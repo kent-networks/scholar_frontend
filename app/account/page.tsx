@@ -1,164 +1,140 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import Sidebar from '@/components/Sidebar'
+import { useState } from "react";
+import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
+
+// Mock state
+const mockLoggedIn = false; // Change to true to see account content
+
+const mockUser = {
+  name: "Dr. Sarah Chen",
+  role: "Researcher",
+  email: "sarah.chen@scholar.edu",
+};
 
 export default function AccountPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
 
-  if (!isLoggedIn) {
-    return (
-      <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto p-8">
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-primary-600 dark:text-primary-400 text-4xl">account_circle</span>
+  if (!mockLoggedIn) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+      <div className="hidden md:block">
+        <Sidebar user={mockUser} />
+      </div>
+      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
+        <div className="max-w-2xl mx-auto p-4 md:p-8">
+            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-primary text-4xl">account_circle</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Sign in to access your account</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Sign in to access your account
+              </h2>
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Create an account or sign in to manage your profile, preferences, and academic activities
+                Create an account or sign in to manage your profile and settings
               </p>
-              <Link
-                href="/login"
-                className="inline-block px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors"
-              >
+              <button className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors shadow-sm shadow-primary/30">
                 Sign In / Join Scholar
-              </Link>
+              </button>
             </div>
           </div>
         </main>
-      </div>
-    )
-  }
 
-  const mockUser = {
-    name: 'Sam',
-    email: 'sam@scholar',
-    role: 'Researcher',
-    institution: 'Forest HU College',
-    joinDate: '2023-01-15',
+        {/* Mobile Bottom Navigation */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+          <MobileBottomNav />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-      <Sidebar user={mockUser} />
+      <div className="hidden md:block">
+        <Sidebar user={mockUser} />
+      </div>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-8">
+      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
+        <div className="max-w-4xl mx-auto p-4 md:p-8">
+          {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Account Settings</h1>
-            <p className="text-slate-600 dark:text-slate-400">Manage your account information and preferences</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Account</h1>
+            <p className="text-slate-600 dark:text-slate-400">Manage your profile and settings</p>
           </div>
 
-          <div className="space-y-6">
-            {/* Profile Section */}
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">Profile Information</h2>
-              <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 rounded-full bg-primary-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                  {mockUser.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{mockUser.name}</h3>
-                  <p className="text-slate-600 dark:text-slate-400">{mockUser.email}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{mockUser.role} • {mockUser.institution}</p>
-                </div>
+          {/* Profile Card */}
+          <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-6">
+            <div className="flex items-center gap-6 mb-6">
+              <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                {mockUser.name.charAt(0)}
               </div>
-              <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
-                Change Profile Picture
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                  {mockUser.name}
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 mb-1">{mockUser.role}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-500">{mockUser.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-lg transition-colors"
+            >
+              {isEditing ? "Cancel" : "Edit Profile"}
+            </button>
+          </div>
+
+          {/* Settings Section */}
+          <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-6">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Settings</h3>
+            <div className="space-y-4">
+              <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">
+                    edit
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">Edit Profile</span>
+                </div>
+                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+              </button>
+
+              <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">
+                    lock
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">Change Password</span>
+                </div>
+                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
               </button>
             </div>
+          </div>
 
-            {/* Account Details */}
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">Account Details</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Account Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={mockUser.name}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email</label>
-                  <input
-                    type="email"
-                    defaultValue={mockUser.email}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Institution</label>
-                  <input
-                    type="text"
-                    defaultValue={mockUser.institution}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Password</label>
-                  <input
-                    type="password"
-                    placeholder="Enter new password"
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <button className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors">
-                  Save Changes
-                </button>
+          {/* Activity Summary */}
+          <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Activity Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Documents</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">12</p>
               </div>
-            </div>
-
-            {/* Activity Stats */}
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">Your Activity</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">12</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Projects</p>
-                </div>
-                <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">45</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Publications</p>
-                </div>
-                <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">8</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Collaborations</p>
-                </div>
-                <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">234</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Contributions</p>
-                </div>
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Communities</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">5</p>
               </div>
-            </div>
-
-            {/* Preamble Section */}
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4"># Preamble</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Welcome to Scholar, your academic ecosystem for research, collaboration, and community engagement. 
-                Share your academic journey, research interests, and professional background with the community.
-              </p>
-              <textarea
-                placeholder="Add your preamble or bio... Share your research interests, academic background, and what you're working on."
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                rows={6}
-              />
-              <button className="mt-4 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors">
-                Save Preamble
-              </button>
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Contributions</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">234</p>
+              </div>
             </div>
           </div>
         </div>
       </main>
-    </div>
-  )
-}
 
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+        <MobileBottomNav />
+      </div>
+    </div>
+  );
+}

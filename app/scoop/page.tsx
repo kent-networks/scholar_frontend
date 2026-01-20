@@ -1,210 +1,206 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import Sidebar from '@/components/Sidebar'
+import { useState, useEffect, useRef } from "react";
+import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
+import VideoCard from "./components/VideoCard";
+import SearchBar from "./components/SearchBar";
 
-const scoopItems = [
+const mockVideos = [
   {
     id: 1,
-    title: 'Revolutionary Breakthrough in Quantum Computing',
-    excerpt: 'Scientists at Scholar Research Lab have discovered a new method for sustainable energy production that could revolutionize the industry. The breakthrough involves advanced quantum algorithms that optimize energy storage and distribution.',
-    author: 'Dr. Jane Smith',
-    date: '2 days ago',
-    category: 'Research',
-    image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=400&fit=crop',
-    views: 2340,
-    featured: true,
+    title: "Introduction to Quantum Computing: Understanding Qubits and Superposition",
+    subject: "Physics",
+    author: "Dr. Sarah Chen",
+    views: 1240,
+    likes: 89,
+    comments: 23,
+    date: "2 days ago",
   },
   {
     id: 2,
-    title: 'Annual Research Symposium 2024: Call for Papers',
-    excerpt: 'Join us for the annual research symposium where researchers from around the world will present their latest findings. This year\'s theme focuses on sustainable technology and environmental solutions.',
-    author: 'Community Team',
-    date: '5 days ago',
-    category: 'Event',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop',
-    views: 1890,
-    featured: false,
+    title: "Sustainable Energy Solutions for the Future",
+    subject: "Environmental Science",
+    author: "Prof. Michael Johnson",
+    views: 890,
+    likes: 67,
+    comments: 15,
+    date: "5 days ago",
   },
   {
     id: 3,
-    title: 'Forest HU College Partners with Scholar Platform',
-    excerpt: 'We\'re excited to announce a new partnership with Forest HU College, expanding our network of academic institutions. This collaboration will enable joint research programs and student exchanges.',
-    author: 'Partnership Team',
-    date: '1 week ago',
-    category: 'Partnership',
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=400&fit=crop',
-    views: 1560,
-    featured: true,
+    title: "Machine Learning Fundamentals: Neural Networks Explained",
+    subject: "AI",
+    author: "Dr. Emily Rodriguez",
+    views: 2100,
+    likes: 145,
+    comments: 42,
+    date: "1 week ago",
   },
   {
     id: 4,
-    title: 'New AI Research Lab Opens at Scholar',
-    excerpt: 'The new state-of-the-art AI research lab is now open, featuring cutting-edge equipment and facilities for machine learning and artificial intelligence research.',
-    author: 'Dr. Michael Chen',
-    date: '3 days ago',
-    category: 'Announcement',
-    image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=400&fit=crop',
-    views: 2100,
-    featured: false,
+    title: "Climate Change Research: Latest Findings and Solutions",
+    subject: "Climate Science",
+    author: "Dr. Lisa Anderson",
+    views: 980,
+    likes: 78,
+    comments: 19,
+    date: "4 days ago",
   },
   {
     id: 5,
-    title: 'Climate Change Research Initiative Launched',
-    excerpt: 'Scholar launches a comprehensive research initiative to study climate change impacts and develop sustainable solutions. The program involves multiple institutions and research teams.',
-    author: 'Dr. Sarah Johnson',
-    date: '4 days ago',
-    category: 'Research',
-    image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=400&fit=crop',
-    views: 1780,
-    featured: false,
+    title: "Biotechnology Breakthroughs in Medical Science",
+    subject: "Biotechnology",
+    author: "Prof. James Wilson",
+    views: 1560,
+    likes: 92,
+    comments: 28,
+    date: "3 days ago",
   },
-  {
-    id: 6,
-    title: 'Student Research Grant Program Now Accepting Applications',
-    excerpt: 'Applications are now open for the 2024 Student Research Grant Program. This program supports undergraduate and graduate students in their research endeavors.',
-    author: 'Grants Committee',
-    date: '6 days ago',
-    category: 'Opportunity',
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop',
-    views: 1450,
-    featured: false,
-  },
-]
-
-const categories = ['All', 'Research', 'Event', 'Partnership', 'Announcement', 'Opportunity']
+];
 
 export default function ScoopPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
+  const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  const filteredVideos = mockVideos.filter(
+    (video) =>
+      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleLike = (videoId: number) => {
+    setLikedVideos((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(videoId)) {
+        newSet.delete(videoId);
+      } else {
+        newSet.add(videoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSave = (videoId: number) => {
+    setSavedVideos((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(videoId)) {
+        newSet.delete(videoId);
+      } else {
+        newSet.add(videoId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle scroll to snap to videos
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || isScrolling) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      setIsScrolling(true);
+
+      scrollTimeout = setTimeout(() => {
+        setIsScrolling(false);
+        const scrollTop = container.scrollTop;
+        const videoHeight = window.innerHeight;
+        const newIndex = Math.round(scrollTop / videoHeight);
+        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredVideos.length) {
+          setCurrentIndex(newIndex);
+        }
+      }, 100);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [currentIndex, filteredVideos.length, isScrolling]);
+
+  // Scroll to current video
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || isScrolling) return;
+
+    const videoHeight = window.innerHeight;
+    container.scrollTo({
+      top: currentIndex * videoHeight,
+      behavior: "smooth",
+    });
+  }, [currentIndex, isScrolling]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-      <Sidebar />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full mb-4">
-              <span className="text-sm font-medium">Scoop</span>
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Search Bar - Desktop only */}
+        <div className="hidden md:block p-4 border-b border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark z-10">
+          <div className="max-w-md">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+        </div>
+
+        {/* Video Feed Container */}
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth md:pb-0 pb-20"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <style jsx global>{`
+            .snap-y::-webkit-scrollbar {
+              display: none;
+            }
+            @supports (-webkit-touch-callout: none) {
+              .pb-safe {
+                padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+              }
+            }
+          `}</style>
+
+          {filteredVideos.length > 0 ? (
+            filteredVideos.map((video, index) => (
+              <VideoCard
+                key={video.id}
+                video={video}
+                isActive={index === currentIndex}
+                onLike={() => handleLike(video.id)}
+                onComment={() => console.log("Comment", video.id)}
+                onShare={() => console.log("Share", video.id)}
+                onSave={() => handleSave(video.id)}
+                liked={likedVideos.has(video.id)}
+                saved={savedVideos.has(video.id)}
+              />
+            ))
+          ) : (
+            <div className="h-screen flex items-center justify-center">
+              <div className="text-center">
+                <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">
+                  search_off
+                </span>
+                <p className="text-slate-500 dark:text-slate-400 text-lg">
+                  No videos found
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Latest News & Updates</h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Stay informed about the latest happenings in the Scholar community
-            </p>
-          </div>
+          )}
+        </div>
 
-          {/* Categories */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`px-4 py-2 rounded-lg font-bold transition-colors ${
-                  category === 'All'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:border-primary/50'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          {/* Featured Articles */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Featured Stories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {scoopItems
-                .filter((item) => item.featured)
-                .map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/scoop/${item.id}`}
-                    className="group bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all hover:border-primary/50"
-                  >
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
-                          {item.category}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{item.excerpt}</p>
-                      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                        <span>By {item.author}</span>
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-base">visibility</span>
-                            {item.views}
-                          </span>
-                          <span>{item.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-            </div>
-          </div>
-
-          {/* All Articles */}
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">All News</h2>
-            <div className="space-y-6">
-              {scoopItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/scoop/${item.id}`}
-                  className="group block bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 hover:shadow-lg transition-all hover:border-primary-300 dark:hover:border-primary-700"
-                >
-                  <div className="flex gap-6">
-                    <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded-full">
-                          {item.category}
-                        </span>
-                        {item.featured && (
-                          <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-full">
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{item.excerpt}</p>
-                      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                        <span>By {item.author}</span>
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-base">visibility</span>
-                            {item.views}
-                          </span>
-                          <span>{item.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+        {/* Mobile Bottom Navigation */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+          <MobileBottomNav />
         </div>
       </main>
     </div>
-  )
+  );
 }
-

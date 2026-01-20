@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Sidebar from "@/components/Sidebar";
+import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 
 const contentItems = [
   {
@@ -95,11 +95,13 @@ const featuredCategories = [
 export default function Home() {
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-      <Sidebar />
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
+        <div className="p-4 md:p-8">
           {/* Hero Section */}
           <div className="mb-12 relative rounded-xl overflow-hidden shadow-lg shadow-blue-500/30 min-h-[300px]">
             {/* Background Image */}
@@ -290,6 +292,11 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+        <MobileBottomNav />
+      </div>
     </div>
   );
 }
