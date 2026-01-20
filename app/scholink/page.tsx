@@ -1,9 +1,8 @@
 "use client";
 
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-
-// Mock state
-const mockIsPaidSchool = false; // Change to true to see competitions
+import { mockIsPaidSchool } from "@/lib/mockState";
+import { Lock } from "lucide-react";
 
 const mockCompetitions = [
   {
@@ -58,7 +57,7 @@ export default function ScholinkPage() {
             <div className="max-w-2xl mx-auto">
               <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-12 text-center shadow-sm">
                 <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-6">
-                  <span className="material-symbols-outlined text-4xl text-slate-400">lock</span>
+                  <Lock className="h-8 w-8 text-slate-500" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
                   Upgrade to access Scholink

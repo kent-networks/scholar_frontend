@@ -4,9 +4,9 @@ import { useState } from "react";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import DocumentCard from "./components/DocumentCard";
 import FilterDropdown from "./components/FilterDropdown";
-
-// Mock state
-const mockLoggedIn = false; // Change to true to see upload button
+import ModalDialog from "@/components/ModalDialog";
+import { mockLoggedIn } from "@/lib/mockState";
+import { Plus, Search, UploadCloud } from "lucide-react";
 
 const mockDocuments = [
   {
@@ -68,6 +68,8 @@ export default function ResearchLabPage() {
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [selectedYear, setSelectedYear] = useState("All");
   const [selectedInstitution, setSelectedInstitution] = useState("All");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const filteredDocuments = mockDocuments.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,6 +80,8 @@ export default function ResearchLabPage() {
     
     return matchesSearch && matchesSubject && matchesYear && matchesInstitution;
   });
+
+  const visibleDocuments = filteredDocuments.slice(0, visibleCount);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -102,7 +106,7 @@ export default function ResearchLabPage() {
             {/* Search Bar */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <span className="material-symbols-outlined text-slate-400">search</span>
+                <Search className="h-5 w-5 text-slate-400" />
               </div>
               <input
                 type="text"
@@ -136,8 +140,11 @@ export default function ResearchLabPage() {
 
               {/* Upload Button - only visible if logged in */}
               {mockLoggedIn && (
-                <button className="flex items-center gap-2 px-6 py-2 font-bold text-white transition-colors rounded-lg shadow-sm bg-primary hover:bg-primary-dark shadow-primary/30">
-                  <span className="material-symbols-outlined">upload</span>
+                <button
+                  onClick={() => setUploadOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2 font-bold text-white transition-colors rounded-lg shadow-sm bg-primary hover:bg-primary-dark shadow-primary/30"
+                >
+                  <UploadCloud className="h-4 w-4" />
                   Upload
                 </button>
               )}
@@ -146,7 +153,7 @@ export default function ResearchLabPage() {
 
           {/* Documents Grid */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredDocuments.map((doc) => (
+            {visibleDocuments.map((doc) => (
               <DocumentCard key={doc.id} document={doc} />
             ))}
           </div>
@@ -156,6 +163,19 @@ export default function ResearchLabPage() {
               <p className="text-slate-500 dark:text-slate-400">No documents found</p>
             </div>
           )}
+
+          {/* Load more */}
+          {filteredDocuments.length > visibleCount && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => setVisibleCount((c) => c + 6)}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg border border-border-light bg-surface-light hover:bg-slate-100 transition-colors font-bold text-slate-900"
+              >
+                <Plus className="h-4 w-4" />
+                Load more
+              </button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -163,6 +183,30 @@ export default function ResearchLabPage() {
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 safe-area-inset-bottom">
         <MobileBottomNav />
       </div>
+
+      {/* Upload modal */}
+      <ModalDialog
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title="Upload document"
+        width="md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
+            <p className="text-sm font-bold text-slate-900 mb-1">Choose a file</p>
+            <p className="text-xs text-slate-500 mb-3">
+              (Mock) This will not upload anywhere yet.
+            </p>
+            <input type="file" className="w-full" />
+          </div>
+          <button
+            onClick={() => setUploadOpen(false)}
+            className="w-full px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
+          >
+            Upload
+          </button>
+        </div>
+      </ModalDialog>
     </div>
   );
 }

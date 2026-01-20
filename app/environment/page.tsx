@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Sidebar from '@/components/Sidebar'
+import { Folder, Search, Users } from 'lucide-react'
 
 const partnerInstitutions = [
   { id: 1, name: 'Forest HU College', initial: 'F', description: 'Leading research institution in environmental sciences', programs: 12, students: 8500 },
@@ -84,7 +85,7 @@ export default function EnvironmentPage() {
                 />
               </div>
               <button className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
-                <span className="material-symbols-outlined">search</span>
+                <Search className="h-4 w-4" />
                 Search
               </button>
             </div>
@@ -163,11 +164,11 @@ export default function EnvironmentPage() {
                   <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">{institution.description}</p>
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                      <span className="material-symbols-outlined text-base">folder</span>
+                      <Folder className="h-4 w-4" />
                       <span>{institution.programs} programs</span>
                     </div>
                     <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                      <span className="material-symbols-outlined text-base">people</span>
+                      <Users className="h-4 w-4" />
                       <span>{institution.students.toLocaleString()}</span>
                     </div>
                   </div>

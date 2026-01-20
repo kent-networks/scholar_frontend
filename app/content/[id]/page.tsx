@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
+import { ArrowLeft, Download, Hand, Link2, Share2 } from 'lucide-react'
 
 // No user required - public access
 
@@ -46,7 +47,7 @@ export default function ContentDetailPage() {
               onClick={() => router.back()}
               className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 mb-4 transition-colors"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <ArrowLeft className="h-4 w-4" />
               <span>Back</span>
             </button>
             <div className="flex items-center gap-2 mb-2">
@@ -93,23 +94,23 @@ export default function ContentDetailPage() {
               onClick={() => setHi5Count(hi5Count + 1)}
               className="flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
             >
-              <span className="material-symbols-outlined">waving_hand</span>
+              <Hand className="h-4 w-4" />
               <span>Hi5</span>
               {hi5Count > 0 && <span className="text-sm">({hi5Count})</span>}
             </button>
 
             <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              <span className="material-symbols-outlined">share</span>
+              <Share2 className="h-4 w-4" />
               <span>Share</span>
             </button>
 
             <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              <span className="material-symbols-outlined">download</span>
+              <Download className="h-4 w-4" />
               <span>Get</span>
             </button>
 
             <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              <span className="material-symbols-outlined">link</span>
+              <Link2 className="h-4 w-4" />
               <span>Link</span>
             </button>
           </div>

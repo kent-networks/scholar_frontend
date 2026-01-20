@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-
-// Mock state
-const mockLoggedIn = false; // Change to true to see account content
+import { mockLoggedIn } from "@/lib/mockState";
+import { KeyRound, Pencil, Activity, FileText, Users } from "lucide-react";
 
 const mockUser = {
   name: "Dr. Sarah Chen",
@@ -15,38 +14,8 @@ const mockUser = {
 export default function AccountPage() {
   const [isEditing, setIsEditing] = useState(false);
 
-  if (!mockLoggedIn) {
-  return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
-      <div className="hidden md:block">
-        <Sidebar user={mockUser} />
-      </div>
-      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
-        <div className="max-w-2xl mx-auto p-4 md:p-8">
-            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center shadow-sm">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-primary text-4xl">account_circle</span>
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Sign in to access your account
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Create an account or sign in to manage your profile and settings
-              </p>
-              <button className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors shadow-sm shadow-primary/30">
-                Sign In / Join Scholar
-              </button>
-            </div>
-          </div>
-        </main>
-
-        {/* Mobile Bottom Navigation */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
-          <MobileBottomNav />
-        </div>
-      </div>
-    );
-  }
+  // For now we assume logged in via mockState; keep guard for future wiring.
+  if (!mockLoggedIn) return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -90,22 +59,18 @@ export default function AccountPage() {
             <div className="space-y-4">
               <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">
-                    edit
-                  </span>
+                  <Pencil className="h-5 w-5 text-slate-600" />
                   <span className="font-bold text-slate-900 dark:text-white">Edit Profile</span>
                 </div>
-                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+                <span className="text-slate-400">›</span>
               </button>
 
               <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">
-                    lock
-                  </span>
+                  <KeyRound className="h-5 w-5 text-slate-600" />
                   <span className="font-bold text-slate-900 dark:text-white">Change Password</span>
                 </div>
-                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+                <span className="text-slate-400">›</span>
               </button>
             </div>
           </div>
@@ -115,15 +80,24 @@ export default function AccountPage() {
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Activity Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Documents</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Documents</p>
+                </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">12</p>
               </div>
               <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Communities</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Communities</p>
+                </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">5</p>
               </div>
               <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Contributions</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Contributions</p>
+                </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">234</p>
               </div>
             </div>

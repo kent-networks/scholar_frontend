@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-
-// Mock state
-const mockIsOwner = false; // Change to true to see owner section
+import ModalDialog from "@/components/ModalDialog";
+import { mockIsOwner, mockLoggedIn } from "@/lib/mockState";
+import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud } from "lucide-react";
 
 const mockPosts = [
   {
@@ -43,6 +43,10 @@ export default function CommunityDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"posts" | "files" | "members">("posts");
+  const [files, setFiles] = useState(mockFiles);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const communityId = params.id as string;
 
@@ -60,7 +64,7 @@ export default function CommunityDetailPage() {
               onClick={() => router.back()}
               className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary mb-4 transition-colors"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <ArrowLeft className="h-4 w-4" />
               <span>Back to Communities</span>
             </button>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
@@ -130,13 +134,18 @@ export default function CommunityDetailPage() {
                       <p className="text-slate-700 dark:text-slate-300 mb-4">{post.content}</p>
                       <div className="flex gap-4 text-sm text-slate-500 dark:text-slate-400">
                         <button className="flex items-center gap-1 hover:text-primary">
-                          <span className="material-symbols-outlined text-base">thumb_up</span>
+                          <span className="text-sm font-bold">{post.likes}</span>
+                          <span>Likes</span>
+                        </button>
+                        <button
+                          onClick={() => setCommentOpen(true)}
+                          className="flex items-center gap-2 hover:text-primary"
+                        >
+                          <MessageSquareText className="h-4 w-4" />
                           {post.likes}
                         </button>
-                        <button className="flex items-center gap-1 hover:text-primary">
-                          <span className="material-symbols-outlined text-base">chat_bubble</span>
-                          {post.comments}
-                        </button>
+                        <span className="text-sm font-bold">{post.comments}</span>
+                        <span>Comments</span>
                       </div>
                     </div>
                   ))}
@@ -145,7 +154,41 @@ export default function CommunityDetailPage() {
 
               {activeTab === "files" && (
                 <div className="space-y-4">
-                  {mockFiles.map((file) => (
+                  {mockLoggedIn && (
+                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                          <h3 className="font-bold text-slate-900 dark:text-white">Upload files</h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Share PDFs, datasets, slides (mock upload).
+                          </p>
+                        </div>
+                        <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg cursor-pointer transition-colors">
+                          <UploadCloud className="h-4 w-4" />
+                          Upload
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (!f) return;
+                              setFiles((prev) => [
+                                {
+                                  id: Date.now(),
+                                  name: f.name,
+                                  size: `${Math.max(1, Math.round(f.size / 1024))} KB`,
+                                  date: "just now",
+                                },
+                                ...prev,
+                              ]);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {files.map((file) => (
                     <div
                       key={file.id}
                       className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all"
@@ -153,7 +196,7 @@ export default function CommunityDetailPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary">description</span>
+                            <FileText className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white">{file.name}</p>
@@ -186,6 +229,16 @@ export default function CommunityDetailPage() {
                           <p className="font-bold text-slate-900 dark:text-white">{member.name}</p>
                           <p className="text-sm text-slate-500 dark:text-slate-400">{member.role}</p>
                         </div>
+                        <button
+                          onClick={() => {
+                            setSelectedMember(member.name);
+                            setInboxOpen(true);
+                          }}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border-light bg-surface-light hover:bg-slate-100 transition-colors font-bold text-slate-900"
+                        >
+                          <Inbox className="h-4 w-4" />
+                          Inbox
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -230,6 +283,52 @@ export default function CommunityDetailPage() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
         <MobileBottomNav />
       </div>
+
+      <ModalDialog isOpen={commentOpen} onClose={() => setCommentOpen(false)} title="Comments" width="md">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="p-3 rounded-lg border border-border-light bg-surface-light">
+              <p className="text-sm font-bold text-slate-900">Student A</p>
+              <p className="text-sm text-slate-600">This is super interesting — can you share the dataset?</p>
+            </div>
+            <div className="p-3 rounded-lg border border-border-light bg-surface-light">
+              <p className="text-sm font-bold text-slate-900">Dr. B</p>
+              <p className="text-sm text-slate-600">Nice work. What’s the next step?</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <input
+              placeholder="Write a comment..."
+              className="flex-1 px-3 py-2 rounded-lg border border-border-light bg-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors">
+              Send
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
+
+      <ModalDialog
+        isOpen={inboxOpen}
+        onClose={() => setInboxOpen(false)}
+        title={selectedMember ? `Message ${selectedMember}` : "Message"}
+        width="md"
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-lg border border-border-light bg-surface-light">
+            <p className="text-sm text-slate-600">(Mock) Start a conversation.</p>
+          </div>
+          <div className="flex gap-2">
+            <input
+              placeholder="Type a message..."
+              className="flex-1 px-3 py-2 rounded-lg border border-border-light bg-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors">
+              Send
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
     </div>
   );
 }

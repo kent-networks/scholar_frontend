@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Heart, MessageCircle, Share2, Bookmark, PlayCircle } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -12,8 +12,8 @@ interface VideoCardProps {
     likes: number;
     comments: number;
     date: string;
+    poster: string;
   };
-  isActive: boolean;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -24,7 +24,6 @@ interface VideoCardProps {
 
 export default function VideoCard({
   video,
-  isActive,
   onLike,
   onComment,
   onShare,
@@ -33,30 +32,33 @@ export default function VideoCard({
   saved,
 }: VideoCardProps) {
   return (
-    <div
-      className={`relative w-full h-screen flex-shrink-0 snap-start ${
-        isActive ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
-    >
+    <div className="relative w-full h-screen flex-shrink-0 snap-start">
       {/* Video Container */}
-      <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
+      <div
+        className="relative w-full h-full flex items-center justify-center"
+        style={{
+          backgroundImage: `url(${video.poster})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/60" />
+
         {/* Video Placeholder */}
-        <div className="text-center">
-          <span className="material-symbols-outlined text-8xl text-white/50">
-            play_circle
-          </span>
-          <p className="text-white/70 mt-4 text-lg">Video Player</p>
+        <div className="relative z-10 text-center">
+          <PlayCircle className="h-20 w-20 text-white/70 mx-auto" />
+          <p className="text-white/80 mt-3 text-base font-semibold">Video Player</p>
         </div>
 
         {/* Subject Badge */}
-        <div className="absolute top-6 left-4">
-          <span className="px-3 py-1 bg-primary text-white text-sm font-bold rounded-full">
+        <div className="absolute top-6 left-4 z-10">
+          <span className="px-3 py-1 bg-primary text-white text-sm font-bold rounded-full shadow-sm">
             {video.subject}
           </span>
         </div>
 
         {/* Right Side Actions */}
-        <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center">
+        <div className="absolute right-4 bottom-28 flex flex-col gap-6 items-center z-10">
           <button
             onClick={onLike}
             className="flex flex-col items-center gap-2 group"
@@ -68,9 +70,7 @@ export default function VideoCard({
                   : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
               }`}
             >
-              <span className="material-symbols-outlined">
-                {liked ? "favorite" : "favorite_border"}
-              </span>
+              <Heart className={`h-5 w-5 ${liked ? "fill-white" : ""}`} />
             </div>
             <span className="text-white text-xs font-bold">
               {video.likes + (liked ? 1 : 0)}
@@ -82,7 +82,7 @@ export default function VideoCard({
             className="flex flex-col items-center gap-2 group"
           >
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/30 transition-all">
-              <span className="material-symbols-outlined">chat_bubble</span>
+              <MessageCircle className="h-5 w-5" />
             </div>
             <span className="text-white text-xs font-bold">{video.comments}</span>
           </button>
@@ -92,7 +92,7 @@ export default function VideoCard({
             className="flex flex-col items-center gap-2 group"
           >
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/30 transition-all">
-              <span className="material-symbols-outlined">share</span>
+              <Share2 className="h-5 w-5" />
             </div>
             <span className="text-white text-xs font-bold">Share</span>
           </button>
@@ -108,16 +108,14 @@ export default function VideoCard({
                   : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
               }`}
             >
-              <span className="material-symbols-outlined">
-                {saved ? "bookmark" : "bookmark_border"}
-              </span>
+              <Bookmark className={`h-5 w-5 ${saved ? "fill-white" : ""}`} />
             </div>
             <span className="text-white text-xs font-bold">Save</span>
           </button>
         </div>
 
         {/* Bottom Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pb-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent p-6 pb-24 z-10">
           <h2 className="text-white text-xl font-bold mb-2 line-clamp-2">
             {video.title}
           </h2>

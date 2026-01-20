@@ -2,6 +2,16 @@
 
 import Link from "next/link";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
+import {
+  ArrowRight,
+  Eye,
+  FlaskConical,
+  Folder,
+  GraduationCap,
+  Link2,
+  Users,
+  Video,
+} from "lucide-react";
 
 const contentItems = [
   {
@@ -86,10 +96,10 @@ const stats = [
 ];
 
 const featuredCategories = [
-  { name: "Research Lab", href: "/research-lab", icon: "science", count: 450 },
-  { name: "Scoop", href: "/scoop", icon: "article", count: 120 },
-  { name: "Environment", href: "/environment", icon: "eco", count: 89 },
-  { name: "Community", href: "/community", icon: "groups", count: 2340 },
+  { name: "Research Lab", href: "/research-lab", icon: FlaskConical, count: 450 },
+  { name: "Scoop", href: "/scoop", icon: Video, count: 120 },
+  { name: "Scholink", href: "/scholink", icon: Link2, count: 89 },
+  { name: "Community", href: "/community", icon: Users, count: 2340 },
 ];
 
 export default function Home() {
@@ -100,7 +110,7 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
+      <main className="flex-1 pb-20 overflow-y-auto md:pb-0">
         <div className="p-4 md:p-8">
           {/* Hero Section */}
           <div className="mb-12 relative rounded-xl overflow-hidden shadow-lg shadow-blue-500/30 min-h-[300px]">
@@ -141,7 +151,7 @@ export default function Home() {
             <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
               <div className="flex items-start justify-between">
                 <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-primary">
-                  <span className="material-symbols-outlined">science</span>
+                  <FlaskConical className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -156,7 +166,7 @@ export default function Home() {
             <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
               <div className="flex items-start justify-between">
                 <div className="p-2 text-purple-600 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400">
-                  <span className="material-symbols-outlined">folder</span>
+                  <Folder className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -171,7 +181,7 @@ export default function Home() {
             <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
               <div className="flex items-start justify-between">
                 <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-                  <span className="material-symbols-outlined">school</span>
+                  <GraduationCap className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -186,7 +196,7 @@ export default function Home() {
             <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
               <div className="flex items-start justify-between">
                 <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
-                  <span className="material-symbols-outlined">groups</span>
+                  <Users className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -207,6 +217,9 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               {featuredCategories.map((category) => (
+                (() => {
+                  const Icon = category.icon
+                  return (
                 <Link
                   key={category.href}
                   href={category.href}
@@ -214,9 +227,7 @@ export default function Home() {
                 >
                   <div className="flex items-center gap-4 mb-3">
                     <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
-                      <span className="material-symbols-outlined">
-                        {category.icon}
-                      </span>
+                      <Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
@@ -228,6 +239,8 @@ export default function Home() {
                     </div>
                   </div>
                 </Link>
+                  )
+                })()
               ))}
             </div>
           </div>
@@ -243,9 +256,7 @@ export default function Home() {
                 className="flex items-center gap-2 font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
               >
                 View All
-                <span className="text-lg material-symbols-outlined">
-                  arrow_forward
-                </span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
@@ -268,9 +279,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="absolute flex items-center gap-2 px-2 py-1 text-xs text-white rounded-full bottom-4 right-4 bg-black/50 backdrop-blur-sm">
-                      <span className="text-sm material-symbols-outlined">
-                        visibility
-                      </span>
+                      <Eye className="w-4 h-4" />
                       {item.views}
                     </div>
                   </div>
@@ -294,7 +303,7 @@ export default function Home() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
         <MobileBottomNav />
       </div>
     </div>

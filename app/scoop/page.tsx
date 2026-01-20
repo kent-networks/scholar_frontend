@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "./components/VideoCard";
 import SearchBar from "./components/SearchBar";
+import ModalDialog from "@/components/ModalDialog";
+import { mockLoggedIn } from "@/lib/mockState";
+import { Plus, Search } from "lucide-react";
 
 const mockVideos = [
   {
@@ -15,6 +18,8 @@ const mockVideos = [
     likes: 89,
     comments: 23,
     date: "2 days ago",
+    poster:
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: 2,
@@ -25,6 +30,8 @@ const mockVideos = [
     likes: 67,
     comments: 15,
     date: "5 days ago",
+    poster:
+      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: 3,
@@ -35,6 +42,8 @@ const mockVideos = [
     likes: 145,
     comments: 42,
     date: "1 week ago",
+    poster:
+      "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: 4,
@@ -45,6 +54,8 @@ const mockVideos = [
     likes: 78,
     comments: 19,
     date: "4 days ago",
+    poster:
+      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: 5,
@@ -55,6 +66,8 @@ const mockVideos = [
     likes: 92,
     comments: 28,
     date: "3 days ago",
+    poster:
+      "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=1400&q=80",
   },
 ];
 
@@ -65,6 +78,8 @@ export default function ScoopPage() {
   const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
 
   const filteredVideos = mockVideos.filter(
     (video) =>
@@ -143,11 +158,43 @@ export default function ScoopPage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Search Bar - Desktop only */}
-        <div className="hidden md:block p-4 border-b border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark z-10">
-          <div className="max-w-md">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-black">
+        {/* TikTok-like top overlay */}
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
+          <div className="absolute top-3 left-0 right-0 flex items-center justify-between px-4">
+            <button
+              className="p-2 rounded-full bg-white/10 text-white md:hidden"
+              onClick={() => setSearchQuery("")}
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-6 mx-auto text-white">
+              <button
+                onClick={() => setActiveTab("following")}
+                className={`text-sm font-bold transition-opacity ${activeTab === "following" ? "opacity-100" : "opacity-60"}`}
+              >
+                Following
+              </button>
+              <button
+                onClick={() => setActiveTab("forYou")}
+                className={`text-sm font-bold transition-opacity ${activeTab === "forYou" ? "opacity-100" : "opacity-60"}`}
+              >
+                For You
+              </button>
+            </div>
+
+            {mockLoggedIn && (
+              <button
+                className="p-2 rounded-full bg-white/10 text-white"
+                onClick={() => setUploadOpen(true)}
+                aria-label="Upload"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -169,11 +216,10 @@ export default function ScoopPage() {
           `}</style>
 
           {filteredVideos.length > 0 ? (
-            filteredVideos.map((video, index) => (
+            filteredVideos.map((video) => (
               <VideoCard
                 key={video.id}
                 video={video}
-                isActive={index === currentIndex}
                 onLike={() => handleLike(video.id)}
                 onComment={() => console.log("Comment", video.id)}
                 onShare={() => console.log("Share", video.id)}
@@ -185,10 +231,7 @@ export default function ScoopPage() {
           ) : (
             <div className="h-screen flex items-center justify-center">
               <div className="text-center">
-                <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">
-                  search_off
-                </span>
-                <p className="text-slate-500 dark:text-slate-400 text-lg">
+                <p className="text-slate-200 text-lg font-semibold">
                   No videos found
                 </p>
               </div>
@@ -201,6 +244,36 @@ export default function ScoopPage() {
           <MobileBottomNav />
         </div>
       </main>
+
+      {/* Upload modal */}
+      <ModalDialog
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title="Upload / Post a video"
+        width="md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
+            <p className="text-sm font-bold text-slate-900 mb-1">Choose a video file</p>
+            <p className="text-xs text-slate-500 mb-3">(Mock) No real upload yet.</p>
+            <input type="file" accept="video/*" className="w-full" />
+          </div>
+          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
+            <label className="block text-sm font-bold text-slate-900 mb-2">Caption</label>
+            <input
+              type="text"
+              placeholder="Write a caption..."
+              className="w-full px-3 py-2 rounded-lg border border-border-light bg-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <button
+            onClick={() => setUploadOpen(false)}
+            className="w-full px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
+          >
+            Post
+          </button>
+        </div>
+      </ModalDialog>
     </div>
   );
 }

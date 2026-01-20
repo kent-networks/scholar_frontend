@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Check, ChevronDown } from "lucide-react";
 
 interface DropdownOption {
   value: string;
@@ -176,25 +177,19 @@ export default function Dropdown({
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={handleInputFocus}
             className={`
-              w-full px-3 py-2 ${Icon ? "pl-10" : ""} pr-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm
-              focus:ring-2 focus:border-0 focus:ring-primary focus:outline-none
+              w-full px-3 py-2 ${Icon ? "pl-10" : ""} pr-9 rounded-lg bg-surface-light border border-border-light text-sm
+              focus:ring-2 focus:border-transparent focus:ring-primary/40 focus:outline-none
               placeholder-slate-400
               cursor-default
-              ${
-                !isOpen && selectedOption
-                  ? "text-slate-900 dark:text-white"
-                  : "text-slate-900 dark:text-white"
-              }
+              text-slate-900
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             `}
           />
-          <span
-            className={`absolute right-2 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none transition-transform duration-300 ${
+          <ChevronDown
+            className={`absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none transition-transform duration-300 ${
               isOpen ? "rotate-180" : ""
             }`}
-          >
-            keyboard_arrow_down
-          </span>
+          />
         </div>
       </div>
 
@@ -208,7 +203,7 @@ export default function Dropdown({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: openUpwards ? 10 : -10 }}
               transition={{ type: "spring", stiffness: 180, damping: 20 }}
-              className={`fixed z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg overflow-hidden border border-slate-200 dark:border-slate-700 ${
+              className={`fixed z-50 bg-surface-light rounded-lg shadow-lg overflow-hidden border border-border-light ${
                 openUpwards ? "mb-2" : "mt-2"
               }`}
               style={{
@@ -226,11 +221,11 @@ export default function Dropdown({
                       key={option.value}
                       onClick={() => handleSelect(option)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-left
-                        hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-300
+                        hover:bg-slate-100/70 transition-colors duration-300
                         ${
                           value === option.value
                             ? "bg-primary/5 text-primary"
-                            : "text-slate-900 dark:text-white"
+                            : "text-slate-900"
                         }
                         ${index === 0 ? "rounded-t-lg" : ""}
                         ${index === filteredOptions.length - 1 ? "rounded-b-lg" : ""}
@@ -244,14 +239,12 @@ export default function Dropdown({
                         <span className="truncate">{option.label}</span>
                       </div>
                       {showCheckmark && value === option.value && (
-                        <span className="material-symbols-outlined text-primary flex-shrink-0">
-                          check
-                        </span>
+                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
                       )}
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-2 text-slate-500 dark:text-slate-400 text-sm text-center">
+                  <div className="px-3 py-2 text-slate-500 text-sm text-center">
                     No items found
                   </div>
                 )}

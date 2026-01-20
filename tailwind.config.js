@@ -12,11 +12,11 @@ module.exports = {
         primary: '#135bec',
         'primary-dark': '#0e45b5',
         background: {
-          light: '#f6f6f8',
+          light: '#eef2f7',
           dark: '#101622',
         },
         surface: {
-          light: '#ffffff',
+          light: '#f8fafc',
           dark: '#1a202c',
         },
         border: {

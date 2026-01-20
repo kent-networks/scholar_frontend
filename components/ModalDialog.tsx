@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
 interface ModalDialogProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ export default function ModalDialog({
                       onClick={onClose}
                       className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-semibold transition-all duration-300 z-10 ml-4"
                     >
-                      <span className="material-symbols-outlined">close</span>
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                   <div
