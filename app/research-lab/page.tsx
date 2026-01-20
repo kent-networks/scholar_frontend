@@ -1,212 +1,272 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import DocumentCard from "./components/DocumentCard";
-import FilterDropdown from "./components/FilterDropdown";
-import ModalDialog from "@/components/ModalDialog";
+import VideoCard from "../scoop/components/VideoCard";
+import CommentsSidePanel from "@/components/CommentsSidePanel";
 import { mockLoggedIn } from "@/lib/mockState";
 import { Plus, Search, UploadCloud } from "lucide-react";
 
-const mockDocuments = [
+// Sample video URLs for demonstration (using sample videos)
+const sampleVideoUrls = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+];
+
+const mockVideos = [
   {
     id: 1,
-    title: "Advanced Quantum Computing Algorithms",
-    subject: "Computer Science",
+    title: "Quantum Computing Explained: A Visual Guide",
+    subject: "Physics",
     year: 2024,
     institution: "MIT",
     author: "Dr. Sarah Chen",
+    views: 1240,
+    likes: 89,
+    comments: 23,
+    date: "2 days ago",
+    poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=80",
+    videoUrl: sampleVideoUrls[0],
   },
   {
     id: 2,
-    title: "Sustainable Energy Solutions",
-    subject: "Environmental Science",
-    year: 2023,
+    title: "Machine Learning Research Methods and Applications",
+    subject: "AI",
+    year: 2024,
     institution: "Stanford University",
     author: "Prof. Michael Johnson",
+    views: 2100,
+    likes: 145,
+    comments: 42,
+    date: "1 week ago",
+    poster: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1400&q=80",
+    videoUrl: sampleVideoUrls[1],
   },
   {
     id: 3,
-    title: "AI-Powered Medical Diagnostics",
-    subject: "Artificial Intelligence",
+    title: "Sustainable Energy Solutions for the Future",
+    subject: "Environmental Science",
     year: 2024,
-    institution: "Harvard Medical School",
+    institution: "UC Berkeley",
     author: "Dr. Emily Rodriguez",
+    views: 890,
+    likes: 67,
+    comments: 15,
+    date: "5 days ago",
+    poster: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1400&q=80",
+    videoUrl: sampleVideoUrls[2],
   },
   {
     id: 4,
-    title: "Climate Change Impact Analysis",
+    title: "Climate Change Research: Latest Findings",
     subject: "Climate Science",
-    year: 2023,
-    institution: "UC Berkeley",
+    year: 2024,
+    institution: "Harvard",
     author: "Dr. Lisa Anderson",
+    views: 980,
+    likes: 78,
+    comments: 19,
+    date: "4 days ago",
+    poster: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1400&q=80",
+    videoUrl: sampleVideoUrls[3],
   },
   {
     id: 5,
-    title: "Biotechnology Innovations",
+    title: "Biotechnology Breakthroughs in Medical Science",
     subject: "Biotechnology",
     year: 2024,
     institution: "Johns Hopkins",
     author: "Prof. James Wilson",
-  },
-  {
-    id: 6,
-    title: "Neural Network Optimization",
-    subject: "Machine Learning",
-    year: 2024,
-    institution: "Carnegie Mellon",
-    author: "Dr. David Kim",
+    views: 1560,
+    likes: 92,
+    comments: 28,
+    date: "3 days ago",
+    poster: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=1400&q=80",
+    videoUrl: sampleVideoUrls[4],
   },
 ];
 
-const subjects = ["All", "Computer Science", "Environmental Science", "AI", "Climate Science", "Biotechnology", "Machine Learning"];
-const years = ["All", "2024", "2023", "2022", "2021"];
-const institutions = ["All", "MIT", "Stanford", "Harvard", "UC Berkeley", "Johns Hopkins", "Carnegie Mellon"];
-
 export default function ResearchLabPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("All");
-  const [selectedYear, setSelectedYear] = useState("All");
-  const [selectedInstitution, setSelectedInstitution] = useState("All");
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
+  const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
 
-  const filteredDocuments = mockDocuments.filter((doc) => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.subject.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSubject = selectedSubject === "All" || doc.subject === selectedSubject;
-    const matchesYear = selectedYear === "All" || doc.year.toString() === selectedYear;
-    const matchesInstitution = selectedInstitution === "All" || doc.institution === selectedInstitution;
-    
-    return matchesSearch && matchesSubject && matchesYear && matchesInstitution;
-  });
+  const filteredVideos = mockVideos.filter(
+    (video) =>
+      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const visibleDocuments = filteredDocuments.slice(0, visibleCount);
+  const handleLike = (videoId: number) => {
+    setLikedVideos((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(videoId)) {
+        newSet.delete(videoId);
+      } else {
+        newSet.add(videoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSave = (videoId: number) => {
+    setSavedVideos((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(videoId)) {
+        newSet.delete(videoId);
+      } else {
+        newSet.add(videoId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle scroll to snap to videos
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || isScrolling) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      setIsScrolling(true);
+
+      scrollTimeout = setTimeout(() => {
+        setIsScrolling(false);
+        const scrollTop = container.scrollTop;
+        const videoHeight = window.innerHeight;
+        const newIndex = Math.round(scrollTop / videoHeight);
+        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredVideos.length) {
+          setCurrentIndex(newIndex);
+        }
+      }, 100);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [currentIndex, filteredVideos.length, isScrolling]);
+
+  // Scroll to current video
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || isScrolling) return;
+
+    const videoHeight = window.innerHeight;
+    container.scrollTo({
+      top: currentIndex * videoHeight,
+      behavior: "smooth",
+    });
+  }, [currentIndex, isScrolling]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+      {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      <main className="flex-1 pb-20 overflow-y-auto md:pb-0">
-        <div className="p-4 md:p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
-              Research Lab
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Explore research documents and publications
-            </p>
-          </div>
+      <main className="relative flex flex-col flex-1 overflow-hidden bg-black">
+        {/* TikTok-like top overlay */}
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
+          <div className="absolute left-0 right-0 flex items-center justify-between px-4 top-3">
+            <button
+              className="p-2 text-white rounded-full bg-white/10 md:hidden"
+              onClick={() => setSearchQuery("")}
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
 
-          {/* Search and Filters */}
-          <div className="mb-8 space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <Search className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search documents..."
-                className="w-full py-3 pl-12 pr-4 transition-all bg-white border shadow-sm dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-              />
+            <div className="flex items-center gap-4 mx-auto">
+              <h1 className="text-lg font-bold text-white">Research Lab</h1>
             </div>
 
-            {/* Filter Dropdowns */}
-            <div className="flex flex-wrap gap-4">
-              <FilterDropdown
-                label="Subject"
-                value={selectedSubject}
-                options={subjects}
-                onChange={setSelectedSubject}
-              />
-              <FilterDropdown
-                label="Year"
-                value={selectedYear}
-                options={years}
-                onChange={setSelectedYear}
-              />
-              <FilterDropdown
-                label="Institution"
-                value={selectedInstitution}
-                options={institutions}
-                onChange={setSelectedInstitution}
-              />
-
-              {/* Upload Button - only visible if logged in */}
-              {mockLoggedIn && (
-                <button
-                  onClick={() => setUploadOpen(true)}
-                  className="flex items-center gap-2 px-5 py-2 font-bold text-white transition-colors rounded-lg shadow-sm bg-primary hover:bg-primary-dark shadow-primary/30"
-                >
-                  <UploadCloud className="h-4 w-4" />
-                  Upload
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Documents Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {visibleDocuments.map((doc) => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))}
-          </div>
-
-          {filteredDocuments.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-slate-500 dark:text-slate-400">No documents found</p>
-            </div>
-          )}
-
-          {/* Load more */}
-          {filteredDocuments.length > visibleCount && (
-            <div className="flex justify-center mt-8">
+            {mockLoggedIn && (
               <button
-                onClick={() => setVisibleCount((c) => c + 6)}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg border border-border-light bg-surface-light hover:bg-slate-100 transition-colors font-bold text-slate-900"
+                className="p-2 text-white rounded-full bg-white/10"
+                onClick={() => router.push("/research-lab/upload")}
+                aria-label="Upload"
               >
-                <Plus className="h-4 w-4" />
-                Load more
+                <UploadCloud className="w-5 h-5" />
               </button>
+            )}
+          </div>
+        </div>
+
+        {/* Video Feed Container */}
+        <div
+          ref={containerRef}
+          className="flex-1 pb-20 overflow-y-scroll snap-y snap-mandatory scroll-smooth md:pb-0"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <style jsx global>{`
+            .snap-y::-webkit-scrollbar {
+              display: none;
+            }
+            @supports (-webkit-touch-callout: none) {
+              .pb-safe {
+                padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+              }
+            }
+          `}</style>
+
+          {filteredVideos.length > 0 ? (
+            filteredVideos.map((video) => (
+              <VideoCard
+                key={video.id}
+                video={video}
+                onLike={() => handleLike(video.id)}
+                onComment={() => {
+                  setSelectedVideoId(video.id);
+                  setCommentsOpen(true);
+                }}
+                onShare={() => console.log("Share", video.id)}
+                onSave={() => handleSave(video.id)}
+                liked={likedVideos.has(video.id)}
+                saved={savedVideos.has(video.id)}
+              />
+            ))
+          ) : (
+            <div className="flex items-center justify-center h-screen">
+              <div className="text-center">
+                <p className="text-lg font-semibold text-slate-200">
+                  No videos found
+                </p>
+              </div>
             </div>
           )}
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
+          <MobileBottomNav />
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 safe-area-inset-bottom">
-        <MobileBottomNav />
-      </div>
-
-      {/* Upload modal */}
-      <ModalDialog
-        isOpen={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        title="Upload document"
-        width="md"
-      >
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
-            <p className="text-sm font-bold text-slate-900 mb-1">Choose a file</p>
-            <p className="text-xs text-slate-500 mb-3">
-              (Mock) This will not upload anywhere yet.
-            </p>
-            <input type="file" className="w-full" />
-          </div>
-          <button
-            onClick={() => setUploadOpen(false)}
-            className="w-full px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
-          >
-            Upload
-          </button>
-        </div>
-      </ModalDialog>
+      {/* Comments Side Panel */}
+      <CommentsSidePanel
+        isOpen={commentsOpen}
+        onClose={() => {
+          setCommentsOpen(false);
+          setSelectedVideoId(null);
+        }}
+        videoId={selectedVideoId || undefined}
+        commentsCount={selectedVideoId ? filteredVideos.find(v => v.id === selectedVideoId)?.comments : 0}
+      />
     </div>
   );
 }

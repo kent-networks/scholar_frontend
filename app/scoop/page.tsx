@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "./components/VideoCard";
 import SearchBar from "./components/SearchBar";
-import ModalDialog from "@/components/ModalDialog";
+import CommentsSidePanel from "@/components/CommentsSidePanel";
 import { mockLoggedIn } from "@/lib/mockState";
 import { Plus, Search } from "lucide-react";
 
@@ -72,14 +73,16 @@ const mockVideos = [
 ];
 
 export default function ScoopPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
 
   const filteredVideos = mockVideos.filter(
     (video) =>
@@ -189,7 +192,7 @@ export default function ScoopPage() {
             {mockLoggedIn && (
               <button
                 className="p-2 rounded-full bg-white/10 text-white"
-                onClick={() => setUploadOpen(true)}
+                onClick={() => router.push("/scoop/upload")}
                 aria-label="Upload"
               >
                 <Plus className="h-5 w-5" />
@@ -221,7 +224,10 @@ export default function ScoopPage() {
                 key={video.id}
                 video={video}
                 onLike={() => handleLike(video.id)}
-                onComment={() => console.log("Comment", video.id)}
+                onComment={() => {
+                  setSelectedVideoId(video.id);
+                  setCommentsOpen(true);
+                }}
                 onShare={() => console.log("Share", video.id)}
                 onSave={() => handleSave(video.id)}
                 liked={likedVideos.has(video.id)}
@@ -245,35 +251,16 @@ export default function ScoopPage() {
         </div>
       </main>
 
-      {/* Upload modal */}
-      <ModalDialog
-        isOpen={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        title="Upload / Post a video"
-        width="md"
-      >
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
-            <p className="text-sm font-bold text-slate-900 mb-1">Choose a video file</p>
-            <p className="text-xs text-slate-500 mb-3">(Mock) No real upload yet.</p>
-            <input type="file" accept="video/*" className="w-full" />
-          </div>
-          <div className="p-4 rounded-lg border border-border-light bg-surface-light">
-            <label className="block text-sm font-bold text-slate-900 mb-2">Caption</label>
-            <input
-              type="text"
-              placeholder="Write a caption..."
-              className="w-full px-3 py-2 rounded-lg border border-border-light bg-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <button
-            onClick={() => setUploadOpen(false)}
-            className="w-full px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
-          >
-            Post
-          </button>
-        </div>
-      </ModalDialog>
+      {/* Comments Side Panel */}
+      <CommentsSidePanel
+        isOpen={commentsOpen}
+        onClose={() => {
+          setCommentsOpen(false);
+          setSelectedVideoId(null);
+        }}
+        videoId={selectedVideoId || undefined}
+        commentsCount={selectedVideoId ? filteredVideos.find(v => v.id === selectedVideoId)?.comments : 0}
+      />
     </div>
   );
 }

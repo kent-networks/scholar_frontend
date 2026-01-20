@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
 import { mockIsOwner, mockLoggedIn } from "@/lib/mockState";
-import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud } from "lucide-react";
+import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud, MessageCircle, Heart } from "lucide-react";
 
 const mockPosts = [
   {
@@ -284,26 +284,117 @@ export default function CommunityDetailPage() {
         <MobileBottomNav />
       </div>
 
-      <ModalDialog isOpen={commentOpen} onClose={() => setCommentOpen(false)} title="Comments" width="md">
+      <ModalDialog isOpen={commentOpen} onClose={() => setCommentOpen(false)} title="Comments" width="lg">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="p-3 rounded-lg border border-border-light bg-surface-light">
-              <p className="text-sm font-bold text-slate-900">Student A</p>
-              <p className="text-sm text-slate-600">This is super interesting — can you share the dataset?</p>
+          {/* X-style Comments Thread */}
+          <div className="space-y-4">
+            {/* Comment 1 with replies */}
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                  S
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Student A</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">@student_a</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">·</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">2h</span>
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                    This is super interesting — can you share the dataset?
+                  </p>
+                  <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+                    <button className="hover:text-primary transition-colors flex items-center gap-1">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>3</span>
+                    </button>
+                    <button className="hover:text-red-500 transition-colors flex items-center gap-1">
+                      <Heart className="h-4 w-4" />
+                      <span>12</span>
+                    </button>
+                    <button className="hover:text-primary transition-colors">Reply</button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Replies */}
+              <div className="ml-12 space-y-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs flex-shrink-0">
+                    O
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">Original Author</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">@original_author</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">·</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">1h</span>
+                    </div>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 mb-2">
+                      Sure! I'll post a detailed methodology section soon.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                      <button className="hover:text-red-500 transition-colors flex items-center gap-1">
+                        <Heart className="h-3 w-3" />
+                        <span>5</span>
+                      </button>
+                      <button className="hover:text-primary transition-colors">Reply</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="p-3 rounded-lg border border-border-light bg-surface-light">
-              <p className="text-sm font-bold text-slate-900">Dr. B</p>
-              <p className="text-sm text-slate-600">Nice work. What’s the next step?</p>
+
+            {/* Comment 2 */}
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold flex-shrink-0">
+                D
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">Dr. B</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">@dr_b</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">·</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">3h</span>
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                  Nice work. What's the next step?
+                </p>
+                <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+                  <button className="hover:text-primary transition-colors flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>1</span>
+                  </button>
+                  <button className="hover:text-red-500 transition-colors flex items-center gap-1">
+                    <Heart className="h-4 w-4" />
+                    <span>8</span>
+                  </button>
+                  <button className="hover:text-primary transition-colors">Reply</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <input
-              placeholder="Write a comment..."
-              className="flex-1 px-3 py-2 rounded-lg border border-border-light bg-surface-light focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors">
-              Send
-            </button>
+
+          {/* Comment Input */}
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                Y
+              </div>
+              <div className="flex-1">
+                <textarea
+                  placeholder="Post your reply"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+                />
+                <div className="flex justify-end mt-2">
+                  <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-full transition-colors text-sm">
+                    Reply
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </ModalDialog>
