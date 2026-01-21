@@ -88,7 +88,7 @@ export default function VideoCard({
     };
   }, [video.id]);
 
-  const togglePlay = () => {
+  // const togglePlay = () => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
@@ -100,10 +100,10 @@ export default function VideoCard({
   };
 
   return (
-    <div className="relative w-full h-screen flex-shrink-0 snap-start">
+    <div className="relative flex-shrink-0 w-full h-screen snap-start">
       {/* Video Container */}
       <div
-        className="relative w-full h-full flex items-center justify-center overflow-hidden"
+        className="relative flex items-center justify-center w-full h-full overflow-hidden"
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
         onClick={togglePlay}
@@ -113,7 +113,7 @@ export default function VideoCard({
           ref={videoRef}
           src={videoUrl}
           poster={video.poster}
-          className="w-full h-full object-cover"
+          className="object-cover w-full h-full"
           loop
           muted
           playsInline
@@ -121,33 +121,33 @@ export default function VideoCard({
 
         {/* Loading Overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+            <div className="w-12 h-12 border-4 rounded-full border-white/30 border-t-white animate-spin" />
           </div>
         )}
 
         {/* Play/Pause Overlay */}
         {showControls && !isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <div className="w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm">
               {isPlaying ? (
-                <Pause className="h-10 w-10 text-white" />
+                <Pause className="w-10 h-10 text-white" />
               ) : (
-                <PlayCircle className="h-10 w-10 text-white" />
+                <PlayCircle className="w-10 h-10 text-white" />
               )}
             </div>
           </div>
         )}
 
         {/* Subject Badge */}
-        <div className="absolute top-6 left-4 z-20 pointer-events-none">
-          <span className="px-3 py-1 bg-primary text-white text-sm font-bold rounded-full shadow-sm">
+        <div className="absolute z-20 pointer-events-none top-6 left-4">
+          <span className="px-3 py-1 text-sm font-bold text-white rounded-full shadow-sm bg-primary">
             {video.subject}
           </span>
         </div>
 
         {/* Right Side Actions */}
-        <div className="absolute right-4 bottom-28 flex flex-col gap-6 items-center z-20">
+        <div className="absolute z-20 flex flex-col items-center gap-6 right-4 bottom-28">
           <button
             onClick={onLike}
             className="flex flex-col items-center gap-2 group"
@@ -161,7 +161,7 @@ export default function VideoCard({
             >
               <Heart className={`h-5 w-5 ${liked ? "fill-white" : ""}`} />
             </div>
-            <span className="text-white text-xs font-bold">
+            <span className="text-xs font-bold text-white">
               {video.likes + (liked ? 1 : 0)}
             </span>
           </button>
@@ -170,20 +170,20 @@ export default function VideoCard({
             onClick={onComment}
             className="flex flex-col items-center gap-2 group"
           >
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/30 transition-all">
-              <MessageCircle className="h-5 w-5" />
+            <div className="flex items-center justify-center w-12 h-12 text-white transition-all rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30">
+              <MessageCircle className="w-5 h-5" />
             </div>
-            <span className="text-white text-xs font-bold">{video.comments}</span>
+            <span className="text-xs font-bold text-white">{video.comments}</span>
           </button>
 
           <button
             onClick={onShare}
             className="flex flex-col items-center gap-2 group"
           >
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/30 transition-all">
-              <Share2 className="h-5 w-5" />
+            <div className="flex items-center justify-center w-12 h-12 text-white transition-all rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30">
+              <Share2 className="w-5 h-5" />
             </div>
-            <span className="text-white text-xs font-bold">Share</span>
+            <span className="text-xs font-bold text-white">Share</span>
           </button>
 
           <button
@@ -199,16 +199,16 @@ export default function VideoCard({
             >
               <Bookmark className={`h-5 w-5 ${saved ? "fill-white" : ""}`} />
             </div>
-            <span className="text-white text-xs font-bold">Save</span>
+            <span className="text-xs font-bold text-white">Save</span>
           </button>
         </div>
 
         {/* Bottom Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent p-6 pb-24 z-20 pointer-events-none">
-          <h2 className="text-white text-xl font-bold mb-2 line-clamp-2">
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-6 pb-24 pointer-events-none bg-gradient-to-t from-black/85 to-transparent">
+          <h2 className="mb-2 text-xl font-bold text-white line-clamp-2">
             {video.title}
           </h2>
-          <div className="flex items-center gap-3 text-white/80 text-sm mb-3">
+          <div className="flex items-center gap-3 mb-3 text-sm text-white/80">
             <span>{video.author}</span>
             <span>•</span>
             <span>{video.views} views</span>
