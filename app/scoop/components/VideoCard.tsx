@@ -88,7 +88,7 @@ export default function VideoCard({
     };
   }, [video.id]);
 
-  // const togglePlay = () => {
+  const togglePlay = () => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
