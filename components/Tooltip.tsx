@@ -27,10 +27,13 @@ export default function Tooltip({
   const portalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     portalRef.current = document.createElement("div");
     document.body.appendChild(portalRef.current);
     return () => {
-      if (portalRef.current) document.body.removeChild(portalRef.current);
+      if (portalRef.current && typeof window !== 'undefined') {
+        document.body.removeChild(portalRef.current);
+      }
     };
   }, []);
 

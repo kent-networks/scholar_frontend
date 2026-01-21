@@ -26,6 +26,7 @@ interface DropdownProps {
 
 function getScrollableAncestors(node: HTMLElement | null): (HTMLElement | Window)[] {
   const scrollables: (HTMLElement | Window)[] = [];
+  if (typeof window === 'undefined' || !document.body) return scrollables;
   let parent = node?.parentElement;
   while (parent && parent !== document.body) {
     const style = getComputedStyle(parent);
