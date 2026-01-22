@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import Tooltip from '@/components/Tooltip'
 import { mockLoggedIn } from '@/lib/mockState'
@@ -101,6 +101,7 @@ export function MobileBottomNav() {
 
 export default function Sidebar({ user }: { user?: { name: string; email: string } }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
 
   const isLoggedIn = mockLoggedIn || !!user
@@ -121,23 +122,19 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
 
   const wrapTooltip = (node: React.ReactNode, label: string) => {
     if (!collapsed) return node
-    return (
-      <Tooltip content={label} position="right">
-        {node}
-      </Tooltip>
-    )
+    return <Tooltip content={label} position="right">{node}</Tooltip>
   }
 
   return (
     <aside
-      className={`hidden md:flex flex-col justify-between flex-shrink-0 h-screen overflow-hidden transition-[width] duration-300 ease-in-out ${
+      className={`hidden md:flex flex-col flex-shrink-0 h-screen overflow-hidden transition-[width] duration-300 ease-in-out ${
         collapsed ? 'w-16' : 'w-64'
       } bg-[#030e2a] border-r border-white/10`}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex-shrink-0 px-4 py-5 border-b border-white/10">
-          <div className={`flex items-center gap-2 ${collapsed ? 'flex-col justify-center' : 'justify-between'}`}>
+        <div className={`flex-shrink-0 px-4 border-b border-white/10 ${collapsed ? 'py-3' : 'py-5'}`}>
+          <div className={`flex items-center gap-2 ${collapsed ? 'flex-col justify-center gap-1' : 'justify-between'}`}>
             <Link href="/" className={`flex items-center min-w-0 gap-2 ${collapsed ? 'flex-col' : ''}`}>
               <GraduationCap className="flex-shrink-0 h-7 w-7 text-primary" />
               <div
@@ -155,13 +152,11 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
             </Link>
             <button
               onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setCollapsed((v) => !v);
+                e.preventDefault()
+                e.stopPropagation()
+                setCollapsed((v) => !v)
               }}
-              className={`flex items-center justify-center transition-colors rounded-lg size-10 hover:bg-white/10 flex-shrink-0 ${
-                collapsed ? 'mt-2' : ''
-              }`}
+              className="flex items-center justify-center flex-shrink-0 transition-colors rounded-lg size-10 hover:bg-white/10"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? (
@@ -173,51 +168,63 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className={`flex-1 px-4 py-4 ${collapsed ? 'flex flex-col items-center justify-center space-y-2' : 'space-y-2 overflow-y-auto'}`}>
-          {items.map((item) => {
-            if (item.requiresAuth && !isLoggedIn) return null
+        {/* Main content – grows and pushes footer down */}
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Navigation */}
+          <nav
+            className={`
+              px-3
+              ${collapsed
+                ? 'py-6 flex flex-col items-center space-y-5'
+                : 'flex-1 py-4 space-y-1.5 overflow-y-auto'}
+            `}
+          >
+            {items.map((item) => {
+              if (item.requiresAuth && !isLoggedIn) return null
 
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-            const Icon = item.icon
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+              const Icon = item.icon
 
-            const link = (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={(e) => {
-                  if (collapsed) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Navigate directly without expanding
-                    window.location.href = item.href;
-                  }
-                }}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group ${
-                  collapsed ? 'justify-center w-12' : ''
-                } ${
-                  isActive
-                    ? 'bg-white/10 text-white border-l-2 border-slate-200'
-                    : 'text-slate-200 hover:bg-white/10'
-                }`}
-              >
-                <Icon className="flex-shrink-0 w-5 h-5" />
-                <span
-                  className={`text-sm font-medium transition-all duration-300 overflow-hidden ${
-                    collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-                  }`}
+              const content = collapsed ? (
+                <button
+                  type="button"
+                  onClick={() => router.push(item.href)}
+                  className={`
+                    flex items-center justify-center size-11 rounded-lg transition-all duration-200
+                    ${isActive
+                      ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                      : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                  `}
+                  aria-label={item.name}
                 >
-                  {item.name}
-                </span>
-              </Link>
-            )
-            return wrapTooltip(link, item.name)
-          })}
-        </nav>
+                  <Icon className="w-5 h-5" />
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={`
+                    flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
+                    ${isActive
+                      ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                      : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                  `}
+                >
+                  <Icon className="flex-shrink-0 w-5 h-5" />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </Link>
+              )
 
-        {/* User with Dropdown */}
+              return wrapTooltip(content, item.name)
+            })}
+          </nav>
+
+          {/* Invisible spacer when collapsed → keeps user section at bottom */}
+          {collapsed && <div className="flex-1" />}
+        </div>
+
+        {/* User section – always stays at bottom */}
         {isLoggedIn && (
-          <div className="p-4 border-t border-white/10">
+          <div className="flex-shrink-0 p-2 border-t border-white/10">
             <ButtonDropdown
               buttonContent={
                 <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
@@ -267,5 +274,3 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
     </aside>
   )
 }
-
-

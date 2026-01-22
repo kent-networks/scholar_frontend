@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
+import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import CommunityCard from "./components/CommunityCard";
 import SearchBar from "../scoop/components/SearchBar";
 
@@ -67,10 +66,13 @@ export default function CommunityPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark">
-      <TopNav />
+    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
-      <main>
+      <main className="flex-1 overflow-y-auto md:pb-0 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -106,7 +108,10 @@ export default function CommunityPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden">
+        <MobileBottomNav />
+      </div>
     </div>
   );
 }
