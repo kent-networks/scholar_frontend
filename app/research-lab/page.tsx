@@ -313,6 +313,7 @@ export default function ResearchLabPage() {
                   subject: video.subject || "General",
                   author: video.author,
                   authorId: video.authorId,
+                  authorUserId: video.authorUserId,
                   authorPhoto: video.authorPhoto,
                   views: video.views,
                   likes: video.likes,
@@ -374,6 +375,7 @@ export default function ResearchLabPage() {
         }}
         videoId={selectedVideoId || undefined}
         commentsCount={selectedVideoId ? videos.find((v) => v.id === selectedVideoId)?.comments || 0 : 0}
+        videoOwnerId={selectedVideoId ? videos.find((v) => v.id === selectedVideoId)?.authorUserId : undefined}
       />
 
       {/* Mobile Search Modal */}

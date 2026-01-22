@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Tooltip from '@/components/Tooltip'
 import { useAuth } from '@/contexts/AuthContext'
 import ButtonDropdown from '@/components/ButtonDropdown'
@@ -189,6 +189,7 @@ export default function Sidebar() {
 
               const content = collapsed ? (
                 <button
+                  key={item.href}
                   type="button"
                   onClick={() => router.push(item.href)}
                   className={`
@@ -203,6 +204,7 @@ export default function Sidebar() {
                 </button>
               ) : (
                 <Link
+                  key={item.href}
                   href={item.href}
                   className={`
                     flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
@@ -216,7 +218,7 @@ export default function Sidebar() {
                 </Link>
               )
 
-              return wrapTooltip(content, item.name)
+              return <Fragment key={item.href}>{wrapTooltip(content, item.name)}</Fragment>
             })}
           </nav>
 

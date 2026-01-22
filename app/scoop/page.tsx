@@ -1,82 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "./components/VideoCard";
-import SearchBar from "./components/SearchBar";
 import CommentsSidePanel from "@/components/CommentsSidePanel";
+import ModalDialog from "@/components/ModalDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Search } from "lucide-react";
-
-const mockVideos = [
-  {
-    id: 1,
-    title: "Introduction to Quantum Computing: Understanding Qubits and Superposition",
-    subject: "Physics",
-    author: "Dr. Sarah Chen",
-    views: 1240,
-    likes: 89,
-    comments: 23,
-    date: "2 days ago",
-    poster:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=80",
-  },
-  {
-    id: 2,
-    title: "Sustainable Energy Solutions for the Future",
-    subject: "Environmental Science",
-    author: "Prof. Michael Johnson",
-    views: 890,
-    likes: 67,
-    comments: 15,
-    date: "5 days ago",
-    poster:
-      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1400&q=80",
-  },
-  {
-    id: 3,
-    title: "Machine Learning Fundamentals: Neural Networks Explained",
-    subject: "AI",
-    author: "Dr. Emily Rodriguez",
-    views: 2100,
-    likes: 145,
-    comments: 42,
-    date: "1 week ago",
-    poster:
-      "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1400&q=80",
-  },
-  {
-    id: 4,
-    title: "Climate Change Research: Latest Findings and Solutions",
-    subject: "Climate Science",
-    author: "Dr. Lisa Anderson",
-    views: 980,
-    likes: 78,
-    comments: 19,
-    date: "4 days ago",
-    poster:
-      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1400&q=80",
-  },
-  {
-    id: 5,
-    title: "Biotechnology Breakthroughs in Medical Science",
-    subject: "Biotechnology",
-    author: "Prof. James Wilson",
-    views: 1560,
-    likes: 92,
-    comments: 28,
-    date: "3 days ago",
-    poster:
-      "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=1400&q=80",
-  },
-];
+import { videoApi, Video } from "@/lib/api/videos";
+import { Plus, Search, UploadCloud } from "lucide-react";
+import toast from "react-hot-toast";
+import { formatDistanceToNow } from "date-fns";
 
 export default function ScoopPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,35 +28,167 @@ export default function ScoopPage() {
   const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const limit = 10;
+  
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin' || user?.role === 'educator' || user?.role === 'creator';
 
-  const filteredVideos = mockVideos.filter(
-    (video) =>
-      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.subject.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch videos from backend
+  const fetchVideos = useCallback(async (reset = false) => {
+    try {
+      setLoading(true);
+      const currentOffset = reset ? 0 : offset;
+      const fetchedVideos = await videoApi.getVideos({
+        type: "scoop",
+        limit,
+        offset: currentOffset,
+        search: searchQuery || undefined,
+      });
 
-  const handleLike = (videoId: number) => {
+      if (reset) {
+        setVideos(fetchedVideos);
+        setOffset(fetchedVideos.length);
+      } else {
+        setVideos((prev) => [...prev, ...fetchedVideos]);
+        setOffset((prev) => prev + fetchedVideos.length);
+      }
+
+      setHasMore(fetchedVideos.length === limit);
+      
+      // Update liked/saved sets from API response
+      const likedSet = new Set<number>();
+      const savedSet = new Set<number>();
+      fetchedVideos.forEach((video) => {
+        if (video.isLiked) likedSet.add(video.id);
+        if (video.isSaved) savedSet.add(video.id);
+      });
+      setLikedVideos((prev) => new Set([...Array.from(prev), ...Array.from(likedSet)]));
+      setSavedVideos((prev) => new Set([...Array.from(prev), ...Array.from(savedSet)]));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load videos");
+    } finally {
+      setLoading(false);
+    }
+  }, [offset, searchQuery]);
+
+  // Initial load and search
+  useEffect(() => {
+    fetchVideos(true);
+  }, [searchQuery]);
+
+  // Load more on scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !hasMore || loading) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      if (scrollHeight - scrollTop - clientHeight < 500) {
+        fetchVideos(false);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [hasMore, loading, fetchVideos]);
+
+  const handleLike = async (videoId: number) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    const wasLiked = likedVideos.has(videoId);
+    
+    // Optimistic update
     setLikedVideos((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(videoId)) {
+      if (wasLiked) {
         newSet.delete(videoId);
       } else {
         newSet.add(videoId);
       }
       return newSet;
     });
+
+    // Update video likes count
+    setVideos((prev) =>
+      prev.map((v) => (v.id === videoId ? { ...v, likes: wasLiked ? v.likes - 1 : v.likes + 1, isLiked: !wasLiked } : v))
+    );
+
+    try {
+      await videoApi.likeVideo(videoId);
+    } catch (error: any) {
+      // Revert on error
+      setLikedVideos((prev) => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.add(videoId);
+        } else {
+          newSet.delete(videoId);
+        }
+        return newSet;
+      });
+      setVideos((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, likes: wasLiked ? v.likes + 1 : v.likes - 1, isLiked: wasLiked } : v))
+      );
+      toast.error(error.response?.data?.message || "Failed to like video");
+    }
   };
 
-  const handleSave = (videoId: number) => {
+  const handleSave = async (videoId: number) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    const wasSaved = savedVideos.has(videoId);
+    
+    // Optimistic update
     setSavedVideos((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(videoId)) {
+      if (wasSaved) {
         newSet.delete(videoId);
       } else {
         newSet.add(videoId);
       }
       return newSet;
     });
+
+    // Update video saved state
+    setVideos((prev) =>
+      prev.map((v) => (v.id === videoId ? { ...v, isSaved: !wasSaved } : v))
+    );
+
+    try {
+      await videoApi.saveVideo(videoId);
+      toast.success(wasSaved ? "Video unsaved" : "Video saved!");
+    } catch (error: any) {
+      // Revert on error
+      setSavedVideos((prev) => {
+        const newSet = new Set(prev);
+        if (wasSaved) {
+          newSet.add(videoId);
+        } else {
+          newSet.delete(videoId);
+        }
+        return newSet;
+      });
+      setVideos((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, isSaved: wasSaved } : v))
+      );
+      toast.error(error.response?.data?.message || "Failed to save video");
+    }
+  };
+
+  const handleComment = (videoId: number) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    setSelectedVideoId(videoId);
+    setCommentsOpen(true);
   };
 
   // Handle scroll to snap to videos
@@ -130,7 +206,7 @@ export default function ScoopPage() {
         const scrollTop = container.scrollTop;
         const videoHeight = window.innerHeight;
         const newIndex = Math.round(scrollTop / videoHeight);
-        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredVideos.length) {
+        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < videos.length) {
           setCurrentIndex(newIndex);
         }
       }, 100);
@@ -141,7 +217,7 @@ export default function ScoopPage() {
       container.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimeout);
     };
-  }, [currentIndex, filteredVideos.length, isScrolling]);
+  }, [currentIndex, videos.length, isScrolling]);
 
   // Scroll to current video
   useEffect(() => {
@@ -162,20 +238,34 @@ export default function ScoopPage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-black">
+      <main className="relative flex flex-col flex-1 overflow-hidden bg-black">
         {/* TikTok-like top overlay */}
         <div className="absolute top-0 left-0 right-0 z-20">
           <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
-          <div className="absolute top-3 left-0 right-0 flex items-center justify-between px-4">
+          <div className="absolute left-0 right-0 flex items-center justify-between px-4 top-3">
             <button
-              className="p-2 rounded-full bg-white/10 text-white md:hidden"
-              onClick={() => setSearchQuery("")}
+              className="p-2 text-white rounded-full bg-white/10 md:hidden"
+              onClick={() => setSearchOpen(true)}
               aria-label="Search"
             >
-              <Search className="h-5 w-5" />
+              <Search className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-6 mx-auto text-white">
+            {/* Desktop Search */}
+            <div className="items-center flex-1 hidden max-w-md gap-4 mx-auto md:flex">
+              <div className="relative flex-1">
+                <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search videos..."
+                  className="w-full py-2 pl-10 pr-4 text-white border rounded-lg bg-white/10 backdrop-blur-sm border-white/20 placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6 mx-auto text-white md:hidden">
               <button
                 onClick={() => setActiveTab("following")}
                 className={`text-sm font-bold transition-opacity ${activeTab === "following" ? "opacity-100" : "opacity-60"}`}
@@ -190,13 +280,13 @@ export default function ScoopPage() {
               </button>
             </div>
 
-            {isAuthenticated && (
+            {isAuthenticated && isAdmin && (
               <button
-                className="p-2 rounded-full bg-white/10 text-white"
+                className="p-2 text-white rounded-full bg-white/10"
                 onClick={() => router.push("/scoop/upload")}
                 aria-label="Upload"
               >
-                <Plus className="h-5 w-5" />
+                <UploadCloud className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -205,7 +295,7 @@ export default function ScoopPage() {
         {/* Video Feed Container */}
         <div
           ref={containerRef}
-          className="flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth md:pb-0 pb-20"
+          className="flex-1 pb-20 overflow-y-scroll snap-y snap-mandatory scroll-smooth md:pb-0"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <style jsx global>{`
@@ -219,35 +309,65 @@ export default function ScoopPage() {
             }
           `}</style>
 
-          {filteredVideos.length > 0 ? (
-            filteredVideos.map((video) => (
+          {videos.length > 0 ? (
+            videos.map((video) => (
               <VideoCard
                 key={video.id}
-                video={video}
-                onLike={() => handleLike(video.id)}
-                onComment={() => {
-                  setSelectedVideoId(video.id);
-                  setCommentsOpen(true);
+                video={{
+                  id: video.id,
+                  title: video.title,
+                  subject: video.subject || "General",
+                  author: video.author,
+                  authorId: video.authorId,
+                  authorUserId: video.authorUserId,
+                  authorPhoto: video.authorPhoto,
+                  views: video.views,
+                  likes: video.likes,
+                  comments: video.comments,
+                  date: formatDistanceToNow(new Date(video.date), { addSuffix: true }),
+                  poster: video.poster || "",
+                  videoUrl: video.videoUrl,
+                  imageUrls: video.imageUrls,
+                  isImageCollection: video.isImageCollection,
                 }}
-                onShare={() => console.log("Share", video.id)}
+                onLike={() => handleLike(video.id)}
+                onComment={() => handleComment(video.id)}
+                onShare={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: video.title,
+                      text: video.description,
+                      url: `${window.location.origin}/scoop`,
+                    });
+                  } else {
+                    navigator.clipboard.writeText(`${window.location.origin}/scoop`);
+                    toast.success("Link copied to clipboard!");
+                  }
+                }}
                 onSave={() => handleSave(video.id)}
                 liked={likedVideos.has(video.id)}
                 saved={savedVideos.has(video.id)}
               />
             ))
-          ) : (
-            <div className="h-screen flex items-center justify-center">
+          ) : !loading ? (
+            <div className="flex items-center justify-center h-screen">
               <div className="text-center">
-                <p className="text-slate-200 text-lg font-semibold">
+                <p className="text-lg font-semibold text-slate-200">
                   No videos found
                 </p>
               </div>
+            </div>
+          ) : null}
+          
+          {loading && videos.length === 0 && (
+            <div className="flex items-center justify-center h-screen">
+              <div className="w-12 h-12 border-4 rounded-full border-white/30 border-t-white animate-spin" />
             </div>
           )}
         </div>
 
         {/* Mobile Bottom Navigation */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
           <MobileBottomNav />
         </div>
       </main>
@@ -260,8 +380,42 @@ export default function ScoopPage() {
           setSelectedVideoId(null);
         }}
         videoId={selectedVideoId || undefined}
-        commentsCount={selectedVideoId ? filteredVideos.find(v => v.id === selectedVideoId)?.comments : 0}
+        commentsCount={selectedVideoId ? videos.find((v) => v.id === selectedVideoId)?.comments || 0 : 0}
+        videoOwnerId={selectedVideoId ? videos.find((v) => v.id === selectedVideoId)?.authorUserId : undefined}
       />
+
+      {/* Mobile Search Modal */}
+      <ModalDialog
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        title="Search Videos"
+        mode="bottom"
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute w-5 h-5 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search videos..."
+              className="w-full py-3 pl-10 pr-4 border rounded-lg bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              autoFocus
+            />
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSearchOpen(false);
+              }}
+              className="w-full px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      </ModalDialog>
     </div>
   );
 }

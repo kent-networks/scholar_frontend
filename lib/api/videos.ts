@@ -19,6 +19,7 @@ export interface Video {
   date: string;
   author: string;
   authorId: string;
+  authorUserId?: number;
   authorPhoto?: string;
   isLiked: boolean;
   isSaved: boolean;

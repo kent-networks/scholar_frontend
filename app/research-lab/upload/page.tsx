@@ -6,6 +6,7 @@ import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import FileUploadArea from "@/components/FileUploadArea";
 import Toggle from "@/components/Toggle";
+import SubjectSelector from "@/components/SubjectSelector";
 import { uploadApi } from "@/lib/api/upload";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +30,7 @@ export default function ResearchLabUploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -264,13 +265,11 @@ export default function ResearchLabUploadPage() {
               <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
                 Subject (Optional)
               </label>
-              <input
-                type="text"
+              <SubjectSelector
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="e.g., Physics, AI, Biology..."
+                onChange={setSubject}
                 disabled={isUploading}
-                className="w-full px-4 py-3 bg-white border rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
+                placeholder="Select or type a subject..."
               />
             </div>
 

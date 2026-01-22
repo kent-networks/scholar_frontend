@@ -12,6 +12,7 @@ interface VideoCardProps {
     subject: string;
     author: string;
     authorId?: string;
+    authorUserId?: number;
     authorPhoto?: string;
     views: number;
     likes: number;

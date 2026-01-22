@@ -2,17 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Heart, MessageCircle } from "lucide-react";
-
-interface Comment {
-  id: number;
-  author: string;
-  content: string;
-  date: string;
-  likes: number;
-  liked?: boolean;
-  replies?: Comment[];
-}
+import { X, Send, Heart, MessageCircle, Trash2 } from "lucide-react";
+import { commentApi, Comment } from "@/lib/api/comments";
+import { useAuth } from "@/contexts/AuthContext";
+import toast from "react-hot-toast";
 
 interface CommentsSidePanelProps {
   isOpen: boolean;
@@ -20,42 +13,8 @@ interface CommentsSidePanelProps {
   videoId?: number;
   postId?: number;
   commentsCount?: number;
+  videoOwnerId?: number;
 }
-
-const mockComments: Comment[] = [
-  {
-    id: 1,
-    author: "Dr. Sarah Chen",
-    content: "This is fascinating! Can you share more details about the methodology?",
-    date: "2 hours ago",
-    likes: 12,
-    liked: false,
-    replies: [
-      {
-        id: 11,
-        author: "Original Author",
-        content: "Sure! I'll post a detailed methodology section soon.",
-        date: "1 hour ago",
-        likes: 5,
-      },
-    ],
-  },
-  {
-    id: 2,
-    author: "Prof. Michael Johnson",
-    content: "Great work! This aligns with our recent findings.",
-    date: "3 hours ago",
-    likes: 8,
-    liked: true,
-  },
-  {
-    id: 3,
-    author: "Student Researcher",
-    content: "Could you explain the implications of this research?",
-    date: "5 hours ago",
-    likes: 3,
-  },
-];
 
 export default function CommentsSidePanel({
   isOpen,
@@ -63,11 +22,43 @@ export default function CommentsSidePanel({
   videoId,
   postId,
   commentsCount = 0,
+  videoOwnerId,
 }: CommentsSidePanelProps) {
-  const [comments, setComments] = useState<Comment[]>(mockComments);
+  const { isAuthenticated, user } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Fetch comments when panel opens
+  useEffect(() => {
+    if (isOpen && videoId) {
+      fetchComments();
+    }
+  }, [isOpen, videoId]);
+
+  const fetchComments = async () => {
+    if (!videoId) return;
+    setLoading(true);
+    try {
+      const fetchedComments = await commentApi.getComments(videoId);
+      setComments(fetchedComments);
+      // Update liked comments set
+      const likedSet = new Set<number>();
+      fetchedComments.forEach((comment) => {
+        if (comment.liked) likedSet.add(comment.id);
+        comment.replies?.forEach((reply) => {
+          if (reply.liked) likedSet.add(reply.id);
+        });
+      });
+      setLikedComments(likedSet);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load comments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -83,25 +74,36 @@ export default function CommentsSidePanel({
     };
   }, [isOpen]);
 
-  const handleSubmitComment = () => {
-    if (!newComment.trim()) return;
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !videoId || !isAuthenticated) {
+      if (!isAuthenticated) {
+        toast.error("Please login to comment");
+      }
+      return;
+    }
 
-    const comment: Comment = {
-      id: Date.now(),
-      author: "You", // In real app, get from auth
-      content: newComment,
-      date: "just now",
-      likes: 0,
-    };
-
-    setComments([comment, ...comments]);
-    setNewComment("");
+    try {
+      const comment = await commentApi.createComment(videoId, newComment);
+      setComments([comment, ...comments]);
+      setNewComment("");
+      toast.success("Comment posted!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to post comment");
+    }
   };
 
-  const handleLikeComment = (commentId: number) => {
+  const handleLikeComment = async (commentId: number) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to like comments");
+      return;
+    }
+
+    const wasLiked = likedComments.has(commentId);
+    
+    // Optimistic update
     setLikedComments((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(commentId)) {
+      if (wasLiked) {
         newSet.delete(commentId);
       } else {
         newSet.add(commentId);
@@ -114,9 +116,8 @@ export default function CommentsSidePanel({
         if (comment.id === commentId) {
           return {
             ...comment,
-            likes: likedComments.has(commentId)
-              ? comment.likes - 1
-              : comment.likes + 1,
+            likes: wasLiked ? comment.likes - 1 : comment.likes + 1,
+            liked: !wasLiked,
           };
         }
         if (comment.replies) {
@@ -126,9 +127,8 @@ export default function CommentsSidePanel({
               if (reply.id === commentId) {
                 return {
                   ...reply,
-                  likes: likedComments.has(commentId)
-                    ? reply.likes - 1
-                    : reply.likes + 1,
+                  likes: wasLiked ? reply.likes - 1 : reply.likes + 1,
+                  liked: !wasLiked,
                 };
               }
               return reply;
@@ -138,6 +138,73 @@ export default function CommentsSidePanel({
         return comment;
       })
     );
+
+    try {
+      await commentApi.likeComment(commentId);
+    } catch (error: any) {
+      // Revert on error
+      setLikedComments((prev) => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.add(commentId);
+        } else {
+          newSet.delete(commentId);
+        }
+        return newSet;
+      });
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              likes: wasLiked ? comment.likes + 1 : comment.likes - 1,
+              liked: wasLiked,
+            };
+          }
+          if (comment.replies) {
+            return {
+              ...comment,
+              replies: comment.replies.map((reply) => {
+                if (reply.id === commentId) {
+                  return {
+                    ...reply,
+                    likes: wasLiked ? reply.likes + 1 : reply.likes - 1,
+                    liked: wasLiked,
+                  };
+                }
+                return reply;
+              }),
+            };
+          }
+          return comment;
+        })
+      );
+      toast.error(error.response?.data?.message || "Failed to like comment");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!videoId || !isAuthenticated) return;
+
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+
+    try {
+      await commentApi.deleteComment(videoId, commentId);
+      setComments((prev) => {
+        const removeFromComments = (comments: Comment[]): Comment[] => {
+          return comments
+            .filter((c) => c.id !== commentId)
+            .map((c) => ({
+              ...c,
+              replies: c.replies ? removeFromComments(c.replies) : undefined,
+            }));
+        };
+        return removeFromComments(prev);
+      });
+      toast.success("Comment deleted");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete comment");
+    }
   };
 
   return (
@@ -179,7 +246,11 @@ export default function CommentsSidePanel({
 
             {/* Comments List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="w-8 h-8 border-4 rounded-full border-primary/30 border-t-primary animate-spin mx-auto" />
+                </div>
+              ) : comments.length === 0 ? (
                 <div className="text-center py-12">
                   <MessageCircle className="h-12 w-12 text-slate-400 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400">
@@ -193,36 +264,46 @@ export default function CommentsSidePanel({
                     comment={comment}
                     liked={likedComments.has(comment.id)}
                     onLike={() => handleLikeComment(comment.id)}
+                    onDelete={() => handleDeleteComment(comment.id)}
+                    canDelete={isAuthenticated && (user?.id === comment.userId || user?.id === videoOwnerId)}
                   />
                 ))
               )}
             </div>
 
             {/* Comment Input */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmitComment();
-                    }
-                  }}
-                  placeholder="Add a comment..."
-                  className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                />
-                <button
-                  onClick={handleSubmitComment}
-                  disabled={!newComment.trim()}
-                  className="p-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="h-5 w-5" />
-                </button>
+            {isAuthenticated ? (
+              <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmitComment();
+                      }
+                    }}
+                    placeholder="Add a comment..."
+                    className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  />
+                  <button
+                    onClick={handleSubmitComment}
+                    disabled={!newComment.trim()}
+                    className="p-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 border-t border-slate-200 dark:border-slate-700 text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Please login to comment
+                </p>
+              </div>
+            )}
           </motion.div>
         </>
       )}
@@ -234,10 +315,14 @@ function CommentItem({
   comment,
   liked,
   onLike,
+  onDelete,
+  canDelete,
 }: {
   comment: Comment;
   liked: boolean;
   onLike: () => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -269,9 +354,15 @@ function CommentItem({
               <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
               <span>{comment.likes}</span>
             </button>
-            <button className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary">
-              Reply
-            </button>
+            {canDelete && onDelete && (
+              <button
+                onClick={onDelete}
+                className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1"
+              >
+                <Trash2 className="h-3 w-3" />
+                Delete
+              </button>
+            )}
           </div>
         </div>
       </div>
