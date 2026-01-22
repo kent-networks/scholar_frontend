@@ -112,36 +112,49 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 pb-20 overflow-y-auto md:pb-0">
         <div className="p-4 md:p-8">
-          {/* Hero Section */}
-          <div className="mb-12 relative rounded-xl overflow-hidden shadow-lg shadow-blue-500/30 min-h-[300px]">
+          {/* Hero Section - Enhanced */}
+          <div className="mb-12 relative rounded-2xl overflow-hidden shadow-2xl shadow-primary/20 min-h-[400px] md:min-h-[500px]">
             {/* Background Image */}
             <img
               src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1600&q=80"
               alt="Academic campus"
-              className="absolute inset-0 object-cover w-full h-full"
+              className="absolute inset-0 object-cover w-full h-full transition-transform duration-700 scale-105 hover:scale-100"
             />
-            {/* Blue Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/75 to-blue-700/75" />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-blue-700/90" />
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                backgroundSize: '40px 40px'
+              }} />
+            </div>
             {/* Content */}
-            <div className="relative z-10 p-8 text-white">
-              <h1 className="mb-3 text-4xl font-bold">Welcome to Scholar</h1>
-              <p className="mb-6 text-xl text-blue-100">
-                Your academic ecosystem for research, collaboration, and
-                community engagement
-              </p>
-              <div className="flex gap-4">
-                <Link
-                  href="/login"
-                  className="px-6 py-3 font-semibold transition-colors bg-white rounded-lg shadow-sm text-primary hover:bg-blue-50"
-                >
-                  Get Started
-                </Link>
-                <Link
-                  href="/research-lab"
-                  className="px-6 py-3 font-semibold text-white transition-all border rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/20"
-                >
-                  Explore Research
-                </Link>
+            <div className="relative z-10 p-8 text-white md:p-12">
+              <div className="max-w-3xl">
+                <div className="inline-block px-4 py-2 mb-4 text-sm font-bold rounded-full bg-white/20 backdrop-blur-sm">
+                  Welcome to Scholar
+                </div>
+                <h1 className="mb-4 text-5xl font-bold leading-tight md:text-6xl">
+                  Your Academic Ecosystem
+                </h1>
+                <p className="mb-8 text-xl leading-relaxed text-blue-100 md:text-2xl">
+                  Connect, collaborate, and discover groundbreaking research in one unified platform
+                </p>
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <Link
+                    href="/research-lab"
+                    className="px-8 py-4 text-lg font-bold transition-all transform bg-white shadow-lg rounded-xl text-primary hover:bg-blue-50 hover:scale-105"
+                  >
+                    Explore Research
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="px-8 py-4 text-lg font-bold transition-all border-2 border-white rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

@@ -35,14 +35,37 @@ export default function ButtonDropdown({
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOpen || !buttonRef.current) return;
+    if (!isOpen || !buttonRef.current || !menuRef.current) return;
 
     const updatePosition = () => {
-      if (buttonRef.current) {
+      if (buttonRef.current && menuRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
+        const menuHeight = menuRef.current.offsetHeight || 200;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        let newY = rect.bottom + window.scrollY + 8;
+        let newX = rect.left + window.scrollX;
+
+        // Check if menu would overflow below, if so, open upwards
+        if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+          newY = rect.top + window.scrollY - menuHeight - 8;
+        }
+
+        // Check if menu would overflow to the right
+        const menuWidth = menuRef.current.offsetWidth || 160;
+        if (newX + menuWidth > window.innerWidth) {
+          newX = window.innerWidth - menuWidth - 8;
+        }
+
+        // Check if menu would overflow to the left
+        if (newX < 8) {
+          newX = 8;
+        }
+
         setPosition({
-          x: rect.left,
-          y: rect.bottom + 8,
+          x: newX,
+          y: newY,
         });
       }
     };
@@ -58,6 +81,7 @@ export default function ButtonDropdown({
   }, [isOpen]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleClickOutside = (event: MouseEvent) => {
       if (
         menuRef.current &&
@@ -75,7 +99,9 @@ export default function ButtonDropdown({
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      if (typeof window !== 'undefined') {
+        document.removeEventListener("mousedown", handleClickOutside);
+      }
     };
   }, [isOpen, onOpenChange]);
 
@@ -98,7 +124,7 @@ export default function ButtonDropdown({
         {buttonContent}
       </button>
 
-      {createPortal(
+      {typeof window !== 'undefined' && document.body && createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div

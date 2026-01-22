@@ -119,6 +119,7 @@ export default function Dropdown({
   }, [isOpen]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -194,7 +195,7 @@ export default function Dropdown({
         </div>
       </div>
 
-      {createPortal(
+      {typeof window !== 'undefined' && document.body && createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div

@@ -30,12 +30,12 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'Scoop', href: '/scoop', icon: Video },
   { name: 'Community', href: '/community', icon: Users },
   { name: 'Scholink', href: '/scholink', icon: Link2 },
-  { name: 'Account', href: '/account', icon: UserCircle2, requiresAuth: true },
 ]
 
 export function MobileBottomNav() {
   const pathname = usePathname()
   const isLoggedIn = mockLoggedIn
+  const mockUser = { name: "Dr. Scholar", email: "user@scholar" }
 
   return (
     <nav className="flex items-center justify-around px-2 py-2">
@@ -56,6 +56,45 @@ export function MobileBottomNav() {
           </Link>
         )
       })}
+      {/* Account button with photo on mobile */}
+      {isLoggedIn && (
+        <ButtonDropdown
+          buttonContent={
+            <div className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px]">
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                {(mockUser?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
+              </div>
+              <span className="text-[10px] font-medium leading-tight text-center">Account</span>
+            </div>
+          }
+          buttonClassName=""
+          options={[
+            {
+              label: 'My Profile',
+              value: 'profile',
+              icon: UserCircle2,
+              onClick: () => {
+                window.location.href = '/account'
+              },
+            },
+            {
+              label: 'Settings',
+              value: 'settings',
+              icon: UserCircle2,
+              onClick: () => {
+                window.location.href = '/account'
+              },
+            },
+            {
+              label: 'Logout',
+              value: 'logout',
+              danger: true,
+              icon: LogOut,
+              onClick: () => console.log('Logout clicked'),
+            },
+          ]}
+        />
+      )}
     </nav>
   )
 }
@@ -136,54 +175,6 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
             const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
             const Icon = item.icon
 
-            if (item.name === 'Account') {
-              const trigger = (
-                <div
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 ${
-                    collapsed ? 'justify-center' : ''
-                  } ${
-                    isActive
-                      ? 'bg-white/10 text-white'
-                      : 'text-slate-200 hover:bg-white/10'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span
-                    className={`text-sm font-medium transition-all duration-300 overflow-hidden ${
-                      collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-                    }`}
-                  >
-                    Account
-                  </span>
-                </div>
-              )
-
-              return wrapTooltip(
-                <ButtonDropdown
-                  buttonContent={trigger}
-                  buttonClassName="w-full"
-                  options={[
-                    {
-                      label: 'Open Account',
-                      value: 'account',
-                      icon: UserCircle2,
-                      onClick: () => {
-                        window.location.href = '/account'
-                      },
-                    },
-                    {
-                      label: 'Logout',
-                      value: 'logout',
-                      danger: true,
-                      icon: LogOut,
-                      onClick: () => console.log('Logout clicked'),
-                    },
-                  ]}
-                />,
-                'Account'
-              )
-            }
-
             const link = (
               <Link
                 key={item.href}
@@ -210,22 +201,52 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
           })}
         </nav>
 
-        {/* User */}
+        {/* User with Dropdown */}
         {isLoggedIn && (
           <div className="p-4 border-t border-white/10">
-            <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
-                {(user?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
-              </div>
-              <div
-                className={`flex-1 text-left transition-all duration-300 overflow-hidden ${
-                  collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-                }`}
-              >
-                <p className="text-sm font-bold truncate text-white">{user?.name || 'Dr. Scholar'}</p>
-                <p className="text-xs text-slate-300/80 truncate">{user?.email || 'user@scholar'}</p>
-              </div>
-            </div>
+            <ButtonDropdown
+              buttonContent={
+                <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
+                  <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                    {(user?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
+                  </div>
+                  <div
+                    className={`flex-1 text-left transition-all duration-300 overflow-hidden ${
+                      collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                    }`}
+                  >
+                    <p className="text-sm font-bold truncate text-white">{user?.name || 'Dr. Scholar'}</p>
+                    <p className="text-xs text-slate-300/80 truncate">{user?.email || 'user@scholar'}</p>
+                  </div>
+                </div>
+              }
+              buttonClassName="w-full hover:bg-white/5 rounded-lg p-2 transition-colors"
+              options={[
+                {
+                  label: 'My Profile',
+                  value: 'profile',
+                  icon: UserCircle2,
+                  onClick: () => {
+                    window.location.href = '/account'
+                  },
+                },
+                {
+                  label: 'Settings',
+                  value: 'settings',
+                  icon: UserCircle2,
+                  onClick: () => {
+                    window.location.href = '/account'
+                  },
+                },
+                {
+                  label: 'Logout',
+                  value: 'logout',
+                  danger: true,
+                  icon: LogOut,
+                  onClick: () => console.log('Logout clicked'),
+                },
+              ]}
+            />
           </div>
         )}
       </div>

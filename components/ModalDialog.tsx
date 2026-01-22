@@ -29,6 +29,7 @@ export default function ModalDialog({
   const [detectedMode, setDetectedMode] = useState<"center" | "bottom">("center");
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const mql = window.matchMedia("(max-width: 640px)");
 
     const handleResize = () => {
@@ -47,6 +48,7 @@ export default function ModalDialog({
   const allowClickOutside = actualMode === "bottom" ? true : clickOutside;
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleClick = (e: MouseEvent) => {
       if (
         allowClickOutside &&
@@ -66,8 +68,10 @@ export default function ModalDialog({
     }
 
     return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("mousedown", handleClick);
+      if (typeof window !== 'undefined') {
+        document.body.style.overflow = "";
+        document.removeEventListener("mousedown", handleClick);
+      }
     };
   }, [isOpen, onClose, allowClickOutside]);
 

@@ -21,6 +21,7 @@ const ModalDialog = ({
 
   // Detect screen size and decide mode dynamically
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const mql = window.matchMedia("(max-width: 640px)");
 
     const handleResize = () => {
@@ -39,6 +40,7 @@ const ModalDialog = ({
   const allowClickOutside = actualMode === "bottom" ? true : clickOutside;
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleClick = (e) => {
       if (
         allowClickOutside &&
@@ -58,8 +60,10 @@ const ModalDialog = ({
     }
 
     return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("mousedown", handleClick);
+      if (typeof window !== 'undefined') {
+        document.body.style.overflow = "";
+        document.removeEventListener("mousedown", handleClick);
+      }
     };
   }, [isOpen, onClose, allowClickOutside]);
 

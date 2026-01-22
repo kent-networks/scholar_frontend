@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, Share2, Bookmark, PlayCircle, Pause } from "lucide-react";
 
 interface VideoCardProps {
@@ -9,6 +10,8 @@ interface VideoCardProps {
     title: string;
     subject: string;
     author: string;
+    authorId?: string;
+    authorPhoto?: string;
     views: number;
     likes: number;
     comments: number;
@@ -33,6 +36,7 @@ export default function VideoCard({
   liked,
   saved,
 }: VideoCardProps) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,17 +208,34 @@ export default function VideoCard({
         </div>
 
         {/* Bottom Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 p-6 pb-24 pointer-events-none bg-gradient-to-t from-black/85 to-transparent">
-          <h2 className="mb-2 text-xl font-bold text-white line-clamp-2">
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-6 pb-24 bg-gradient-to-t from-black/85 to-transparent">
+          {/* Owner Info - Clickable */}
+          <div 
+            className="flex items-center gap-3 mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/profile/${video.authorId || video.author.toLowerCase().replace(/\s+/g, '-')}`);
+            }}
+          >
+            {video.authorPhoto ? (
+              <img 
+                src={video.authorPhoto} 
+                alt={video.author}
+                className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold border-2 border-white/50">
+                {video.author.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-bold text-white">{video.author}</p>
+              <p className="text-xs text-white/70">{video.views} views • {video.date}</p>
+            </div>
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-white line-clamp-2 pointer-events-none">
             {video.title}
           </h2>
-          <div className="flex items-center gap-3 mb-3 text-sm text-white/80">
-            <span>{video.author}</span>
-            <span>•</span>
-            <span>{video.views} views</span>
-            <span>•</span>
-            <span>{video.date}</span>
-          </div>
         </div>
       </div>
     </div>

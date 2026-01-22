@@ -1,49 +1,67 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { ArrowLeft, Upload, X, Video, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import FileUploadArea from "@/components/FileUploadArea";
+import Toggle from "@/components/Toggle";
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB in bytes
 const MAX_FILE_SIZE_MB = 500;
+const MAX_FILES = 10;
+
+interface UploadedFile {
+  file: File;
+  preview: string;
+  id: string;
+}
 
 export default function ResearchLabUploadPage() {
   const router = useRouter();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [caption, setCaption] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPublic, setIsPublic] = useState(false);
 
-  const handleFileSelect = (file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
-      alert(`File size exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`);
-      return;
-    }
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
 
-    setSelectedFile(file);
-    
-    // Create preview for video or image
-    if (file.type.startsWith("video/")) {
-      const videoUrl = URL.createObjectURL(file);
-      setPreview(videoUrl);
-    } else if (file.type.startsWith("image/")) {
-      const imageUrl = URL.createObjectURL(file);
-      setPreview(imageUrl);
-    } else {
-      setPreview(null);
-    }
+    Array.from(files).forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File ${file.name} exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`);
+        return;
+      }
+
+      if (selectedFiles.length >= MAX_FILES) {
+        alert(`Maximum ${MAX_FILES} files allowed`);
+        return;
+      }
+
+      // Allow both videos and images
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+        alert("Only images and videos are supported");
+        return;
+      }
+
+      const preview = URL.createObjectURL(file);
+      const newFile: UploadedFile = {
+        file,
+        preview,
+        id: Math.random().toString(36).substring(7),
+      };
+
+      setSelectedFiles((prev) => [...prev, newFile]);
+    });
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files) {
+      handleFileSelect(e.dataTransfer.files);
     }
   };
 
@@ -56,38 +74,18 @@ export default function ResearchLabUploadPage() {
     setDragActive(false);
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const removeFile = () => {
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
-    setSelectedFile(null);
-    setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
-  const getFileIcon = (file: File | null) => {
-    if (!file) return null;
-    if (file.type.startsWith("video/")) return <Video className="h-8 w-8" />;
-    if (file.type.startsWith("image/")) return <ImageIcon className="h-8 w-8" />;
-    return null;
+  const removeFile = (id: string) => {
+    setSelectedFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.id === id);
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter((f) => f.id !== id);
+    });
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -109,6 +107,8 @@ export default function ResearchLabUploadPage() {
       setUploadProgress(100);
       setTimeout(() => {
         setIsUploading(false);
+        // Clean up preview URLs
+        selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
         router.back();
       }, 500);
     }, 2000);
@@ -121,133 +121,62 @@ export default function ResearchLabUploadPage() {
       </div>
 
       <main className="flex-1 pb-20 overflow-y-auto md:pb-0">
-        <div className="max-w-4xl mx-auto p-4 md:p-8">
+        <div className="max-w-4xl p-4 mx-auto md:p-8">
           {/* Header */}
           <div className="mb-8">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary mb-4 transition-colors"
+              className="flex items-center gap-2 mb-4 transition-colors text-slate-600 dark:text-slate-400 hover:text-primary"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </button>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
               Upload to Research Lab
             </h1>
             <p className="text-slate-600 dark:text-slate-400">
-              Share videos or images with the research community
+              Share videos or photos with the research community
             </p>
           </div>
 
-          {/* TikTok-like Upload Interface */}
+          {/* Modern Upload Interface */}
           <div className="space-y-6">
             {/* File Upload Area */}
-            <div
-              className={`relative border-2 border-dashed rounded-xl p-12 transition-all ${
-                dragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50"
-              }`}
-              onDrop={handleDrop}
+            <FileUploadArea
+              files={selectedFiles}
+              onFilesSelect={handleFileSelect}
+              onFileRemove={removeFile}
+              dragActive={dragActive}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-            >
-              {!selectedFile ? (
-                <div className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-4 rounded-full bg-primary/10 text-primary">
-                      <Upload className="h-8 w-8" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                    Select a file to upload
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                    Drag and drop or click to browse
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-4">
-                    Maximum file size: <span className="font-bold">{MAX_FILE_SIZE_MB}MB</span>
-                  </p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
-                  >
-                    Select File
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/*,image/*"
-                    onChange={handleFileInputChange}
-                    className="hidden"
+              onDrop={handleDrop}
+              maxFiles={MAX_FILES}
+              maxFileSizeMB={MAX_FILE_SIZE_MB}
+              accept="video/*,image/*"
+              disabled={isUploading}
+            />
+
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="p-6 space-y-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-bold text-slate-600 dark:text-slate-400">
+                    Uploading {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""}...
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">{uploadProgress}%</span>
+                </div>
+                <div className="w-full h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <div
+                    className="h-3 transition-all duration-300 rounded-full shadow-lg bg-gradient-to-r from-primary to-primary-dark"
+                    style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                        {getFileIcon(selectedFile)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">
-                          {selectedFile.name}
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          {formatFileSize(selectedFile.size)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={removeFile}
-                      disabled={isUploading}
-                      className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <X className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    </button>
-                  </div>
-
-                  {/* Preview */}
-                  {preview && (
-                    <div className="relative rounded-lg overflow-hidden bg-black">
-                      {selectedFile.type.startsWith("video/") ? (
-                        <video
-                          src={preview}
-                          controls
-                          className="w-full max-h-[400px] object-contain"
-                        />
-                      ) : (
-                        <img
-                          src={preview}
-                          alt="Preview"
-                          className="w-full max-h-[400px] object-contain"
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Upload Progress */}
-                  {isUploading && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Uploading...</span>
-                        <span className="font-bold text-slate-900 dark:text-white">{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Caption Input */}
             <div>
-              <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
                 Caption
               </label>
               <textarea
@@ -256,27 +185,32 @@ export default function ResearchLabUploadPage() {
                 placeholder="Write a caption..."
                 rows={4}
                 disabled={isUploading}
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border rounded-lg resize-none border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {caption.length} characters
               </p>
             </div>
 
             {/* Additional Options */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="public"
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/50"
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                <div>
+                  <label
+                    htmlFor="public"
+                    className="block mb-1 text-sm font-bold cursor-pointer text-slate-900 dark:text-white"
+                  >
+                    Make this public
+                  </label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Allow others to view and interact with your content
+                  </p>
+                </div>
+                <Toggle
+                  checked={isPublic}
+                  onChange={setIsPublic}
+                  disabled={isUploading}
                 />
-                <label
-                  htmlFor="public"
-                  className="text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  Make this public
-                </label>
               </div>
             </div>
 
@@ -285,18 +219,18 @@ export default function ResearchLabUploadPage() {
               <button
                 onClick={() => router.back()}
                 disabled={isUploading}
-                className="flex-1 px-6 py-3 border border-slate-300 dark:border-slate-700 rounded-lg font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                className="flex-1 px-6 py-3 font-bold transition-colors border rounded-lg border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
-                className="flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled={selectedFiles.length === 0 || isUploading}
+                className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     Uploading...
                   </>
                 ) : (

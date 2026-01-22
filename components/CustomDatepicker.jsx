@@ -76,8 +76,10 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
       )
         closeCalendar();
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (typeof window !== 'undefined') {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
   }, []);
 
   const handleDateClick = (day) => {
@@ -157,7 +159,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
           <CalendarIcon className="w-5 h-5 text-[#560fd1]" strokeWidth={1.5} />
         </button>
       </div>
-      {show &&
+      {show && typeof window !== 'undefined' && document.body &&
         createPortal(
           <>
             <style>{`
