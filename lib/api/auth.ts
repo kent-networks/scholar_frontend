@@ -1,10 +1,9 @@
-import api from "./api";
+import api from "../api";
 
 export interface RegisterData {
   email: string;
   password: string;
   name: string;
-  username: string;
   role: "student" | "educator" | "creator";
 }
 
@@ -47,11 +46,6 @@ export const authApi = {
   getCurrentUser: async (): Promise<User> => {
     const response = await api.get("/auth/me");
     return response.data.data.user;
-  },
-
-  refreshToken: async () => {
-    const response = await api.post("/auth/refresh");
-    return response.data;
   },
 };
 

@@ -40,24 +40,14 @@ api.interceptors.response.use(
   async (error) => {
     NProgress.done();
 
-    // Handle token refresh on 401
-    if (error.response?.status === 401 && !error.config._retry) {
-      error.config._retry = true;
-
-      try {
-        const response = await axios.post(
-          `${api.defaults.baseURL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-
-        if (response.data.success) {
-          // Retry original request with new token
-          return api.request(error.config);
-        }
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        if (typeof window !== "undefined") {
+    // Handle 401 - redirect to login (except for /auth/me which is used for auth check)
+    if (error.response?.status === 401) {
+      const url = error.config?.url || "";
+      // Don't redirect if it's the auth check endpoint
+      if (!url.includes("/auth/me") && typeof window !== "undefined") {
+        // Only redirect if not already on login/signup pages
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes("/login") && !currentPath.includes("/signup")) {
           window.location.href = "/login";
         }
       }

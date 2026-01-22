@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import Tooltip from '@/components/Tooltip'
-import { mockLoggedIn } from '@/lib/mockState'
+import { useAuth } from '@/contexts/AuthContext'
 import ButtonDropdown from '@/components/ButtonDropdown'
 import {
   GraduationCap,
@@ -34,13 +34,13 @@ const NAV_ITEMS: NavItem[] = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
-  const isLoggedIn = mockLoggedIn
-  const mockUser = { name: "Dr. Scholar", email: "user@scholar" }
+  const { isAuthenticated, user } = useAuth()
+  const displayUser = user ? { name: user.name, email: user.email } : null
 
   return (
     <nav className="flex items-center justify-around px-2 py-2">
       {NAV_ITEMS.map((item) => {
-        if (item.requiresAuth && !isLoggedIn) return null
+        if (item.requiresAuth && !isAuthenticated) return null
         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
         const Icon = item.icon
         return (
@@ -57,12 +57,12 @@ export function MobileBottomNav() {
         )
       })}
       {/* Account button with photo on mobile */}
-      {isLoggedIn && (
+      {isAuthenticated && displayUser && (
         <ButtonDropdown
           buttonContent={
             <div className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px]">
               <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-primary">
-                {(mockUser?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
+                {displayUser.name.charAt(0).toUpperCase()}
               </div>
               <span className="text-[10px] font-medium leading-tight text-center">Account</span>
             </div>
@@ -90,7 +90,9 @@ export function MobileBottomNav() {
               value: 'logout',
               danger: true,
               icon: LogOut,
-              onClick: () => console.log('Logout clicked'),
+              onClick: async () => {
+                await logout()
+              },
             },
           ]}
         />
@@ -99,12 +101,12 @@ export function MobileBottomNav() {
   )
 }
 
-export default function Sidebar({ user }: { user?: { name: string; email: string } }) {
+export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { isAuthenticated, user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
 
-  const isLoggedIn = mockLoggedIn || !!user
   const items = useMemo(() => NAV_ITEMS, [])
 
   useEffect(() => {
@@ -180,7 +182,7 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
             `}
           >
             {items.map((item) => {
-              if (item.requiresAuth && !isLoggedIn) return null
+              if (item.requiresAuth && !isAuthenticated) return null
 
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
               const Icon = item.icon
@@ -223,21 +225,21 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
         </div>
 
         {/* User section – always stays at bottom */}
-        {isLoggedIn && (
+        {isAuthenticated && user && (
           <div className="flex-shrink-0 p-2 border-t border-white/10">
             <ButtonDropdown
               buttonContent={
                 <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
                   <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
-                    {(user?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div
                     className={`flex-1 text-left transition-all duration-300 overflow-hidden ${
                       collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
                     }`}
                   >
-                    <p className="text-sm font-bold text-white truncate">{user?.name || 'Dr. Scholar'}</p>
-                    <p className="text-xs truncate text-slate-300/80">{user?.email || 'user@scholar'}</p>
+                    <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                    <p className="text-xs truncate text-slate-300/80">{user.email}</p>
                   </div>
                 </div>
               }
@@ -248,7 +250,7 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
                   value: 'profile',
                   icon: UserCircle2,
                   onClick: () => {
-                    window.location.href = '/account'
+                    router.push('/account')
                   },
                 },
                 {
@@ -256,7 +258,7 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
                   value: 'settings',
                   icon: UserCircle2,
                   onClick: () => {
-                    window.location.href = '/account'
+                    router.push('/account')
                   },
                 },
                 {
@@ -264,7 +266,9 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
                   value: 'logout',
                   danger: true,
                   icon: LogOut,
-                  onClick: () => console.log('Logout clicked'),
+                  onClick: async () => {
+                    await logout()
+                  },
                 },
               ]}
             />

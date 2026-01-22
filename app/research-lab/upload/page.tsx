@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import FileUploadArea from "@/components/FileUploadArea";
 import Toggle from "@/components/Toggle";
+import { uploadApi } from "@/lib/api/upload";
+import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB in bytes
 const MAX_FILE_SIZE_MB = 500;
@@ -19,12 +22,21 @@ interface UploadedFile {
 
 export default function ResearchLabUploadPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [caption, setCaption] = useState("");
+  const [subject, setSubject] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPublic, setIsPublic] = useState(false);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -85,33 +97,88 @@ export default function ResearchLabUploadPage() {
   };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) {
+      toast.error("Please select at least one file");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    try {
+      // For now, upload only the first video file (can be extended for multiple)
+      const videoFile = selectedFiles.find((f) => f.file.type.startsWith("video/"));
+      const imageFiles = selectedFiles.filter((f) => f.file.type.startsWith("image/"));
 
-    // Simulate upload completion
-    setTimeout(() => {
-      clearInterval(interval);
-      setUploadProgress(100);
-      setTimeout(() => {
+      if (videoFile) {
+        // Upload video
+        const uploadPromise = uploadApi.uploadVideo(videoFile.file, {
+          title: caption || "Untitled Video",
+          description: caption,
+          subject: subject || undefined,
+          videoType: "research-lab",
+        });
+
+        // Track progress
+        const progressInterval = setInterval(() => {
+          setUploadProgress((prev) => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 5;
+          });
+        }, 200);
+
+        await uploadPromise;
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        toast.success("Video uploaded successfully!");
+      } else if (imageFiles.length > 0) {
+        // Upload images
+        const uploadPromise = uploadApi.uploadImages(imageFiles.map((f) => f.file), {
+          description: caption,
+          subject: subject || undefined,
+          videoType: "research-lab",
+        });
+        
+        const progressInterval = setInterval(() => {
+          setUploadProgress((prev) => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 10;
+          });
+        }, 200);
+
+        await uploadPromise;
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        toast.success(`${imageFiles.length} image(s) uploaded successfully!`);
+      } else {
+        toast.error("Please select a video or image file");
         setIsUploading(false);
-        // Clean up preview URLs
-        selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
-        router.back();
+        return;
+      }
+
+      // Clean up preview URLs
+      selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
+      
+      setTimeout(() => {
+        router.push("/research-lab");
       }, 500);
-    }, 2000);
+    } catch (error: any) {
+      setUploadProgress(0);
+      toast.error(error.response?.data?.message || "Failed to upload file");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -177,12 +244,12 @@ export default function ResearchLabUploadPage() {
             {/* Caption Input */}
             <div>
               <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
-                Caption
+                Title / Caption
               </label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Write a caption..."
+                placeholder="Write a title or caption..."
                 rows={4}
                 disabled={isUploading}
                 className="w-full px-4 py-3 bg-white border rounded-lg resize-none border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
@@ -190,6 +257,21 @@ export default function ResearchLabUploadPage() {
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {caption.length} characters
               </p>
+            </div>
+
+            {/* Subject Input */}
+            <div>
+              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
+                Subject (Optional)
+              </label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g., Physics, AI, Biology..."
+                disabled={isUploading}
+                className="w-full px-4 py-3 bg-white border rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
+              />
             </div>
 
             {/* Additional Options */}

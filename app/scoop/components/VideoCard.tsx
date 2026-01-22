@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, MessageCircle, Share2, Bookmark, PlayCircle, Pause } from "lucide-react";
+import ReactPlayer from "react-player";
+import { Heart, MessageCircle, Share2, Bookmark, PlayCircle, Pause, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -18,6 +19,8 @@ interface VideoCardProps {
     date: string;
     poster: string;
     videoUrl?: string;
+    imageUrls?: string[];
+    isImageCollection?: boolean;
   };
   onLike: () => void;
   onComment: () => void;
@@ -37,91 +40,165 @@ export default function VideoCard({
   saved,
 }: VideoCardProps) {
   const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<ReactPlayer>(null);
+  const imageScrollRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Use sample video URLs if videoUrl is not provided
-  const sampleVideoUrls = [
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-  ];
-
-  const videoUrl = video.videoUrl || sampleVideoUrls[video.id % sampleVideoUrls.length];
-
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    // Set random start time when video loads
-    const handleLoadedMetadata = () => {
-      if (videoElement.duration) {
-        const randomTime = Math.random() * (videoElement.duration - 10); // Random time, leaving 10s buffer
-        videoElement.currentTime = randomTime;
-      }
-      setIsLoading(false);
-    };
-
-    // Auto-play when video is ready
-    const handleCanPlay = () => {
-      videoElement.play().catch(() => {
-        // Autoplay blocked, show play button
-        setIsPlaying(false);
-      });
-      setIsPlaying(true);
-    };
-
-    videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-    videoElement.addEventListener("canplay", handleCanPlay);
-    videoElement.addEventListener("play", () => setIsPlaying(true));
-    videoElement.addEventListener("pause", () => setIsPlaying(false));
-    videoElement.addEventListener("waiting", () => setIsLoading(true));
-    videoElement.addEventListener("playing", () => setIsLoading(false));
-
-    return () => {
-      videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      videoElement.removeEventListener("canplay", handleCanPlay);
-      videoElement.removeEventListener("play", () => setIsPlaying(true));
-      videoElement.removeEventListener("pause", () => setIsPlaying(false));
-      videoElement.removeEventListener("waiting", () => setIsLoading(true));
-      videoElement.removeEventListener("playing", () => setIsLoading(false));
-    };
-  }, [video.id]);
+  const videoUrl = video.videoUrl;
+  const isImageCollection = video.isImageCollection && video.imageUrls && video.imageUrls.length > 0;
+  const images = video.imageUrls || [];
 
   const togglePlay = () => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    if (isPlaying) {
-      videoElement.pause();
-    } else {
-      videoElement.play();
+    if (!isImageCollection) {
+      setIsPlaying(!isPlaying);
     }
   };
 
+  const scrollToImage = (index: number) => {
+    if (imageScrollRef.current && images.length > 0) {
+      const imageWidth = imageScrollRef.current.clientWidth;
+      imageScrollRef.current.scrollTo({
+        left: index * imageWidth,
+        behavior: 'smooth',
+      });
+      setCurrentImageIndex(index);
+    }
+  };
+
+  const handleImageScroll = () => {
+    if (imageScrollRef.current && images.length > 0) {
+      const imageWidth = imageScrollRef.current.clientWidth;
+      const scrollLeft = imageScrollRef.current.scrollLeft;
+      const newIndex = Math.round(scrollLeft / imageWidth);
+      setCurrentImageIndex(newIndex);
+    }
+  };
+
+  useEffect(() => {
+    if (isImageCollection && imageScrollRef.current) {
+      imageScrollRef.current.addEventListener('scroll', handleImageScroll);
+      return () => {
+        imageScrollRef.current?.removeEventListener('scroll', handleImageScroll);
+      };
+    }
+  }, [isImageCollection, images.length]);
+
   return (
     <div className="relative flex-shrink-0 w-full h-screen snap-start">
-      {/* Video Container */}
+      {/* Video/Image Container */}
       <div
         className="relative flex items-center justify-center w-full h-full overflow-hidden"
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
         onClick={togglePlay}
       >
-        {/* Video Element */}
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          poster={video.poster}
-          className="object-cover w-full h-full"
-          loop
-          muted
-          playsInline
-        />
+        {isImageCollection ? (
+          /* Image Collection - Horizontal Scroll */
+          <div className="relative w-full h-full">
+            <div
+              ref={imageScrollRef}
+              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              {images.map((imageUrl, index) => (
+                <div
+                  key={index}
+                  className="flex-shrink-0 w-full h-full snap-start"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`${video.title} - Image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Image Navigation Dots */}
+            {images.length > 1 && (
+              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      scrollToImage(index);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentImageIndex
+                        ? 'bg-white w-6'
+                        : 'bg-white/50 hover:bg-white/75'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                {currentImageIndex > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      scrollToImage(currentImageIndex - 1);
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                )}
+                {currentImageIndex < images.length - 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      scrollToImage(currentImageIndex + 1);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        ) : (
+          /* Video Player */
+          <ReactPlayer
+            ref={playerRef}
+            url={videoUrl}
+            playing={isPlaying}
+            loop
+            muted
+            playsinline
+            width="100%"
+            height="100%"
+            style={{ position: "absolute", top: 0, left: 0 }}
+            onReady={() => setIsLoading(false)}
+            onBuffer={() => setIsLoading(true)}
+            onBufferEnd={() => setIsLoading(false)}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            config={{
+              file: {
+                attributes: {
+                  style: { objectFit: "cover" },
+                },
+              },
+            }}
+          />
+        )}
 
         {/* Loading Overlay */}
         {isLoading && (

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CommunityCardProps {
   community: {
@@ -14,7 +16,20 @@ interface CommunityCardProps {
 }
 
 export default function CommunityCard({ community }: CommunityCardProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const storagePercentage = (community.storageUsed / community.storageLimit) * 100;
+
+  const handleJoinClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    // TODO: Implement join community logic
+    console.log("Join community", community.id);
+  };
 
   return (
     <Link
@@ -51,7 +66,10 @@ export default function CommunityCard({ community }: CommunityCardProps) {
           </div>
         </div>
 
-        <button className="w-full mt-4 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors shadow-sm shadow-primary/30">
+        <button
+          onClick={handleJoinClick}
+          className="w-full mt-4 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors shadow-sm shadow-primary/30"
+        >
           Join Community
         </button>
       </div>

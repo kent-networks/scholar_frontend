@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { name: "Ecosystem", href: "/ecosystem" },
@@ -15,7 +16,14 @@ const navItems = [
 
 export default function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    setMobileMenuOpen(false);
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-slate-200 dark:border-slate-800">
@@ -46,18 +54,37 @@ export default function TopNav() {
 
           {/* Desktop Auth Buttons */}
           <div className="items-center hidden gap-4 md:flex">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="px-4 py-4 text-sm font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
-            >
-              Join Scholar
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href="/account"
+                  className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                >
+                  {user?.name || "Account"}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="px-4 py-4 text-sm font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
+                >
+                  Join Scholar
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -101,20 +128,40 @@ export default function TopNav() {
                 </Link>
               ))}
               <div className="pt-4 space-y-2 border-t border-slate-200 dark:border-slate-800">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full px-4 py-2 text-sm font-bold text-center transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 text-sm font-bold text-center text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
-                >
-                  Join Scholar
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full px-4 py-2 text-sm font-bold text-center transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                    >
+                      {user?.name || "Account"}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full px-4 py-2 text-sm font-bold text-center transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full px-4 py-2 text-sm font-bold text-center transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full px-4 py-3 text-sm font-bold text-center text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
+                    >
+                      Join Scholar
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

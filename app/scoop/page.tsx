@@ -6,7 +6,7 @@ import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "./components/VideoCard";
 import SearchBar from "./components/SearchBar";
 import CommentsSidePanel from "@/components/CommentsSidePanel";
-import { mockLoggedIn } from "@/lib/mockState";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Search } from "lucide-react";
 
 const mockVideos = [
@@ -74,6 +74,7 @@ const mockVideos = [
 
 export default function ScoopPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
@@ -189,7 +190,7 @@ export default function ScoopPage() {
               </button>
             </div>
 
-            {mockLoggedIn && (
+            {isAuthenticated && (
               <button
                 className="p-2 rounded-full bg-white/10 text-white"
                 onClick={() => router.push("/scoop/upload")}

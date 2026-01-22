@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AuthLayout from "@/components/AuthLayout";
 import { Mail, Lock, Eye, EyeOff, User, GraduationCap, BookOpen, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type UserType = "student" | "educator" | "creator" | null;
 
 export default function SignupPage() {
   const router = useRouter();
+  const { register, isAuthenticated } = useAuth();
   const [userType, setUserType] = useState<UserType>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
   const userTypes = [
     {
@@ -41,12 +51,21 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userType) return;
+    setError("");
     setIsLoading(true);
-    // Simulate signup
-    setTimeout(() => {
+
+    try {
+      await register({
+        email,
+        password,
+        name,
+        role: userType,
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
+    } finally {
       setIsLoading(false);
-      router.push("/");
-    }, 1500);
+    }
   };
 
   return (
@@ -152,6 +171,12 @@ export default function SignupPage() {
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <label className="flex items-start gap-2">
           <input

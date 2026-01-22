@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "@/lib/api";
 
 export interface Video {
   id: number;
@@ -8,6 +8,8 @@ export interface Video {
   year?: number;
   institution?: string;
   videoUrl: string;
+  imageUrls?: string[]; // Array of image URLs for image collections
+  isImageCollection?: boolean; // True if this is an image collection
   thumbnailUrl?: string;
   poster?: string;
   videoType: "research-lab" | "scoop";

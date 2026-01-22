@@ -86,70 +86,93 @@ export default function ModalDialog({
   const modalWidth = widthClasses[width] || width;
   const autoScrollContent = actualMode === "bottom" || scrollContent;
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            className="fixed inset-0 z-50 bg-black/50 overflow-y-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {actualMode === "center" ? (
-              <div className="flex items-center justify-center min-h-screen p-4">
-                <motion.div
-                  ref={dialogRef}
-                  className={`bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-0 relative w-full ${modalWidth} flex flex-col`}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                >
-                  <div className="sticky rounded-t-lg top-0 left-0 right-0 bg-white dark:bg-slate-800 z-10 px-6 pt-6 pb-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
-                    {title && (
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {title}
-                      </div>
-                    )}
-                    <button
-                      onClick={onClose}
-                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-semibold transition-all duration-300 z-10 ml-4"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <div
-                    className={`px-6 py-4 ${
-                      scrollContent ? "overflow-auto max-h-[80vh]" : ""
-                    }`}
-                  >
-                    {children}
-                  </div>
-                </motion.div>
-              </div>
-            ) : (
+        <motion.div
+          className="fixed inset-0 z-50 bg-black/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={allowClickOutside ? handleClose : undefined}
+        >
+          {actualMode === "center" ? (
+            <div className="flex items-center justify-center min-h-screen p-4 overflow-y-auto">
               <motion.div
                 ref={dialogRef}
-                className="fixed left-0 right-0 bottom-0 z-50 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl mx-auto w-full sm:max-w-md sm:mx-auto max-h-[90vh] overflow-y-auto"
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
+                className={`bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-0 relative w-full ${modalWidth} flex flex-col my-auto`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                style={{ touchAction: "none" }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <div className="w-12 h-[2px] bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-2" />
-                {title && (
-                  <div className="text-center font-semibold text-sm mb-2 text-slate-900 dark:text-white">
-                    {title}
-                  </div>
-                )}
-                <div className="px-4 pb-6 pt-2">{children}</div>
+                <div className="sticky top-0 left-0 right-0 z-10 flex items-center justify-between px-6 pt-4 pb-2 bg-white border-b rounded-t-lg dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+                  {title && (
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {title}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleClose}
+                    type="button"
+                    className="z-10 ml-auto transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div
+                  className={`px-6 py-4 ${
+                    scrollContent ? "overflow-auto max-h-[80vh]" : ""
+                  }`}
+                >
+                  {children}
+                </div>
               </motion.div>
-            )}
-          </motion.div>
-        </>
+            </div>
+          ) : (
+            <motion.div
+              ref={dialogRef}
+              className="fixed left-0 right-0 bottom-0 z-50 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl mx-auto w-full sm:max-w-md sm:mx-auto max-h-[90vh] overflow-y-auto"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              style={{ touchAction: "none" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 pt-3 pb-2 bg-white dark:bg-slate-800">
+                <div className="w-12 h-[2px] bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-2" />
+                <div className="flex items-center justify-between px-4">
+                  {title && (
+                    <div className="flex-1 text-sm font-semibold text-center text-slate-900 dark:text-white">
+                      {title}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleClose}
+                    type="button"
+                    className="ml-auto transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="px-4 pt-2 pb-6">{children}</div>
+            </motion.div>
+          )}
+        </motion.div>
       )}
     </AnimatePresence>
   );

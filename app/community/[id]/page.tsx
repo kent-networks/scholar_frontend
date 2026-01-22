@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
-import { mockIsOwner, mockLoggedIn } from "@/lib/mockState";
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud, MessageCircle, Heart } from "lucide-react";
 
 const mockPosts = [
@@ -42,6 +42,7 @@ const mockMembers = [
 export default function CommunityDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<"posts" | "files" | "members">("posts");
   const [files, setFiles] = useState(mockFiles);
   const [commentOpen, setCommentOpen] = useState(false);
@@ -49,6 +50,22 @@ export default function CommunityDetailPage() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const communityId = params.id as string;
+
+  const handleLike = () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    // TODO: Implement like logic
+  };
+
+  const handleComment = () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    setCommentOpen(true);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -133,19 +150,18 @@ export default function CommunityDetailPage() {
                       </div>
                       <p className="text-slate-700 dark:text-slate-300 mb-4">{post.content}</p>
                       <div className="flex gap-4 text-sm text-slate-500 dark:text-slate-400">
-                        <button className="flex items-center gap-1 hover:text-primary">
+                        <button onClick={handleLike} className="flex items-center gap-1 hover:text-primary">
                           <span className="text-sm font-bold">{post.likes}</span>
                           <span>Likes</span>
                         </button>
                         <button
-                          onClick={() => setCommentOpen(true)}
+                          onClick={handleComment}
                           className="flex items-center gap-2 hover:text-primary"
                         >
                           <MessageSquareText className="h-4 w-4" />
-                          {post.likes}
+                          <span className="text-sm font-bold">{post.comments}</span>
+                          <span>Comments</span>
                         </button>
-                        <span className="text-sm font-bold">{post.comments}</span>
-                        <span>Comments</span>
                       </div>
                     </div>
                   ))}
@@ -154,7 +170,7 @@ export default function CommunityDetailPage() {
 
               {activeTab === "files" && (
                 <div className="space-y-4">
-                  {mockLoggedIn && (
+                  {isAuthenticated && (
                     <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div>

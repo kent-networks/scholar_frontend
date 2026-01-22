@@ -1,21 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { mockLoggedIn } from "@/lib/mockState";
+import { useAuth } from "@/contexts/AuthContext";
 import { KeyRound, Pencil, Activity, FileText, Users, Heart, Bookmark, Video, Grid3x3, List, Settings } from "lucide-react";
 import Link from "next/link";
-
-const mockUser = {
-  name: "Dr. Sarah Chen",
-  role: "Researcher",
-  email: "sarah.chen@scholar.edu",
-  photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-  followers: 12450,
-  following: 320,
-  likes: 8920,
-};
 
 const mockMyVideos = [
   {
@@ -70,12 +60,38 @@ const mockSavedVideos = [
 
 export default function AccountPage() {
   const router = useRouter();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<"uploads" | "liked" | "saved">("uploads");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isEditing, setIsEditing] = useState(false);
 
-  // For now we assume logged in via mockState; keep guard for future wiring.
-  if (!mockLoggedIn) return null;
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-slate-600 dark:text-slate-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) return null;
+
+  // Use user data from auth context
+  const displayUser = {
+    name: user.name,
+    role: user.role,
+    email: user.email,
+    photo: user.profilePhotoPath,
+    followers: 0, // TODO: Get from API
+    following: 0, // TODO: Get from API
+    likes: 0, // TODO: Get from API
+  };
 
   const getCurrentVideos = () => {
     switch (activeTab) {
@@ -91,7 +107,7 @@ export default function AccountPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       <div className="hidden md:block">
-        <Sidebar user={mockUser} />
+        <Sidebar />
       </div>
 
       <main className="flex-1 overflow-y-auto md:pb-0 pb-20 bg-white dark:bg-slate-900">
@@ -105,36 +121,36 @@ export default function AccountPage() {
           {/* Profile Card - Modern Design */}
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-2xl border border-primary/20 dark:border-primary/30 p-8 shadow-lg mb-8">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              {mockUser.photo ? (
+              {displayUser.photo ? (
                 <img
-                  src={mockUser.photo}
-                  alt={mockUser.name}
+                  src={displayUser.photo}
+                  alt={displayUser.name}
                   className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-xl"
                 />
               ) : (
                 <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white dark:border-slate-800">
-                  {mockUser.name.charAt(0)}
+                  {displayUser.name.charAt(0)}
                 </div>
               )}
               <div className="flex-1 text-center md:text-left">
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                  {mockUser.name}
+                  {displayUser.name}
                 </h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-1">{mockUser.role}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">{mockUser.email}</p>
+                <p className="text-slate-600 dark:text-slate-400 mb-1">{displayUser.role}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">{displayUser.email}</p>
                 
                 {/* Stats */}
                 <div className="flex justify-center md:justify-start gap-6 mb-4">
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white text-lg">{mockUser.followers.toLocaleString()}</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-lg">{displayUser.followers.toLocaleString()}</span>
                     <span className="text-slate-600 dark:text-slate-400 ml-1">Followers</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white text-lg">{mockUser.following}</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-lg">{displayUser.following}</span>
                     <span className="text-slate-600 dark:text-slate-400 ml-1">Following</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white text-lg">{mockUser.likes.toLocaleString()}</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-lg">{displayUser.likes.toLocaleString()}</span>
                     <span className="text-slate-600 dark:text-slate-400 ml-1">Likes</span>
                   </div>
                 </div>
@@ -147,7 +163,7 @@ export default function AccountPage() {
                     {isEditing ? "Cancel" : "Edit Profile"}
                   </button>
                   <Link
-                    href={`/profile/${mockUser.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/profile/${user.id}`}
                     className="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                   >
                     View Profile
