@@ -1,6 +1,7 @@
 "use client";
 
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import { FlaskConical, Video, Users, Link2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -40,55 +41,57 @@ export default function EcosystemPage() {
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <TopNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+      <main className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold md:text-5xl text-slate-900 dark:text-white">
             Scholar Ecosystem
           </h1>
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto text-xl text-slate-600 dark:text-slate-400">
             A comprehensive platform connecting students, educators, and creators in one unified academic ecosystem
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <Link
                 key={feature.href}
                 href={feature.href}
-                className="group p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all"
+                className="p-6 transition-all bg-white border group dark:bg-slate-800 rounded-xl border-slate-200 dark:border-slate-700 hover:shadow-lg"
               >
                 <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors">
+                <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
                   {feature.title}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">{feature.description}</p>
-                <div className="flex items-center text-primary font-bold">
-                  Explore <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                <p className="mb-4 text-slate-600 dark:text-slate-400">{feature.description}</p>
+                <div className="flex items-center font-bold text-primary">
+                  Explore <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
                 </div>
               </Link>
             );
           })}
         </div>
 
-        <div className="bg-gradient-to-br from-primary/10 to-blue-500/10 rounded-2xl p-8 md:p-12 text-center">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+        <div className="p-8 text-center bg-gradient-to-br from-primary/10 to-blue-500/10 rounded-2xl md:p-12">
+          <h2 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white">
             Ready to get started?
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
+          <p className="mb-6 text-slate-600 dark:text-slate-400">
             Join thousands of users already on Scholar
           </p>
           <Link
             href="/signup"
-            className="inline-block px-8 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
+            className="inline-block px-8 py-4 text-white transition-colors rounded-2xl bg-primary hover:bg-primary-dark"
           >
             Join Scholar
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

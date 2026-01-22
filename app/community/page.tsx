@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import CommunityCard from "./components/CommunityCard";
 import SearchBar from "../scoop/components/SearchBar";
 
@@ -104,6 +105,8 @@ export default function CommunityPage() {
           )}
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

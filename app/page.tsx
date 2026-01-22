@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Eye,
@@ -103,23 +106,52 @@ const featuredCategories = [
 ];
 
 export default function Home() {
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        const scrolled = window.scrollY;
+        setScrollY(scrolled);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const imageOffset = scrollY * 0.5;
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <TopNav />
 
       {/* Main Content */}
       <main className="overflow-y-auto">
-        <div className="p-4 md:p-8">
+        <div className="">
           {/* Hero Section - Enhanced */}
-          <div className="mb-12 relative rounded-2xl overflow-hidden shadow-2xl shadow-primary/20 min-h-[400px] md:min-h-[500px]">
-            {/* Background Image */}
-            <img
-              src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1600&q=80"
-              alt="Academic campus"
-              className="absolute inset-0 object-cover w-full h-full transition-transform duration-700 scale-105 hover:scale-100"
-            />
+          <div
+            ref={heroRef}
+            className="mb-12 relative overflow-hidden shadow-2xl shadow-primary/20 min-h-[400px] md:min-h-[500px]"
+          >
+            {/* Background Image with Parallax */}
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{
+                transform: `translateY(${imageOffset}px)`,
+                transition: "transform 0.1s ease-out",
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1600&q=80"
+                alt="Academic campus"
+                className="absolute inset-0 object-cover w-full h-full scale-110"
+              />
+            </div>
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-blue-700/90" />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/30" />
             {/* Animated Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0" style={{
@@ -129,191 +161,213 @@ export default function Home() {
             </div>
             {/* Content */}
             <div className="relative z-10 p-8 text-white md:p-12">
-              <div className="max-w-3xl">
-                <div className="inline-block px-4 py-2 mb-4 text-sm font-bold rounded-full bg-white/20 backdrop-blur-sm">
-                  Welcome to Scholar
+              <div className="max-w-6xl">
+                
+                <div className="w-40 h-2 mb-3 bg-primary"/>
+
+                <div className="pb-2 text-5xl font-bold text-primary">
+                  Scholar
                 </div>
-                <h1 className="mb-4 text-5xl font-bold leading-tight md:text-6xl">
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="mb-4 text-5xl font-bold leading-tight text-white md:text-6xl"
+                >
                   Your Academic Ecosystem
-                </h1>
-                <p className="mb-8 text-xl leading-relaxed text-blue-100 md:text-2xl">
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                  className="mb-8 text-xl leading-relaxed text-blue-100 md:text-2xl"
+                >
                   Connect, collaborate, and discover groundbreaking research in one unified platform
-                </p>
-                <div className="flex flex-col gap-4 sm:flex-row">
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                  className="flex flex-col gap-4 sm:flex-row"
+                >
                   <Link
                     href="/research-lab"
-                    className="px-8 py-4 text-lg font-bold transition-all transform bg-white shadow-lg rounded-xl text-primary hover:bg-blue-50 hover:scale-105"
+                    className="px-8 py-4 text-lg transition-all transform bg-white shadow-lg rounded-xl text-primary hover:scale-105"
                   >
                     Explore Research
                   </Link>
                   <Link
                     href="/login"
-                    className="px-8 py-4 text-lg font-bold transition-all border-2 border-white rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30"
+                    className="px-8 py-4 text-lg transition-all border-2 border-white rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30"
                   >
                     Get Started
                   </Link>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
 
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-4">
-            <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
-              <div className="flex items-start justify-between">
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-primary">
-                  <FlaskConical className="w-5 h-5" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  Active Researchers
-                </p>
-                <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                  2,450
-                </p>
-              </div>
-            </div>
-            <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
-              <div className="flex items-start justify-between">
-                <div className="p-2 text-purple-600 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400">
-                  <Folder className="w-5 h-5" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  Research Projects
-                </p>
-                <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                  1,230
-                </p>
-              </div>
-            </div>
-            <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
-              <div className="flex items-start justify-between">
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-                  <GraduationCap className="w-5 h-5" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  Partner Institutions
-                </p>
-                <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                  156
-                </p>
-              </div>
-            </div>
-            <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
-              <div className="flex items-start justify-between">
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
-                  <Users className="w-5 h-5" />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  Community Members
-                </p>
-                <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                  12,890
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Featured Categories */}
-          <div className="mb-12">
-            <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
-              Explore Scholar
-            </h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {featuredCategories.map((category) => (
-                (() => {
-                  const Icon = category.icon
-                  return (
-                <Link
-                  key={category.href}
-                  href={category.href}
-                  className="p-5 transition-all border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
-                >
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
-                        {category.name}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {category.count} items
-                      </p>
-                    </div>
+          <div className="p-4 md:p-8">
+              
+            {/* Stats Section */}
+            <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-4">
+              <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
+                <div className="flex items-start justify-between">
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-primary">
+                    <FlaskConical className="w-5 h-5" />
                   </div>
-                </Link>
-                  )
-                })()
-              ))}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Active Researchers
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+                    2,450
+                  </p>
+                </div>
+              </div>
+              <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
+                <div className="flex items-start justify-between">
+                  <div className="p-2 text-purple-600 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400">
+                    <Folder className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Research Projects
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+                    1,230
+                  </p>
+                </div>
+              </div>
+              <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
+                <div className="flex items-start justify-between">
+                  <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Partner Institutions
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+                    156
+                  </p>
+                </div>
+              </div>
+              <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
+                <div className="flex items-start justify-between">
+                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Community Members
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+                    12,890
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Trending Content */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Trending Research
+            {/* Featured Categories */}
+            <div className="mb-12">
+              <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+                Explore Scholar
               </h2>
-              <Link
-                href="/research-lab"
-                className="flex items-center gap-2 font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-              >
-                View All
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {featuredCategories.map((category) => (
+                  (() => {
+                    const Icon = category.icon
+                    return (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className="p-5 transition-all border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
+                  >
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
+                          {category.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {category.count} items
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                    )
+                  })()
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {contentItems.map((item) => (
+            {/* Trending Content */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Trending Research
+                </h2>
                 <Link
-                  key={item.id}
-                  href={`/content/${item.id}`}
-                  className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
+                  href="/research-lab"
+                  className="flex items-center gap-2 font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
                 >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
-                        {item.category}
-                      </span>
-                    </div>
-                    <div className="absolute flex items-center gap-2 px-2 py-1 text-xs text-white rounded-full bottom-4 right-4 bg-black/50 backdrop-blur-sm">
-                      <Eye className="w-4 h-4" />
-                      {item.views}
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary line-clamp-2">
-                      {item.title}
-                    </h3>
-                    <p className="mb-4 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                      {item.description}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>By {item.author}</span>
-                      <span>{item.date}</span>
-                    </div>
-                  </div>
+                  View All
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {contentItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/content/${item.id}`}
+                    className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
+                  >
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
+                          {item.category}
+                        </span>
+                      </div>
+                      <div className="absolute flex items-center gap-2 px-2 py-1 text-xs text-white rounded-full bottom-4 right-4 bg-black/50 backdrop-blur-sm">
+                        <Eye className="w-4 h-4" />
+                        {item.views}
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary line-clamp-2">
+                        {item.title}
+                      </h3>
+                      <p className="mb-4 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                        {item.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                        <span>By {item.author}</span>
+                        <span>{item.date}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
+
           </div>
         </div>
       </main>
 
-    </main>
+      <Footer />
     </div>
   );
 }

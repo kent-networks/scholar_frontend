@@ -1,6 +1,7 @@
 "use client";
 
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import { GraduationCap, Upload, BarChart, MessageSquare, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -74,6 +75,8 @@ export default function ForEducatorsPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import { BookOpen, Video, Users, Award, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -74,6 +75,8 @@ export default function ForStudentsPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
