@@ -1,131 +1,106 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { GraduationCap, Loader2 } from 'lucide-react'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import AuthLayout from "@/components/AuthLayout";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [account, setAccount] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    
+    e.preventDefault();
+    setIsLoading(true);
     // Simulate login
     setTimeout(() => {
-      setIsLoading(false)
-      router.push('/')
-    }, 1000)
-  }
+      setIsLoading(false);
+      router.push("/");
+    }, 1500);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 dark:from-background-dark dark:via-slate-900 dark:to-background-dark flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <GraduationCap className="h-12 w-12 text-primary-600 dark:text-primary-400" />
-            <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400">Scholar</h1>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your Scholar account"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              placeholder="you@example.com"
+            />
           </div>
-          <p className="text-slate-600 dark:text-slate-400">Academic Ecosystem</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Join Scholar</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="account" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Account
-              </label>
-              <input
-                id="account"
-                type="text"
-                value={account}
-                onChange={(e) => setAccount(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                placeholder="Enter your account"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                placeholder="Enter your password"
-              />
-            </div>
-
+        <div>
+          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full pl-10 pr-12 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              placeholder="Enter your password"
+            />
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Joining...
-                </>
-              ) : (
-                'JOIN'
-              )}
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
-          </form>
-
-          {/* Navigation Links */}
-          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Explore Scholar:</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/research-lab"
-                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Research Lab
-              </Link>
-              <Link
-                href="/scoop"
-                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Scoop
-              </Link>
-              <Link
-                href="/environment"
-                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Environment
-              </Link>
-              <Link
-                href="/community"
-                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Community Operations
-              </Link>
-              <Link
-                href="/scholink"
-                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Scholink
-              </Link>
-            </div>
           </div>
         </div>
-      </div>
-    </div>
-  )
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/50"
+            />
+            <span className="text-sm text-slate-700 dark:text-slate-300">Remember me</span>
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-sm font-bold text-primary hover:text-primary-dark"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? "Signing in..." : "Sign in"}
+        </button>
+
+        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+          Don't have an account?{" "}
+          <Link href="/signup" className="font-bold text-primary hover:text-primary-dark">
+            Create account
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
+  );
 }
-
-
-

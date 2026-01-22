@@ -51,7 +51,7 @@ export function MobileBottomNav() {
               isActive ? 'text-primary bg-primary/10' : 'text-slate-700'
             }`}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="w-6 h-6" />
             <span className="text-[10px] font-medium leading-tight text-center">{item.name}</span>
           </Link>
         )
@@ -61,7 +61,7 @@ export function MobileBottomNav() {
         <ButtonDropdown
           buttonContent={
             <div className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px]">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+              <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-primary">
                 {(mockUser?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
               </div>
               <span className="text-[10px] font-medium leading-tight text-center">Account</span>
@@ -131,21 +131,21 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
   return (
     <aside
       className={`hidden md:flex flex-col justify-between flex-shrink-0 h-screen overflow-hidden transition-[width] duration-300 ease-in-out ${
-        collapsed ? 'w-20' : 'w-72'
+        collapsed ? 'w-16' : 'w-64'
       } bg-[#030e2a] border-r border-white/10`}
     >
-      <div className="flex flex-col h-full overflow-y-auto">
+      <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="px-4 py-5 border-b border-white/10">
-          <div className="flex items-center justify-between gap-2">
-            <Link href="/" className="flex items-center gap-2 min-w-0">
-              <GraduationCap className="h-7 w-7 text-primary" />
+        <div className="flex-shrink-0 px-4 py-5 border-b border-white/10">
+          <div className={`flex items-center gap-2 ${collapsed ? 'flex-col justify-center' : 'justify-between'}`}>
+            <Link href="/" className={`flex items-center min-w-0 gap-2 ${collapsed ? 'flex-col' : ''}`}>
+              <GraduationCap className="flex-shrink-0 h-7 w-7 text-primary" />
               <div
                 className={`transition-all duration-300 overflow-hidden ${
-                  collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                  collapsed ? 'w-0 opacity-0 h-0' : 'w-auto opacity-100'
                 }`}
               >
-                <h1 className="text-white text-xl font-bold leading-tight tracking-tight whitespace-nowrap">
+                <h1 className="text-xl font-bold leading-tight tracking-tight text-white whitespace-nowrap">
                   Scholar
                 </h1>
                 <p className="text-slate-300/80 text-xs font-normal mt-0.5 whitespace-nowrap">
@@ -154,21 +154,27 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
               </div>
             </Link>
             <button
-              onClick={() => setCollapsed((v) => !v)}
-              className="size-10 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCollapsed((v) => !v);
+              }}
+              className={`flex items-center justify-center transition-colors rounded-lg size-10 hover:bg-white/10 flex-shrink-0 ${
+                collapsed ? 'mt-2' : ''
+              }`}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? (
-                <PanelLeftOpen className="h-5 w-5 text-slate-200" />
+                <PanelLeftOpen className="w-5 h-5 text-slate-200" />
               ) : (
-                <PanelLeftClose className="h-5 w-5 text-slate-200" />
+                <PanelLeftClose className="w-5 h-5 text-slate-200" />
               )}
             </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        <nav className={`flex-1 px-4 py-4 ${collapsed ? 'flex flex-col items-center justify-center space-y-2' : 'space-y-2 overflow-y-auto'}`}>
           {items.map((item) => {
             if (item.requiresAuth && !isLoggedIn) return null
 
@@ -179,15 +185,23 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(e) => {
+                  if (collapsed) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Navigate directly without expanding
+                    window.location.href = item.href;
+                  }
+                }}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group ${
-                  collapsed ? 'justify-center' : ''
+                  collapsed ? 'justify-center w-12' : ''
                 } ${
                   isActive
-                    ? 'bg-white/10 text-white'
+                    ? 'bg-white/10 text-white border-l-2 border-slate-200'
                     : 'text-slate-200 hover:bg-white/10'
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="flex-shrink-0 w-5 h-5" />
                 <span
                   className={`text-sm font-medium transition-all duration-300 overflow-hidden ${
                     collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
@@ -207,7 +221,7 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
             <ButtonDropdown
               buttonContent={
                 <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
-                  <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
                     {(user?.name || 'Dr. Scholar').charAt(0).toUpperCase()}
                   </div>
                   <div
@@ -215,8 +229,8 @@ export default function Sidebar({ user }: { user?: { name: string; email: string
                       collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
                     }`}
                   >
-                    <p className="text-sm font-bold truncate text-white">{user?.name || 'Dr. Scholar'}</p>
-                    <p className="text-xs text-slate-300/80 truncate">{user?.email || 'user@scholar'}</p>
+                    <p className="text-sm font-bold text-white truncate">{user?.name || 'Dr. Scholar'}</p>
+                    <p className="text-xs truncate text-slate-300/80">{user?.email || 'user@scholar'}</p>
                   </div>
                 </div>
               }
