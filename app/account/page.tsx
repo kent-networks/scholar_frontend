@@ -11,6 +11,7 @@ import { userApi } from "@/lib/api/users";
 import { uploadApi } from "@/lib/api/upload";
 import toast from "react-hot-toast";
 import ModalDialog from "@/components/ModalDialog";
+import Tooltip from "@/components/Tooltip";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -191,23 +192,24 @@ export default function AccountPage() {
                     {user.name.charAt(0)}
                   </div>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center gap-2 transition-opacity rounded-full opacity-0 bg-black/50 group-hover:opacity-100">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingPhoto}
-                    className="p-2 text-white bg-primary rounded-full hover:bg-primary-dark transition-colors disabled:opacity-50"
+                    className="p-2 text-white transition-colors rounded-full bg-primary hover:bg-primary-dark disabled:opacity-50"
                     title="Upload photo"
                   >
                     <Camera className="w-4 h-4" />
                   </button>
                   {profilePhoto && (
-                    <button
+                    <Tooltip content="Delete photo">
+                      <button
                       onClick={handleDeletePhoto}
-                      className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors"
-                      title="Delete photo"
+                      className="p-2 text-white transition-colors bg-red-500 rounded-full hover:bg-red-600"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    </Tooltip>
                   )}
                 </div>
                 <input
@@ -234,7 +236,7 @@ export default function AccountPage() {
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         placeholder="Tell us about yourself..."
-                        className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full px-3 py-2 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
                         rows={3}
                       />
                       <div className="flex gap-2">
@@ -257,12 +259,12 @@ export default function AccountPage() {
                     </div>
                   ) : (
                     <div className="flex items-start gap-2">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">
+                      <p className="flex-1 text-sm text-slate-700 dark:text-slate-300">
                         {bio || "No bio yet. Click edit to add one."}
                       </p>
                       <button
                         onClick={() => setEditingBio(true)}
-                        className="p-1 text-slate-500 hover:text-primary transition-colors"
+                        className="p-1 transition-colors text-slate-500 hover:text-primary"
                         title="Edit bio"
                       >
                         <Pencil className="w-4 h-4" />
@@ -405,16 +407,19 @@ export default function AccountPage() {
                       </div>
                     </div>
                     {activeTab === "uploads" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirm({ videoId: video.id, open: true });
-                        }}
-                        className="absolute top-2 right-2 p-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors"
-                        title="Delete video"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <Tooltip content="Delete video">
+                        <div className="absolute top-2 right-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirm({ videoId: video.id, open: true });
+                            }}
+                            className="p-2 text-white transition-colors bg-red-500 rounded-full hover:bg-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
@@ -452,13 +457,16 @@ export default function AccountPage() {
                         </span>
                       </div>
                       {activeTab === "uploads" && (
-                        <button
-                          onClick={() => setDeleteConfirm({ videoId: video.id, open: true })}
-                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Delete video"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Tooltip content="Delete video">
+                          <div>
+                            <button
+                              onClick={() => setDeleteConfirm({ videoId: video.id, open: true })}
+                              className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </Tooltip>
                       )}
                     </div>
                   </div>
@@ -479,7 +487,7 @@ export default function AccountPage() {
           <p className="text-slate-700 dark:text-slate-300">
             Are you sure you want to delete this video? This action cannot be undone.
           </p>
-          <div className="flex gap-3 justify-end">
+          <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteConfirm({ videoId: null, open: false })}
               className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -488,7 +496,7 @@ export default function AccountPage() {
             </button>
             <button
               onClick={handleDeleteVideo}
-              className="px-4 py-2 font-bold text-white rounded-lg bg-red-500 hover:bg-red-600"
+              className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
             >
               Delete
             </button>

@@ -336,6 +336,7 @@ export default function ScoopPage() {
                 video={{
                   id: video.id,
                   title: video.title,
+                  description: video.description,
                   subject: video.subject || "General",
                   author: video.author,
                   authorId: video.authorId,
@@ -354,15 +355,19 @@ export default function ScoopPage() {
                 isNearActive={Math.abs(index - currentIndex) <= 1}
                 onLike={() => handleLike(video.id)}
                 onComment={() => handleComment(video.id)}
-                onShare={() => {
+                onShare={async () => {
                   if (navigator.share) {
-                    navigator.share({
-                      title: video.title,
-                      text: video.description,
-                      url: `${window.location.origin}/scoop`,
-                    });
+                    try {
+                      await navigator.share({
+                        title: video.title,
+                        text: video.description,
+                        url: `${window.location.origin}/scoop`,
+                      });
+                    } catch (err) {
+                      // User cancelled or error occurred
+                    }
                   } else {
-                    navigator.clipboard.writeText(`${window.location.origin}/scoop`);
+                    await navigator.clipboard.writeText(`${window.location.origin}/scoop`);
                     toast.success("Link copied to clipboard!");
                   }
                 }}

@@ -6,7 +6,7 @@ import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import FileUploadArea from "@/components/FileUploadArea";
 import Toggle from "@/components/Toggle";
-import SubjectSelector from "@/components/SubjectSelector";
+import Dropdown from "@/components/Dropdown";
 import { uploadApi } from "@/lib/api/upload";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +25,7 @@ export default function ResearchLabUploadPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
+  const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [subject, setSubject] = useState("");
   const [dragActive, setDragActive] = useState(false);
@@ -44,18 +45,18 @@ export default function ResearchLabUploadPage() {
 
     Array.from(files).forEach((file) => {
       if (file.size > MAX_FILE_SIZE) {
-        alert(`File ${file.name} exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`);
+        toast.error(`File ${file.name} exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`);
         return;
       }
 
       if (selectedFiles.length >= MAX_FILES) {
-        alert(`Maximum ${MAX_FILES} files allowed`);
+        toast.error(`Maximum ${MAX_FILES} files allowed`);
         return;
       }
 
       // Allow both videos and images
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        alert("Only images and videos are supported");
+        toast.error("Only images and videos are supported");
         return;
       }
 
@@ -119,7 +120,7 @@ export default function ResearchLabUploadPage() {
       if (videoFile) {
         // Upload video
         const uploadPromise = uploadApi.uploadVideo(videoFile.file, {
-          title: caption || "Untitled Video",
+          title: title || "Untitled Video",
           description: caption,
           subject: subject || undefined,
           videoType: "research-lab",
@@ -242,18 +243,33 @@ export default function ResearchLabUploadPage() {
               </div>
             )}
 
+            {/* Title Input */}
+            <div>
+              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
+                Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter video title..."
+                disabled={isUploading}
+                className="w-full px-4 py-3 transition-colors bg-white border rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
+              />
+            </div>
+
             {/* Caption Input */}
             <div>
               <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
-                Title / Caption
+                Caption
               </label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Write a title or caption..."
+                placeholder="Write a caption..."
                 rows={4}
                 disabled={isUploading}
-                className="w-full px-4 py-3 bg-white border rounded-lg resize-none border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
+                className="w-full px-4 py-3 transition-colors bg-white border rounded-lg resize-none border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
               />
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {caption.length} characters
@@ -265,11 +281,43 @@ export default function ResearchLabUploadPage() {
               <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
                 Subject (Optional)
               </label>
-              <SubjectSelector
+              <Dropdown
+                options={[
+                  { value: "", label: "None" },
+                  { value: "Mathematics", label: "Mathematics" },
+                  { value: "Physics", label: "Physics" },
+                  { value: "Chemistry", label: "Chemistry" },
+                  { value: "Biology", label: "Biology" },
+                  { value: "Computer Science", label: "Computer Science" },
+                  { value: "Engineering", label: "Engineering" },
+                  { value: "Medicine", label: "Medicine" },
+                  { value: "Psychology", label: "Psychology" },
+                  { value: "Economics", label: "Economics" },
+                  { value: "History", label: "History" },
+                  { value: "Literature", label: "Literature" },
+                  { value: "Philosophy", label: "Philosophy" },
+                  { value: "Art", label: "Art" },
+                  { value: "Music", label: "Music" },
+                  { value: "Geography", label: "Geography" },
+                  { value: "Astronomy", label: "Astronomy" },
+                  { value: "Environmental Science", label: "Environmental Science" },
+                  { value: "Political Science", label: "Political Science" },
+                  { value: "Sociology", label: "Sociology" },
+                  { value: "Business", label: "Business" },
+                  { value: "Education", label: "Education" },
+                  { value: "Law", label: "Law" },
+                  { value: "Architecture", label: "Architecture" },
+                  { value: "Agriculture", label: "Agriculture" },
+                  { value: "Other", label: "Other" },
+                ]}
                 value={subject}
-                onChange={setSubject}
+                onChange={(e) => {
+                  const value = typeof e === 'string' ? e : e.target.value;
+                  setSubject(value === "" ? "" : value);
+                }}
+                placeholder="Select a subject (optional)..."
+                className="transition-colors"
                 disabled={isUploading}
-                placeholder="Select or type a subject..."
               />
             </div>
 

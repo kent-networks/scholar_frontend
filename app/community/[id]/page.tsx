@@ -263,7 +263,7 @@ export default function CommunityDetailPage() {
             </div>
 
             {/* Owner Section - only visible if owner */}
-            {mockIsOwner && (
+            {false && (
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
                   <h3 className="font-bold text-slate-900 dark:text-white mb-4">Member List</h3>

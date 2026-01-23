@@ -184,6 +184,7 @@ export default function Dropdown({
               placeholder-slate-400
               cursor-default
               text-slate-900
+              transition-colors
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             `}
           />

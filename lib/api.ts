@@ -1,6 +1,13 @@
 import axios from "axios";
 import NProgress from "nprogress";
 
+// Store router instance for redirects
+let routerInstance: any = null;
+
+export function setRouter(router: any) {
+  routerInstance = router;
+}
+
 // Configure NProgress
 NProgress.configure({
   showSpinner: false,
@@ -48,7 +55,12 @@ api.interceptors.response.use(
         // Only redirect if not already on login/signup pages
         const currentPath = window.location.pathname;
         if (!currentPath.includes("/login") && !currentPath.includes("/signup")) {
-          window.location.href = "/login";
+          // Use router if available, otherwise fallback to window.location
+          if (routerInstance) {
+            routerInstance.push("/login");
+          } else {
+            window.location.href = "/login";
+          }
         }
       }
     }

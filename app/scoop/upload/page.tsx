@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import FileUploadArea from "@/components/FileUploadArea";
-import SubjectSelector from "@/components/SubjectSelector";
+import Dropdown from "@/components/Dropdown";
 import { uploadApi } from "@/lib/api/upload";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,8 +24,10 @@ export default function ScoopUploadPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
+  const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [subject, setSubject] = useState("");
+  const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -35,6 +37,64 @@ export default function ScoopUploadPage() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File ${file.name} exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`);
+        return;
+      }
+
+      if (selectedFiles.length >= MAX_FILES) {
+        toast.error(`Maximum ${MAX_FILES} files allowed`);
+        return;
+      }
+
+      // Allow both videos and images
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+        toast.error("Only images and videos are supported");
+        return;
+      }
+
+      const preview = URL.createObjectURL(file);
+      const newFile: UploadedFile = {
+        file,
+        preview,
+        id: Math.random().toString(36).substring(7),
+      };
+
+      setSelectedFiles((prev) => [...prev, newFile]);
+    });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (e.dataTransfer.files) {
+      handleFileSelect(e.dataTransfer.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragActive(false);
+  };
+
+  const removeFile = (id: string) => {
+    setSelectedFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.id === id);
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter((f) => f.id !== id);
+    });
+  };
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
@@ -69,7 +129,7 @@ export default function ScoopUploadPage() {
       if (videoFiles.length === 1) {
         // Upload single video
         const uploadPromise = uploadApi.uploadVideo(videoFiles[0].file, {
-          title: caption || "Untitled Video",
+          title: title || "Untitled Video",
           description: caption,
           subject: subject || undefined,
           videoType: "scoop",
@@ -151,11 +211,17 @@ export default function ScoopUploadPage() {
           <div className="space-y-6">
             {/* File Upload Area */}
             <FileUploadArea
-              selectedFiles={selectedFiles}
-              onFilesChange={setSelectedFiles}
+              files={selectedFiles}
+              onFilesSelect={handleFileSelect}
+              onFileRemove={removeFile}
+              dragActive={dragActive}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               maxFiles={MAX_FILES}
-              maxFileSize={MAX_FILE_SIZE}
+              maxFileSizeMB={MAX_FILE_SIZE_MB}
               accept="video/*,image/*"
+              disabled={isUploading}
             />
 
             {/* Upload Progress */}
@@ -174,6 +240,21 @@ export default function ScoopUploadPage() {
               </div>
             )}
 
+            {/* Title Input */}
+            <div>
+              <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter video title..."
+                disabled={isUploading}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors disabled:opacity-50"
+              />
+            </div>
+
             {/* Caption Input */}
             <div>
               <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
@@ -185,7 +266,7 @@ export default function ScoopUploadPage() {
                 placeholder="Write a caption..."
                 rows={4}
                 disabled={isUploading}
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none disabled:opacity-50"
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors disabled:opacity-50"
               />
             </div>
 
@@ -194,11 +275,43 @@ export default function ScoopUploadPage() {
               <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
                 Subject (Optional)
               </label>
-              <SubjectSelector
+              <Dropdown
+                options={[
+                  { value: "", label: "None" },
+                  { value: "Mathematics", label: "Mathematics" },
+                  { value: "Physics", label: "Physics" },
+                  { value: "Chemistry", label: "Chemistry" },
+                  { value: "Biology", label: "Biology" },
+                  { value: "Computer Science", label: "Computer Science" },
+                  { value: "Engineering", label: "Engineering" },
+                  { value: "Medicine", label: "Medicine" },
+                  { value: "Psychology", label: "Psychology" },
+                  { value: "Economics", label: "Economics" },
+                  { value: "History", label: "History" },
+                  { value: "Literature", label: "Literature" },
+                  { value: "Philosophy", label: "Philosophy" },
+                  { value: "Art", label: "Art" },
+                  { value: "Music", label: "Music" },
+                  { value: "Geography", label: "Geography" },
+                  { value: "Astronomy", label: "Astronomy" },
+                  { value: "Environmental Science", label: "Environmental Science" },
+                  { value: "Political Science", label: "Political Science" },
+                  { value: "Sociology", label: "Sociology" },
+                  { value: "Business", label: "Business" },
+                  { value: "Education", label: "Education" },
+                  { value: "Law", label: "Law" },
+                  { value: "Architecture", label: "Architecture" },
+                  { value: "Agriculture", label: "Agriculture" },
+                  { value: "Other", label: "Other" },
+                ]}
                 value={subject}
-                onChange={setSubject}
+                onChange={(e) => {
+                  const value = typeof e === 'string' ? e : e.target.value;
+                  setSubject(value === "" ? "" : value);
+                }}
+                placeholder="Select a subject (optional)..."
+                className="transition-colors"
                 disabled={isUploading}
-                placeholder="Select or type a subject..."
               />
             </div>
 

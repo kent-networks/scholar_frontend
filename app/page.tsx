@@ -15,88 +15,9 @@ import {
   Users,
   Video,
 } from "lucide-react";
+import { statsApi, Stats, TrendingVideo } from "@/lib/api/stats";
+import AnimatedCounter from "@/components/AnimatedCounter";
 
-const contentItems = [
-  {
-    id: 1,
-    title: "Science Oxygen: The Foundation of Life",
-    category: "Research",
-    description:
-      "Exploring the fundamentals of oxygen in scientific research and its critical role in biological processes",
-    image:
-      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop",
-    author: "Dr. Sarah Chen",
-    views: 1240,
-    date: "2 days ago",
-  },
-  {
-    id: 2,
-    title: "Modern Web Development Practices",
-    category: "Technology",
-    description:
-      "Comprehensive guide to modern web development practices, frameworks, and best practices for building scalable applications",
-    image:
-      "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop",
-    author: "Prof. Michael Johnson",
-    views: 890,
-    date: "5 days ago",
-  },
-  {
-    id: 3,
-    title: "Machine Learning Fundamentals",
-    category: "AI",
-    description:
-      "Introduction to machine learning algorithms, neural networks, and their applications in real-world scenarios",
-    image:
-      "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=300&fit=crop",
-    author: "Dr. Emily Rodriguez",
-    views: 2100,
-    date: "1 week ago",
-  },
-  {
-    id: 4,
-    title: "Quantum Computing Principles",
-    category: "Physics",
-    description:
-      "Understanding quantum computing principles, qubits, and the future of computational technology",
-    image:
-      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=300&fit=crop",
-    author: "Prof. David Kim",
-    views: 1560,
-    date: "3 days ago",
-  },
-  {
-    id: 5,
-    title: "Climate Change Research Initiatives",
-    category: "Environment",
-    description:
-      "Latest research on climate change mitigation strategies and sustainable environmental practices",
-    image:
-      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&h=300&fit=crop",
-    author: "Dr. Lisa Anderson",
-    views: 980,
-    date: "4 days ago",
-  },
-  {
-    id: 6,
-    title: "Biotechnology Breakthroughs",
-    category: "Research",
-    description:
-      "Recent advances in biotechnology and their potential impact on healthcare and medicine",
-    image:
-      "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=300&fit=crop",
-    author: "Prof. James Wilson",
-    views: 1340,
-    date: "6 days ago",
-  },
-];
-
-const stats = [
-  { label: "Active Researchers", value: "2,450", icon: "science" },
-  { label: "Research Projects", value: "1,230", icon: "folder" },
-  { label: "Partner Institutions", value: "156", icon: "school" },
-  { label: "Community Members", value: "12,890", icon: "groups" },
-];
 
 const featuredCategories = [
   { name: "Research Lab", href: "/research-lab", icon: FlaskConical, count: 450 },
@@ -107,6 +28,9 @@ const featuredCategories = [
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [trendingVideos, setTrendingVideos] = useState<TrendingVideo[]>([]);
+  const [loading, setLoading] = useState(true);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -120,6 +44,25 @@ export default function Home() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsData, videosData] = await Promise.all([
+          statsApi.getStats(),
+          statsApi.getTrendingVideos(6),
+        ]);
+        setStats(statsData);
+        setTrendingVideos(videosData);
+      } catch (error) {
+        console.error("Error fetching home data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const imageOffset = scrollY * 0.5;
@@ -222,7 +165,7 @@ export default function Home() {
                     Active Researchers
                   </p>
                   <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                    2,450
+                    {loading ? "..." : <AnimatedCounter value={stats?.activeResearchers || 0} prefix="+" />}
                   </p>
                 </div>
               </div>
@@ -237,7 +180,7 @@ export default function Home() {
                     Research Projects
                   </p>
                   <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                    1,230
+                    {loading ? "..." : <AnimatedCounter value={stats?.researchProjects || 0} prefix="+" />}
                   </p>
                 </div>
               </div>
@@ -252,7 +195,7 @@ export default function Home() {
                     Partner Institutions
                   </p>
                   <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                    156
+                    {loading ? "..." : <AnimatedCounter value={stats?.partnerInstitutions || 0} prefix="+" />}
                   </p>
                 </div>
               </div>
@@ -267,7 +210,7 @@ export default function Home() {
                     Community Members
                   </p>
                   <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                    12,890
+                    {loading ? "..." : <AnimatedCounter value={stats?.communityMembers || 0} prefix="+" />}
                   </p>
                 </div>
               </div>
@@ -324,42 +267,54 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {contentItems.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/content/${item.id}`}
-                    className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
-                  >
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
-                          {item.category}
-                        </span>
+                {loading ? (
+                  <div className="py-12 text-center col-span-full text-slate-500 dark:text-slate-400">
+                    Loading trending content...
+                  </div>
+                ) : trendingVideos.length === 0 ? (
+                  <div className="py-12 text-center col-span-full text-slate-500 dark:text-slate-400">
+                    No trending content available
+                  </div>
+                ) : (
+                  trendingVideos.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/scoop`}
+                      className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
+                    >
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={item.image || "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop"}
+                          alt={item.title}
+                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
+                            {item.category}
+                          </span>
+                        </div>
+                        <div className="absolute flex items-center gap-2 px-2 py-1 text-xs text-white rounded-full bottom-4 right-4 bg-black/50 backdrop-blur-sm">
+                          <Eye className="w-4 h-4" />
+                          {item.views}
+                        </div>
                       </div>
-                      <div className="absolute flex items-center gap-2 px-2 py-1 text-xs text-white rounded-full bottom-4 right-4 bg-black/50 backdrop-blur-sm">
-                        <Eye className="w-4 h-4" />
-                        {item.views}
+                      <div className="p-5">
+                        <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary line-clamp-2">
+                          {item.title}
+                        </h3>
+                        {item.description && (
+                          <p className="mb-4 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                          <span>By {item.author}</span>
+                          <span>{item.date}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary line-clamp-2">
-                        {item.title}
-                      </h3>
-                      <p className="mb-4 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                        {item.description}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                        <span>By {item.author}</span>
-                        <span>{item.date}</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
 

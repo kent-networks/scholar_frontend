@@ -71,5 +71,10 @@ export const videoApi = {
   deleteVideo: async (videoId: number) => {
     await api.delete(`/videos/${videoId}`);
   },
+
+  incrementViews: async (videoId: number) => {
+    // This will log watch history and increment views if it's a new view
+    await api.post(`/videos/${videoId}/view`);
+  },
 };
 

@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings } from "lucide-react";
+import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2 } from "lucide-react";
+import Tooltip from "@/components/Tooltip";
+import ModalDialog from "@/components/ModalDialog";
 import Link from "next/link";
 import { userApi, UserProfile } from "@/lib/api/users";
 import { videoApi, Video as VideoType } from "@/lib/api/videos";
@@ -150,6 +152,18 @@ export default function ProfilePage() {
       router.push("/scoop");
     } else {
       router.push("/research-lab");
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!deleteConfirm.videoId) return;
+    try {
+      await videoApi.deleteVideo(deleteConfirm.videoId);
+      setVideos((prev) => prev.filter((v) => v.id !== deleteConfirm.videoId));
+      setDeleteConfirm({ videoId: null, open: false });
+      toast.success("Video deleted");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete video");
     }
   };
 
@@ -377,75 +391,137 @@ export default function ProfilePage() {
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
               {videos.map((video) => (
-                <button
+                <div
                   key={video.id}
-                  onClick={() => handleVideoClick(video)}
-                  className="group relative aspect-[9/16] overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800 text-left"
+                  className="group relative aspect-[9/16] overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800"
                 >
-                  <img
-                    src={video.poster || video.thumbnailUrl || ""}
-                    alt={video.title}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/60 to-transparent group-hover:opacity-100">
-                    <div className="absolute text-white bottom-2 left-2 right-2">
-                      <p className="text-xs font-bold line-clamp-1">{video.title}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs">
-                        <span className="flex items-center gap-1">
-                          <Video className="w-3 h-3" />
-                          {video.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="w-3 h-3" />
-                          {video.likes}
-                        </span>
+                  <button
+                    onClick={() => handleVideoClick(video)}
+                    className="w-full h-full text-left"
+                  >
+                    <img
+                      src={video.poster || video.thumbnailUrl || ""}
+                      alt={video.title}
+                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/60 to-transparent group-hover:opacity-100">
+                      <div className="absolute text-white bottom-2 left-2 right-2">
+                        <p className="text-xs font-bold line-clamp-1">{video.title}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs">
+                          <span className="flex items-center gap-1">
+                            <Video className="w-3 h-3" />
+                            {video.views}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            {video.likes}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  {profile.isOwnProfile && (
+                    <Tooltip content="Delete video">
+                      <div className="absolute top-2 right-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirm({ videoId: video.id, open: true });
+                          }}
+                          className="p-2 text-white transition-colors bg-red-500 rounded-full hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </Tooltip>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
               {videos.map((video) => (
-                <button
+                <div
                   key={video.id}
-                  onClick={() => handleVideoClick(video)}
-                  className="flex gap-4 p-4 transition-colors rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group w-full text-left"
+                  className="flex gap-4 p-4 transition-colors rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group"
                 >
-                  <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-                    <img
-                      src={video.poster || video.thumbnailUrl || ""}
-                      alt={video.title}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="mb-2 text-lg font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
-                      {video.title}
-                    </h3>
-                    {video.description && (
-                      <p className="mb-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                        {video.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Video className="w-4 h-4" />
-                        {video.views} views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        {video.likes} likes
-                      </span>
+                  <button
+                    onClick={() => handleVideoClick(video)}
+                    className="flex gap-4 flex-1 text-left"
+                  >
+                    <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
+                      <img
+                        src={video.poster || video.thumbnailUrl || ""}
+                        alt={video.title}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
-                  </div>
-                </button>
+                    <div className="flex-1">
+                      <h3 className="mb-2 text-lg font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
+                        {video.title}
+                      </h3>
+                      {video.description && (
+                        <p className="mb-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                          {video.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Video className="w-4 h-4" />
+                          {video.views} views
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-4 h-4" />
+                          {video.likes} likes
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                  {profile.isOwnProfile && (
+                    <Tooltip content="Delete video">
+                      <div>
+                        <button
+                          onClick={() => setDeleteConfirm({ videoId: video.id, open: true })}
+                          className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </Tooltip>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <ModalDialog
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ videoId: null, open: false })}
+        title="Delete Video"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to delete this video? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setDeleteConfirm({ videoId: null, open: false })}
+              className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteVideo}
+              className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">

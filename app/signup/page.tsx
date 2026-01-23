@@ -76,7 +76,7 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* User Type Selection */}
         <div>
-          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-3">
+          <label className="block mb-3 text-sm font-bold text-slate-900 dark:text-white">
             I want to join as
           </label>
           <div className="grid grid-cols-1 gap-3">
@@ -115,57 +115,57 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+          <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
             Full Name
           </label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <User className="absolute w-5 h-5 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full py-3 pl-10 pr-4 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               placeholder="John Doe"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+          <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
             Email
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Mail className="absolute w-5 h-5 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full py-3 pl-10 pr-4 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               placeholder="you@example.com"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+          <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Lock className="absolute w-5 h-5 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full pl-10 pr-12 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full py-3 pl-10 pr-12 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               placeholder="Create a password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="absolute -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -173,16 +173,16 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg">
+          <div className="p-3 text-sm text-red-600 rounded-lg bg-red-50 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </div>
         )}
-
+{/* 
         <label className="flex items-start gap-2">
           <input
             type="checkbox"
             required
-            className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/50"
+            className="w-4 h-4 mt-1 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/50"
           />
           <span className="text-sm text-slate-700 dark:text-slate-300">
             I agree to the{" "}
@@ -194,17 +194,17 @@ export default function SignupPage() {
               Privacy Policy
             </Link>
           </span>
-        </label>
+        </label> */}
 
         <button
           type="submit"
           disabled={isLoading || !userType}
-          className="w-full px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-6 py-3 font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Creating account..." : "Create account"}
         </button>
 
-        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-center text-slate-600 dark:text-slate-400">
           Already have an account?{" "}
           <Link href="/login" className="font-bold text-primary hover:text-primary-dark">
             Sign in
