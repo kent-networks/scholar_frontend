@@ -1,88 +1,185 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Send } from "lucide-react";
+import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings } from "lucide-react";
 import Link from "next/link";
-
-// Mock data - in real app, fetch from API
-const mockProfile = {
-  id: "sarah-chen",
-  name: "Dr. Sarah Chen",
-  username: "@sarahchen",
-  bio: "Quantum Computing Researcher | MIT | Exploring the future of computation",
-  photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-  followers: 12450,
-  following: 320,
-  likes: 8920,
-  isFollowing: false,
-  isOwnProfile: false,
-};
-
-const mockVideos = [
-  {
-    id: 1,
-    title: "Quantum Computing Explained",
-    thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=600&fit=crop",
-    views: 1240,
-    likes: 89,
-  },
-  {
-    id: 2,
-    title: "Machine Learning Basics",
-    thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=600&fit=crop",
-    views: 2100,
-    likes: 145,
-  },
-  {
-    id: 3,
-    title: "Sustainable Energy",
-    thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&h=600&fit=crop",
-    views: 890,
-    likes: 67,
-  },
-  {
-    id: 4,
-    title: "Climate Research",
-    thumbnail: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&h=600&fit=crop",
-    views: 980,
-    likes: 78,
-  },
-  {
-    id: 5,
-    title: "Biotech Breakthroughs",
-    thumbnail: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=600&fit=crop",
-    views: 1560,
-    likes: 92,
-  },
-  {
-    id: 6,
-    title: "AI Research Methods",
-    thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=600&fit=crop",
-    views: 1340,
-    likes: 105,
-  },
-];
+import { userApi, UserProfile } from "@/lib/api/users";
+import { videoApi, Video as VideoType } from "@/lib/api/videos";
+import { messageApi } from "@/lib/api/messages";
+import { useAuth } from "@/contexts/AuthContext";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
+  const { isAuthenticated, user } = useAuth();
+  const username = params.id as string;
+  
   const [activeTab, setActiveTab] = useState<"videos" | "liked" | "saved">("videos");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [profile, setProfile] = useState(mockProfile);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [videos, setVideos] = useState<VideoType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [videosLoading, setVideosLoading] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const handleFollow = () => {
-    setProfile((prev) => ({
-      ...prev,
-      isFollowing: !prev.isFollowing,
-      followers: prev.isFollowing ? prev.followers - 1 : prev.followers + 1,
-    }));
+  // Fetch profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const profileData = await userApi.getProfile(username);
+        setProfile(profileData);
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          toast.error("User not found");
+          router.back();
+        } else {
+          toast.error(error.response?.data?.message || "Failed to load profile");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (username) {
+      fetchProfile();
+    }
+  }, [username, router]);
+
+  // Fetch videos based on active tab
+  useEffect(() => {
+    const fetchVideos = async () => {
+      if (!profile?.userId) return;
+
+      try {
+        setVideosLoading(true);
+        let fetchedVideos: VideoType[] = [];
+
+        switch (activeTab) {
+          case "videos":
+            fetchedVideos = await videoApi.getUserVideos(profile.userId);
+            break;
+          case "liked":
+            fetchedVideos = await videoApi.getUserLikedVideos(profile.userId);
+            break;
+          case "saved":
+            fetchedVideos = await videoApi.getUserSavedVideos(profile.userId);
+            break;
+        }
+
+        setVideos(fetchedVideos);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to load videos");
+      } finally {
+        setVideosLoading(false);
+      }
+    };
+
+    if (profile?.userId) {
+      fetchVideos();
+    }
+  }, [profile?.userId, activeTab]);
+
+  const handleFollow = async () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (!profile?.userId) return;
+
+    const wasFollowing = profile.isFollowing;
+
+    // Optimistic update
+    setProfile((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        isFollowing: !prev.isFollowing,
+        followers: prev.isFollowing ? prev.followers - 1 : prev.followers + 1,
+      };
+    });
+
+    try {
+      setFollowLoading(true);
+      const result = await userApi.toggleFollow(profile.userId);
+      // Update with server response
+      setProfile((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          isFollowing: result.following,
+          followers: result.following ? prev.followers + 1 : prev.followers - 1,
+        };
+      });
+      toast.success(result.following ? "Following!" : "Unfollowed");
+    } catch (error: any) {
+      // Revert on error
+      setProfile((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          isFollowing: wasFollowing,
+          followers: wasFollowing ? prev.followers : prev.followers - 1,
+        };
+      });
+      toast.error(error.response?.data?.message || "Failed to update follow status");
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   const handleMessage = () => {
-    router.push(`/inbox/${profile.id}`);
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (!profile?.userId) return;
+
+    // Navigate to inbox with user ID
+    router.push(`/inbox/${profile.userId}`);
   };
+
+  const handleVideoClick = (video: VideoType) => {
+    // Navigate to the appropriate feed based on video type
+    if (video.videoType === "scoop") {
+      router.push("/scoop");
+    } else {
+      router.push("/research-lab");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+        <main className="flex items-center justify-center flex-1">
+          <div className="w-12 h-12 border-4 rounded-full border-primary/30 border-t-primary animate-spin" />
+        </main>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+        <main className="flex items-center justify-center flex-1">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">User not found</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -103,7 +200,7 @@ export default function ProfilePage() {
               </button>
               <div>
                 <h1 className="text-lg font-bold text-slate-900 dark:text-white">{profile.name}</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{mockVideos.length} videos</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{videos.length} {activeTab === "videos" ? "videos" : activeTab === "liked" ? "liked" : "saved"}</p>
               </div>
             </div>
           </div>
@@ -134,8 +231,10 @@ export default function ProfilePage() {
                   <h2 className="mb-1 text-2xl font-bold md:text-3xl text-slate-900 dark:text-white">
                     {profile.name}
                   </h2>
-                  <p className="mb-2 text-slate-600 dark:text-slate-400">{profile.username}</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">{profile.bio}</p>
+                  <p className="mb-2 text-slate-600 dark:text-slate-400">@{profile.username}</p>
+                  {profile.bio && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300">{profile.bio}</p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -144,20 +243,22 @@ export default function ProfilePage() {
                     <>
                       <button
                         onClick={handleMessage}
-                        className="flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                        disabled={followLoading}
+                        className="flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
                       >
                         <MessageCircle className="w-4 h-4" />
                         Message
                       </button>
                       <button
                         onClick={handleFollow}
-                        className={`px-6 py-2 rounded-lg font-bold transition-colors ${
+                        disabled={followLoading}
+                        className={`px-6 py-2 rounded-lg font-bold transition-colors disabled:opacity-50 ${
                           profile.isFollowing
                             ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600"
                             : "bg-primary text-white hover:bg-primary-dark"
                         }`}
                       >
-                        {profile.isFollowing ? "Following" : "Follow"}
+                        {followLoading ? "..." : profile.isFollowing ? "Following" : "Follow"}
                       </button>
                     </>
                   )}
@@ -263,16 +364,26 @@ export default function ProfilePage() {
           </div>
 
           {/* Content Grid/List */}
-          {viewMode === "grid" ? (
+          {videosLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 rounded-full border-primary/30 border-t-primary animate-spin" />
+            </div>
+          ) : videos.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-slate-500 dark:text-slate-400">
+                No {activeTab === "videos" ? "videos" : activeTab === "liked" ? "liked videos" : "saved videos"} yet.
+              </p>
+            </div>
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
-              {mockVideos.map((video) => (
-                <Link
+              {videos.map((video) => (
+                <button
                   key={video.id}
-                  href={`/research-lab`}
-                  className="group relative aspect-[9/16] overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800"
+                  onClick={() => handleVideoClick(video)}
+                  className="group relative aspect-[9/16] overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800 text-left"
                 >
                   <img
-                    src={video.thumbnail}
+                    src={video.poster || video.thumbnailUrl || ""}
                     alt={video.title}
                     className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                   />
@@ -291,20 +402,20 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
-              {mockVideos.map((video) => (
-                <Link
+              {videos.map((video) => (
+                <button
                   key={video.id}
-                  href={`/research-lab`}
-                  className="flex gap-4 p-4 transition-colors rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group"
+                  onClick={() => handleVideoClick(video)}
+                  className="flex gap-4 p-4 transition-colors rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group w-full text-left"
                 >
                   <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
                     <img
-                      src={video.thumbnail}
+                      src={video.poster || video.thumbnailUrl || ""}
                       alt={video.title}
                       className="object-cover w-full h-full"
                     />
@@ -313,6 +424,11 @@ export default function ProfilePage() {
                     <h3 className="mb-2 text-lg font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
                       {video.title}
                     </h3>
+                    {video.description && (
+                      <p className="mb-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                        {video.description}
+                      </p>
+                    )}
                     <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                       <span className="flex items-center gap-1">
                         <Video className="w-4 h-4" />
@@ -324,7 +440,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           )}
@@ -338,4 +454,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

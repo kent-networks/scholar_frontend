@@ -30,6 +30,26 @@ export default function ResearchLabPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const limit = 10;
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { videoId, delta } = (e as CustomEvent<{ videoId: number; delta: number }>).detail || {};
+      if (!videoId || !delta) return;
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoId ? { ...v, comments: Math.max(0, (v.comments || 0) + delta) } : v
+        )
+      );
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("videoCommentsDelta", handler as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("videoCommentsDelta", handler as EventListener);
+      }
+    };
+  }, []);
+
   // Fetch videos from backend
   const fetchVideos = useCallback(async (reset = false) => {
     try {
@@ -209,7 +229,7 @@ export default function ResearchLabPage() {
       scrollTimeout = setTimeout(() => {
         setIsScrolling(false);
         const scrollTop = container.scrollTop;
-        const videoHeight = window.innerHeight;
+        const videoHeight = container.clientHeight || window.innerHeight;
         const newIndex = Math.round(scrollTop / videoHeight);
         if (newIndex !== currentIndex && newIndex >= 0 && newIndex < videos.length) {
           setCurrentIndex(newIndex);
@@ -229,7 +249,7 @@ export default function ResearchLabPage() {
     const container = containerRef.current;
     if (!container || isScrolling) return;
 
-    const videoHeight = window.innerHeight;
+    const videoHeight = container.clientHeight || window.innerHeight;
     container.scrollTo({
       top: currentIndex * videoHeight,
       behavior: "smooth",
@@ -237,7 +257,7 @@ export default function ResearchLabPage() {
   }, [currentIndex, isScrolling]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <div className="flex h-[100svh] md:h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
@@ -304,7 +324,7 @@ export default function ResearchLabPage() {
           `}</style>
 
           {videos.length > 0 ? (
-            videos.map((video) => (
+            videos.map((video, index) => (
               <VideoCard
                 key={video.id}
                 video={{
@@ -324,6 +344,8 @@ export default function ResearchLabPage() {
                   imageUrls: video.imageUrls,
                   isImageCollection: video.isImageCollection,
                 }}
+                isActive={index === currentIndex}
+                isNearActive={Math.abs(index - currentIndex) <= 1}
                 onLike={() => handleLike(video.id)}
                 onComment={() => handleComment(video.id)}
                 onShare={() => {

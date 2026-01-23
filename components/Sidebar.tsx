@@ -34,8 +34,9 @@ const NAV_ITEMS: NavItem[] = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
-  const { isAuthenticated, user } = useAuth()
-  const displayUser = user ? { name: user.name, email: user.email } : null
+  const router = useRouter()
+  const { isAuthenticated, user, logout } = useAuth()
+  const displayUser = user ? { name: user.name, email: user.email, username: user.username, photo: user.profilePhotoPath } : null
 
   return (
     <nav className="flex items-center justify-around px-2 py-2">
@@ -56,15 +57,24 @@ export function MobileBottomNav() {
           </Link>
         )
       })}
-      {/* Account button with photo on mobile */}
+      {/* Profile button with dropdown - shows photo/initials only */}
       {isAuthenticated && displayUser && (
         <ButtonDropdown
           buttonContent={
-            <div className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px]">
-              <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-primary">
-                {displayUser.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-[10px] font-medium leading-tight text-center">Account</span>
+            <div className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
+              pathname?.startsWith('/profile') ? 'text-primary bg-primary/10' : ''
+            }`}>
+              {displayUser.photo ? (
+                <img
+                  src={displayUser.photo}
+                  alt={displayUser.name}
+                  className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-primary">
+                  {displayUser.name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           }
           buttonClassName=""
@@ -74,15 +84,15 @@ export function MobileBottomNav() {
               value: 'profile',
               icon: UserCircle2,
               onClick: () => {
-                window.location.href = '/account'
+                router.push(`/profile/${displayUser.username || displayUser.name.toLowerCase().replace(/\s+/g, '-')}`)
               },
             },
             {
-              label: 'Settings',
-              value: 'settings',
+              label: 'My Account',
+              value: 'account',
               icon: UserCircle2,
               onClick: () => {
-                window.location.href = '/account'
+                router.push('/account')
               },
             },
             {
@@ -232,9 +242,17 @@ export default function Sidebar() {
             <ButtonDropdown
               buttonContent={
                 <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
-                  <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  {user.profilePhotoPath ? (
+                    <img
+                      src={user.profilePhotoPath}
+                      alt={user.name}
+                      className="flex-shrink-0 w-9 h-9 rounded-full object-cover border-2 border-white/20"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div
                     className={`flex-1 text-left transition-all duration-300 overflow-hidden ${
                       collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
@@ -252,12 +270,12 @@ export default function Sidebar() {
                   value: 'profile',
                   icon: UserCircle2,
                   onClick: () => {
-                    router.push('/account')
+                    router.push(`/profile/${user.username || user.name.toLowerCase().replace(/\s+/g, '-')}`)
                   },
                 },
                 {
-                  label: 'Settings',
-                  value: 'settings',
+                  label: 'My Account',
+                  value: 'account',
                   icon: UserCircle2,
                   onClick: () => {
                     router.push('/account')

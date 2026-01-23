@@ -67,5 +67,9 @@ export const videoApi = {
     const response = await api.post(`/videos/${videoId}/save`);
     return response.data.data;
   },
+
+  deleteVideo: async (videoId: number) => {
+    await api.delete(`/videos/${videoId}`);
+  },
 };
 

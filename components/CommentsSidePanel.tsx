@@ -14,6 +14,7 @@ interface CommentsSidePanelProps {
   postId?: number;
   commentsCount?: number;
   videoOwnerId?: number;
+  onVideoCommentsDelta?: (videoId: number, delta: number) => void;
 }
 
 export default function CommentsSidePanel({
@@ -23,13 +24,25 @@ export default function CommentsSidePanel({
   postId,
   commentsCount = 0,
   videoOwnerId,
+  onVideoCommentsDelta,
 }: CommentsSidePanelProps) {
   const { isAuthenticated, user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
+  const [replyingToId, setReplyingToId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const emitVideoCommentsDelta = (videoId: number, delta: number) => {
+    onVideoCommentsDelta?.(videoId, delta);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("videoCommentsDelta", { detail: { videoId, delta } })
+      );
+    }
+  };
 
   // Fetch comments when panel opens
   useEffect(() => {
@@ -86,9 +99,31 @@ export default function CommentsSidePanel({
       const comment = await commentApi.createComment(videoId, newComment);
       setComments([comment, ...comments]);
       setNewComment("");
+      emitVideoCommentsDelta(videoId, 1);
       toast.success("Comment posted!");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to post comment");
+    }
+  };
+
+  const handleSubmitReply = async (parentCommentId: number) => {
+    if (!replyText.trim() || !videoId || !isAuthenticated) return;
+
+    try {
+      const reply = await commentApi.createComment(videoId, replyText, parentCommentId);
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === parentCommentId
+            ? { ...c, replies: [...(c.replies || []), reply] }
+            : c
+        )
+      );
+      setReplyText("");
+      setReplyingToId(null);
+      emitVideoCommentsDelta(videoId, 1);
+      toast.success("Reply posted!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to post reply");
     }
   };
 
@@ -190,6 +225,19 @@ export default function CommentsSidePanel({
 
     try {
       await commentApi.deleteComment(videoId, commentId);
+      // Count how many comments will be removed from the video's comments_count (comment + its replies)
+      const countToRemove = (() => {
+        const findCount = (items: Comment[]): number => {
+          for (const c of items) {
+            if (c.id === commentId) return 1 + (c.replies?.length || 0);
+            const nested = c.replies ? findCount(c.replies) : 0;
+            if (nested) return nested;
+          }
+          return 0;
+        };
+        return findCount(comments) || 1;
+      })();
+
       setComments((prev) => {
         const removeFromComments = (comments: Comment[]): Comment[] => {
           return comments
@@ -201,6 +249,7 @@ export default function CommentsSidePanel({
         };
         return removeFromComments(prev);
       });
+      emitVideoCommentsDelta(videoId, -countToRemove);
       toast.success("Comment deleted");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete comment");
@@ -234,7 +283,7 @@ export default function CommentsSidePanel({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Comments ({comments.length})
+                Comments ({commentsCount || comments.length})
               </h2>
               <button
                 onClick={onClose}
@@ -264,6 +313,20 @@ export default function CommentsSidePanel({
                     comment={comment}
                     liked={likedComments.has(comment.id)}
                     onLike={() => handleLikeComment(comment.id)}
+                    onReply={() => {
+                      setReplyingToId(comment.id);
+                      setReplyText("");
+                    }}
+                    isReplying={replyingToId === comment.id}
+                    replyText={replyText}
+                    onReplyTextChange={setReplyText}
+                    onSubmitReply={() => handleSubmitReply(comment.id)}
+                    onCancelReply={() => {
+                      setReplyingToId(null);
+                      setReplyText("");
+                    }}
+                    likedComments={likedComments}
+                    onLikeAny={(id) => handleLikeComment(id)}
                     onDelete={() => handleDeleteComment(comment.id)}
                     canDelete={isAuthenticated && (user?.id === comment.userId || user?.id === videoOwnerId)}
                   />
@@ -315,15 +378,35 @@ function CommentItem({
   comment,
   liked,
   onLike,
+  onReply,
+  isReplying,
+  replyText,
+  onReplyTextChange,
+  onSubmitReply,
+  onCancelReply,
+  likedComments,
+  onLikeAny,
   onDelete,
   canDelete,
 }: {
   comment: Comment;
   liked: boolean;
   onLike: () => void;
+  onReply: () => void;
+  isReplying: boolean;
+  replyText: string;
+  onReplyTextChange: (v: string) => void;
+  onSubmitReply: () => void;
+  onCancelReply: () => void;
+  likedComments: Set<number>;
+  onLikeAny: (commentId: number) => void;
   onDelete?: () => void;
   canDelete?: boolean;
 }) {
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const replies = comment.replies || [];
+  const visibleReplies = repliesExpanded ? replies : replies.slice(0, 2);
+
   return (
     <div className="space-y-3">
       <div className="flex gap-3">
@@ -354,6 +437,12 @@ function CommentItem({
               <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
               <span>{comment.likes}</span>
             </button>
+            <button
+              onClick={onReply}
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary"
+            >
+              Reply
+            </button>
             {canDelete && onDelete && (
               <button
                 onClick={onDelete}
@@ -364,41 +453,107 @@ function CommentItem({
               </button>
             )}
           </div>
+
+          <AnimatePresence>
+            {isReplying && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-2 overflow-hidden"
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={replyText}
+                    onChange={(e) => onReplyTextChange(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        onSubmitReply();
+                      }
+                    }}
+                    placeholder="Write a reply..."
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                  />
+                  <button
+                    onClick={onSubmitReply}
+                    disabled={!replyText.trim()}
+                    className="px-3 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={onCancelReply}
+                    className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Replies */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-11 space-y-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
-          {comment.replies.map((reply) => (
-            <div key={reply.id} className="flex gap-3">
-              <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs flex-shrink-0">
-                {reply.author.charAt(0)}
+      {replies.length > 0 && (
+        <div className="ml-11 space-y-2">
+          {replies.length > 2 && (
+            <button
+              onClick={() => setRepliesExpanded((v) => !v)}
+              className="text-xs text-slate-600 dark:text-slate-300 hover:text-primary"
+            >
+              {repliesExpanded ? "Hide replies" : `View ${replies.length} replies`}
+            </button>
+          )}
+
+          <AnimatePresence initial={false}>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                {visibleReplies.map((reply) => (
+                  <div key={reply.id} className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs flex-shrink-0">
+                      {reply.author.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white">
+                          {reply.author}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {reply.date}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 mb-1">
+                        {reply.content}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => onLikeAny(reply.id)}
+                          className={`text-xs transition-colors flex items-center gap-1 ${
+                            likedComments.has(reply.id)
+                              ? "text-red-500"
+                              : "text-slate-500 dark:text-slate-400 hover:text-red-500"
+                          }`}
+                        >
+                          <Heart className={`h-3 w-3 ${likedComments.has(reply.id) ? "fill-current" : ""}`} />
+                          <span>{reply.likes}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-xs text-slate-900 dark:text-white">
-                    {reply.author}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {reply.date}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 dark:text-slate-300 mb-1">
-                  {reply.content}
-                </p>
-                <div className="flex items-center gap-3">
-                  <button className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
-                    <span>{reply.likes}</span>
-                  </button>
-                  <button className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary">
-                    Reply
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       )}
     </div>

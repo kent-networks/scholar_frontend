@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { GraduationCap, Menu, X } from "lucide-react";
+import { GraduationCap, LogOut, Menu, User, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import ButtonDropdown from "./ButtonDropdown";
 
 const navItems = [
   { name: "Ecosystem", href: "/ecosystem" },
@@ -54,20 +55,35 @@ export default function TopNav() {
 
           {/* Desktop Auth Buttons */}
           <div className="items-center hidden gap-4 md:flex">
+            
             {isAuthenticated ? (
               <>
-                <Link
-                  href="/account"
-                  className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
-                >
-                  {user?.name || "Account"}
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
-                >
-                  Sign out
-                </button>
+              
+                <ButtonDropdown
+                  buttonContent={<div className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark">
+                   {user?.profilePhotoPath && <img src={user?.profilePhotoPath} alt={user?.name} className="w-8 h-8 border-2 border-white rounded-full" />}
+                    {user?.name || "Account"}
+                  </div>}
+                  options={[
+                    {
+                      label: "My Profile",
+                      value: "profile",
+                      icon: User,
+                      onClick: () => {
+                        router.push('/account')
+                      },
+                    },
+                    {
+                      label: "Logout",
+                      value: "logout",
+                      danger: true,
+                      icon: LogOut,
+                      onClick: () => {
+                        handleLogout()
+                      },
+                    },  
+                  ]}
+                />
               </>
             ) : (
               <>
