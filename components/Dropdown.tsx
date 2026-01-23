@@ -180,11 +180,11 @@ export default function Dropdown({
             onFocus={handleInputFocus}
             className={`
               w-full px-3 py-2 ${Icon ? "pl-10" : ""} pr-9 rounded-lg bg-surface-light border border-border-light text-sm
-              focus:ring-2 focus:border-transparent focus:ring-primary/40 focus:outline-none
+              focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
               placeholder-slate-400
               cursor-default
               text-slate-900
-              transition-colors
+              transition-all
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             `}
           />

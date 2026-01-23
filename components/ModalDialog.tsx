@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -25,11 +25,17 @@ export default function ModalDialog({
   scrollContent = true,
   clickOutside = false,
 }: ModalDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const [detectedMode, setDetectedMode] = useState<"center" | "bottom">("center");
+  const [detectedMode, setDetectedMode] =
+    useState<"center" | "bottom">("center");
 
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  /* --------------------------------------------
+   Detect mobile → bottom sheet
+  --------------------------------------------- */
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
+
     const mql = window.matchMedia("(max-width: 640px)");
 
     const handleResize = () => {
@@ -40,41 +46,38 @@ export default function ModalDialog({
 
     handleResize();
     mql.addEventListener("change", handleResize);
-
     return () => mql.removeEventListener("change", handleResize);
   }, [mode]);
 
   const actualMode = mode || detectedMode;
   const allowClickOutside = actualMode === "bottom" ? true : clickOutside;
 
+  /* --------------------------------------------
+   Mount / unmount control (KEY FIX)
+  --------------------------------------------- */
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        allowClickOutside &&
-        dialogRef.current &&
-        !dialogRef.current.contains(e.target as Node)
-      ) {
-        onClose?.();
-      }
-    };
-
     if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("mousedown", handleClick);
-    } else {
-      document.body.style.overflow = "";
-      document.removeEventListener("mousedown", handleClick);
+      setShouldRender(true);
     }
+  }, [isOpen]);
+
+  /* --------------------------------------------
+   Lock body scroll
+  --------------------------------------------- */
+  useEffect(() => {
+    if (!shouldRender) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     return () => {
-      if (typeof window !== 'undefined') {
-        document.body.style.overflow = "";
-        document.removeEventListener("mousedown", handleClick);
-      }
+      document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen, onClose, allowClickOutside]);
+  }, [shouldRender]);
 
+  /* --------------------------------------------
+   Width handling
+  --------------------------------------------- */
   const widthClasses = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -83,54 +86,43 @@ export default function ModalDialog({
     full: "w-full",
   };
 
-  const modalWidth = widthClasses[width] || width;
-  const autoScrollContent = actualMode === "bottom" || scrollContent;
+  const modalWidth = widthClasses[width];
 
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    onClose();
+  /* --------------------------------------------
+   Close request (NO unmount here)
+  --------------------------------------------- */
+  const requestClose = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShouldRender(false);
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <AnimatePresence
+      onExitComplete={() => {
+        if (!shouldRender) onClose();
+      }}
+    >
+      {shouldRender && (
         <motion.div
-          className="fixed z-50 -mt-10 -inset-8 bg-black/50"
+          className="fixed inset-0 z-50 bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onClick={allowClickOutside ? handleClose : undefined}
+          onClick={allowClickOutside ? requestClose : undefined}
         >
           {actualMode === "center" ? (
             <div className="flex items-center justify-center min-h-screen p-4 overflow-y-auto">
               <motion.div
-                ref={dialogRef}
-                className={`bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-0 relative w-full ${modalWidth} flex flex-col my-auto`}
+                className={`relative w-full ${modalWidth} bg-white dark:bg-slate-800 rounded-lg shadow-2xl flex flex-col`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="sticky top-0 left-0 right-0 z-10 flex items-center justify-between px-6 pt-4 pb-2 bg-white border-b rounded-t-lg dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                  {title && (
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {title}
-                    </div>
-                  )}
-                  <button
-                    onClick={handleClose}
-                    type="button"
-                    className="z-10 ml-auto transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <Header title={title} onClose={requestClose} />
+
                 <div
                   className={`px-6 py-4 ${
                     scrollContent ? "overflow-auto max-h-[80vh]" : ""
@@ -142,33 +134,14 @@ export default function ModalDialog({
             </div>
           ) : (
             <motion.div
-              ref={dialogRef}
-              className="fixed left-0 right-0 bottom-0 z-50 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl mx-auto w-full sm:max-w-md sm:mx-auto max-h-[90vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl max-h-[90vh] overflow-y-auto sm:max-w-md sm:mx-auto"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 32 }}
-              style={{ touchAction: "none" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 z-10 pt-3 pb-2 bg-white dark:bg-slate-800">
-                <div className="w-12 h-[2px] bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-2" />
-                <div className="flex items-center justify-between px-4">
-                  {title && (
-                    <div className="flex-1 text-sm font-semibold text-center text-slate-900 dark:text-white">
-                      {title}
-                    </div>
-                  )}
-                  <button
-                    onClick={handleClose}
-                    type="button"
-                    className="ml-auto transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+              <BottomHeader title={title} onClose={requestClose} />
               <div className="px-4 pt-2 pb-6">{children}</div>
             </motion.div>
           )}
@@ -178,3 +151,49 @@ export default function ModalDialog({
   );
 }
 
+/* --------------------------------------------
+  Headers
+--------------------------------------------- */
+
+function Header({
+  title,
+  onClose,
+}: {
+  title?: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between px-6 pt-4 pb-2 bg-white border-b rounded-t-lg dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+      {title && (
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+          {title}
+        </div>
+      )}
+      <button onClick={onClose} aria-label="Close">
+        <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+      </button>
+    </div>
+  );
+}
+
+function BottomHeader({
+  title,
+  onClose,
+}: {
+  title?: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="sticky top-0 z-10 pt-3 pb-2 bg-white dark:bg-slate-800">
+      <div className="w-12 h-[2px] bg-slate-300 rounded-full mx-auto mb-2" />
+      <div className="flex items-center justify-between px-4">
+        <div className="flex-1 text-sm font-semibold text-center">
+          {title}
+        </div>
+        <button onClick={onClose} aria-label="Close">
+          <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+        </button>
+      </div>
+    </div>
+  );
+}

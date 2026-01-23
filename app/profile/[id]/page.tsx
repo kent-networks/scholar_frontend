@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
 
   // Fetch profile data
   useEffect(() => {

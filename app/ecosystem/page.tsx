@@ -43,7 +43,7 @@ export default function EcosystemPage() {
 
       <main className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold md:text-5xl text-slate-900 dark:text-white">
+          <h1 className="pb-1 text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl xl:text-7xl bg-clip-text bg-gradient-to-r from-slate-900 via-primary to-slate-900 dark:from-white dark:via-primary dark:to-white">
             Scholar Ecosystem
           </h1>
           <p className="max-w-2xl mx-auto text-xl text-slate-600 dark:text-slate-400">

@@ -12,7 +12,6 @@ const footerLinks = {
   ],
   company: [
     { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
     { name: "Careers", href: "/careers" },
     { name: "Contact", href: "/contact" },
   ],
@@ -26,42 +25,42 @@ const footerLinks = {
 export default function Footer() {
   return (
     <footer className="bg-[#101828] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-8 w-8 text-primary" />
+              <GraduationCap className="w-8 h-8 text-primary" />
               <span className="text-xl font-bold">Scholar</span>
             </Link>
-            <p className="text-slate-400 mb-4 max-w-md">
+            <p className="max-w-md mb-4 text-slate-400">
               Your academic ecosystem for research, collaboration, and community engagement.
             </p>
             <div className="flex gap-4">
               <a
                 href="#"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 transition-colors rounded-lg bg-white/10 hover:bg-white/20"
                 aria-label="Twitter"
               >
                 <Twitter className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 transition-colors rounded-lg bg-white/10 hover:bg-white/20"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 transition-colors rounded-lg bg-white/10 hover:bg-white/20"
                 aria-label="GitHub"
               >
                 <Github className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                className="p-2 transition-colors rounded-lg bg-white/10 hover:bg-white/20"
                 aria-label="Email"
               >
                 <Mail className="w-5 h-5" />
@@ -71,13 +70,13 @@ export default function Footer() {
 
           {/* Product Links */}
           <div>
-            <h3 className="font-bold mb-4">Product</h3>
+            <h3 className="mb-4 font-bold">Product</h3>
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="transition-colors text-slate-400 hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -88,13 +87,13 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="font-bold mb-4">Company</h3>
+            <h3 className="mb-4 font-bold">Company</h3>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="transition-colors text-slate-400 hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -105,13 +104,13 @@ export default function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="font-bold mb-4">Legal</h3>
+            <h3 className="mb-4 font-bold">Legal</h3>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="transition-colors text-slate-400 hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -121,7 +120,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-white/10 text-center text-slate-400">
+        <div className="pt-8 mt-8 text-center border-t border-white/10 text-slate-400">
           <p>&copy; {new Date().getFullYear()} Scholar. All rights reserved.</p>
         </div>
       </div>

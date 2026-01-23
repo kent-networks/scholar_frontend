@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud, MessageCircle, Heart } from "lucide-react";
+import { ArrowLeft, FileText, Inbox, MessageSquareText, UploadCloud, MessageCircle, Heart, Settings, Trash2, Edit2, Users } from "lucide-react";
+import { communityApi, Community, CommunityMember } from "@/lib/api/communities";
+import toast from "react-hot-toast";
 
 const mockPosts = [
   {
@@ -32,24 +34,96 @@ const mockFiles = [
   { id: 3, name: "Presentation_Slides.pptx", size: "5.2 MB", date: "2 weeks ago" },
 ];
 
-const mockMembers = [
-  { id: 1, name: "Dr. Sarah Chen", role: "Admin" },
-  { id: 2, name: "Prof. Michael Johnson", role: "Member" },
-  { id: 3, name: "Dr. Emily Rodriguez", role: "Member" },
-  { id: 4, name: "Dr. Lisa Anderson", role: "Member" },
-];
-
 export default function CommunityDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [membersLoading, setMembersLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "files" | "members">("posts");
   const [files, setFiles] = useState(mockFiles);
   const [commentOpen, setCommentOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [membersOffset, setMembersOffset] = useState(0);
+  const [hasMoreMembers, setHasMoreMembers] = useState(true);
 
-  const communityId = params.id as string;
+  const communityId = parseInt(params.id as string);
+
+  useEffect(() => {
+    const fetchCommunity = async () => {
+      try {
+        setLoading(true);
+        const data = await communityApi.getCommunityById(communityId);
+        setCommunity(data);
+        setEditForm({ name: data.name, description: data.description || "" });
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to load community");
+        router.push("/community");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (communityId) {
+      fetchCommunity();
+    }
+  }, [communityId, router]);
+
+  useEffect(() => {
+    if (activeTab === "members" && communityId) {
+      fetchMembers(true);
+    }
+  }, [activeTab, communityId]);
+
+  const fetchMembers = async (reset = false) => {
+    try {
+      setMembersLoading(true);
+      const currentOffset = reset ? 0 : membersOffset;
+      const result = await communityApi.getCommunityMembers(communityId, { limit: 50, offset: currentOffset });
+      
+      if (reset) {
+        setMembers(result.data);
+      } else {
+        setMembers((prev) => [...prev, ...result.data]);
+      }
+      setHasMoreMembers(result.pagination.hasMore);
+      setMembersOffset(result.pagination.offset + result.data.length);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load members");
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const isOwner = community?.ownerId === user?.id || community?.userRole === "owner";
+
+  const handleUpdate = async () => {
+    try {
+      await communityApi.updateCommunity(communityId, editForm);
+      toast.success("Community updated successfully");
+      setEditModalOpen(false);
+      const updated = await communityApi.getCommunityById(communityId);
+      setCommunity(updated);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update community");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await communityApi.deleteCommunity(communityId);
+      toast.success("Community deleted successfully");
+      router.push("/community");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete community");
+    }
+  };
 
   const handleLike = () => {
     if (!isAuthenticated) {
@@ -66,6 +140,23 @@ export default function CommunityDetailPage() {
     }
     setCommentOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-slate-500 dark:text-slate-400">Loading community...</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!community) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -84,12 +175,34 @@ export default function CommunityDetailPage() {
               <ArrowLeft className="h-4 w-4" />
               <span>Back to Communities</span>
             </button>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-              Quantum Computing Research
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              A community for researchers working on quantum computing
-            </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                  {community.name}
+                </h1>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {community.description || "No description available"}
+                </p>
+              </div>
+              {isOwner && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => setDeleteModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Tabs */}
@@ -232,65 +345,104 @@ export default function CommunityDetailPage() {
 
               {activeTab === "members" && (
                 <div className="space-y-4">
-                  {mockMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                          {member.name.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-900 dark:text-white">{member.name}</p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">{member.role}</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSelectedMember(member.name);
-                            setInboxOpen(true);
-                          }}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border-light bg-surface-light hover:bg-slate-100 transition-colors font-bold text-slate-900"
-                        >
-                          <Inbox className="h-4 w-4" />
-                          Inbox
-                        </button>
-                      </div>
+                  {membersLoading && members.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                      Loading members...
                     </div>
-                  ))}
+                  ) : members.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                      No members found
+                    </div>
+                  ) : (
+                    <>
+                      {members.map((member) => (
+                        <div
+                          key={member.id}
+                          className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
+                        >
+                          <div className="flex items-center gap-4">
+                            {member.photo ? (
+                              <img
+                                src={member.photo}
+                                alt={member.name}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                                {member.name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-900 dark:text-white">{member.name}</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                                @{member.username} • {member.role}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedMember(member.name);
+                                setInboxOpen(true);
+                              }}
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border-light bg-surface-light hover:bg-slate-100 transition-colors font-bold text-slate-900"
+                            >
+                              <Inbox className="h-4 w-4" />
+                              Inbox
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {hasMoreMembers && (
+                        <div className="flex justify-center pt-4">
+                          <button
+                            onClick={() => fetchMembers(false)}
+                            disabled={membersLoading}
+                            className="px-6 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {membersLoading ? "Loading..." : "Load More"}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Owner Section - only visible if owner */}
-            {false && (
-              <div className="lg:col-span-1 space-y-6">
-                <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-4">Member List</h3>
-                  <div className="space-y-2">
-                    {mockMembers.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between">
-                        <span className="text-sm text-slate-700 dark:text-slate-300">{member.name}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{member.role}</span>
-                      </div>
-                    ))}
-                  </div>
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-primary" />
+                  <h3 className="font-bold text-slate-900 dark:text-white">Members</h3>
                 </div>
-
-                <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-4">Storage Usage</h3>
-                  <div className="mb-2">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-slate-600 dark:text-slate-400">30MB / 50MB</span>
-                      <span className="font-bold text-slate-900 dark:text-white">60%</span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "60%" }}></div>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                  {community.memberCount}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total members</p>
               </div>
-            )}
+
+              {isOwner && (
+                <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                  <h3 className="font-bold text-slate-900 dark:text-white mb-4">Owner Actions</h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setEditModalOpen(true)}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span>Edit Community</span>
+                    </button>
+                    <button
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete Community</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -299,6 +451,83 @@ export default function CommunityDetailPage() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50 shadow-lg pb-safe">
         <MobileBottomNav />
       </div>
+
+      {/* Edit Modal */}
+      <ModalDialog
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Community"
+        width="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Community Name
+            </label>
+            <input
+              type="text"
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full h-12 px-4 text-base font-normal leading-normal transition-all bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Community name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Description
+            </label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              rows={4}
+              className="w-full p-4 text-base font-normal leading-normal transition-all bg-white border resize-none rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Community description"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setEditModalOpen(false)}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdate}
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
+
+      {/* Delete Confirmation Modal */}
+      <ModalDialog
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Community"
+        width="md"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to delete this community? This action cannot be undone. All members will be removed.
+          </p>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setDeleteModalOpen(false)}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
 
       <ModalDialog isOpen={commentOpen} onClose={() => setCommentOpen(false)} title="Comments" width="lg">
         <div className="space-y-4">
@@ -439,4 +668,3 @@ export default function CommunityDetailPage() {
     </div>
   );
 }
-

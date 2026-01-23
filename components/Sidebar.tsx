@@ -68,10 +68,10 @@ export function MobileBottomNav() {
                 <img
                   src={displayUser.photo}
                   alt={displayUser.name}
-                  className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                  className="object-cover w-8 h-8 border-2 border-white rounded-full"
                 />
               ) : (
-                <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-primary">
+                <div className="flex items-center justify-center w-10 h-10 text-white rounded-full foxnt-bold tet-xs bg-primary">
                   {displayUser.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -246,7 +246,7 @@ export default function Sidebar() {
                     <img
                       src={user.profilePhotoPath}
                       alt={user.name}
-                      className="flex-shrink-0 w-9 h-9 rounded-full object-cover border-2 border-white/20"
+                      className="flex-shrink-0 object-cover border-2 rounded-full w-9 h-9 border-white/20"
                     />
                   ) : (
                     <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
