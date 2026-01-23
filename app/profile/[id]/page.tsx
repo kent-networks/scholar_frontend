@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2 } from "lucide-react";
+import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2, Inbox } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import ModalDialog from "@/components/ModalDialog";
 import Link from "next/link";
@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [videosLoading, setVideosLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Fetch profile data
   useEffect(() => {
@@ -51,6 +52,24 @@ export default function ProfilePage() {
       fetchProfile();
     }
   }, [username, router]);
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!isAuthenticated || !user?.id) return;
+      try {
+        const count = await messageApi.getUnreadCount();
+        setUnreadCount(count);
+      } catch (error) {
+        // Silently fail
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll for new messages every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user?.id]);
 
   // Fetch videos based on active tab
   useEffect(() => {
@@ -278,13 +297,27 @@ export default function ProfilePage() {
                     </>
                   )}
                   {profile.isOwnProfile && (
-                    <Link
-                      href="/account"
-                      className="flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Edit Profile
-                    </Link>
+                    <>
+                      <Link
+                        href="/inbox"
+                        className="relative flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
+                        <Inbox className="w-4 h-4" />
+                        Inbox
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Edit Profile
+                      </Link>
+                    </>
                   )}
                 </div>
               </div>
@@ -423,17 +456,16 @@ export default function ProfilePage() {
                   </button>
                   {profile.isOwnProfile && (
                     <Tooltip content="Delete video">
-                      <div className="absolute top-2 right-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteConfirm({ videoId: video.id, open: true });
-                          }}
-                          className="p-2 text-white transition-colors bg-red-500 rounded-full hover:bg-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setDeleteConfirm({ videoId: video.id, open: true });
+                        }}
+                        className="absolute top-2 right-2 p-2 text-white transition-opacity opacity-0 bg-red-500 rounded-full hover:bg-red-600 group-hover:opacity-100 z-10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </Tooltip>
                   )}
                 </div>
@@ -480,14 +512,16 @@ export default function ProfilePage() {
                   </button>
                   {profile.isOwnProfile && (
                     <Tooltip content="Delete video">
-                      <div>
-                        <button
-                          onClick={() => setDeleteConfirm({ videoId: video.id, open: true })}
-                          className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setDeleteConfirm({ videoId: video.id, open: true });
+                        }}
+                        className="p-2 text-red-500 transition-opacity opacity-0 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </Tooltip>
                   )}
                 </div>

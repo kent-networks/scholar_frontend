@@ -25,6 +25,13 @@ export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState<"discover" | "my-communities" | "created">("discover");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Reset to discover tab if user logs out
+  useEffect(() => {
+    if (!isAuthenticated && (activeTab === "my-communities" || activeTab === "created")) {
+      setActiveTab("discover");
+    }
+  }, [isAuthenticated, activeTab]);
+
   const fetchCommunities = async (reset = false) => {
     try {
       if (reset) {
@@ -32,10 +39,22 @@ export default function CommunityPage() {
         setOffset(0);
       }
       const currentOffset = reset ? 0 : offset;
+      
+      // Determine filter based on active tab
+      let filter: 'all' | 'discover' | 'joined' | 'created' = 'all';
+      if (activeTab === 'discover') {
+        filter = 'discover';
+      } else if (activeTab === 'my-communities') {
+        filter = 'joined';
+      } else if (activeTab === 'created') {
+        filter = 'created';
+      }
+      
       const result = await communityApi.getCommunities({
         search: searchQuery || undefined,
         limit: 20,
         offset: currentOffset,
+        filter,
       });
       
       if (reset) {
@@ -54,11 +73,11 @@ export default function CommunityPage() {
 
   useEffect(() => {
     fetchCommunities(true);
-  }, [searchQuery, researchField, type, size]);
+  }, [searchQuery, researchField, type, size, activeTab]);
 
   const filteredCommunities = communities.filter((community) => {
     if (researchField && community.category !== researchField) return false;
-    // TODO: Add type and size filtering
+    // Type and size filtering can be added here if needed
     return true;
   });
 
@@ -116,8 +135,27 @@ export default function CommunityPage() {
 
           {/* Communities Grid */}
           {loading ? (
-            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-              Loading communities...
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden transition-all bg-white border rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      <div className="w-20 h-6 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      <div className="w-3/4 h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </div>
+                    <div className="h-16 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="w-24 h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="rounded-lg h-11 bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredCommunities.length === 0 ? (
             <div className="py-12 text-center text-slate-500 dark:text-slate-400">
@@ -127,7 +165,11 @@ export default function CommunityPage() {
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredCommunities.map((community) => (
-                  <CommunityCard key={community.id} community={community} />
+                  <CommunityCard 
+                    key={community.id} 
+                    community={community} 
+                    onUpdate={() => fetchCommunities(true)}
+                  />
                 ))}
               </div>
               {/* Pagination/Load More */}
@@ -160,8 +202,7 @@ export default function CommunityPage() {
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
-            // Refresh communities
-            window.location.reload();
+            fetchCommunities(true);
           }}
         />
       )}

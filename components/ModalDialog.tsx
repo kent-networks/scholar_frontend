@@ -104,7 +104,7 @@ export default function ModalDialog({
     >
       {shouldRender && (
         <motion.div
-          className="fixed inset-0 z-50 bg-black/50"
+          className="fixed z-50 -inset-6 bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -134,7 +134,7 @@ export default function ModalDialog({
             </div>
           ) : (
             <motion.div
-              className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl max-h-[90vh] overflow-y-auto sm:max-w-md sm:mx-auto"
+              className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-lg shadow-2xl max-h-[90vh] flex flex-col sm:max-w-md sm:mx-auto"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -142,7 +142,9 @@ export default function ModalDialog({
               onClick={(e) => e.stopPropagation()}
             >
               <BottomHeader title={title} onClose={requestClose} />
-              <div className="px-4 pt-2 pb-6">{children}</div>
+              <div className={`flex-1 overflow-y-auto px-4 pt-2 ${scrollContent ? "pb-6" : "pb-safe"}`}>
+                {children}
+              </div>
             </motion.div>
           )}
         </motion.div>

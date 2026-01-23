@@ -6,6 +6,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import Tooltip from '@/components/Tooltip'
 import { useAuth } from '@/contexts/AuthContext'
 import ButtonDropdown from '@/components/ButtonDropdown'
+import { messageApi } from '@/lib/api/messages'
 import {
   GraduationCap,
   FlaskConical,
@@ -37,6 +38,24 @@ export function MobileBottomNav() {
   const router = useRouter()
   const { isAuthenticated, user, logout } = useAuth()
   const displayUser = user ? { name: user.name, email: user.email, username: user.username, photo: user.profilePhotoPath } : null
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await messageApi.getUnreadCount()
+        setUnreadCount(count)
+      } catch (error) {
+        // Silently fail
+      }
+    }
+
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
 
   return (
     <nav className="flex items-center justify-around px-2 py-2">
@@ -61,7 +80,7 @@ export function MobileBottomNav() {
       {isAuthenticated && displayUser && (
         <ButtonDropdown
           buttonContent={
-            <div className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
+            <div className={`relative flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
               pathname?.startsWith('/profile') ? 'text-primary bg-primary/10' : ''
             }`}>
               {displayUser.photo ? (
@@ -71,9 +90,14 @@ export function MobileBottomNav() {
                   className="object-cover w-8 h-8 border-2 border-white rounded-full"
                 />
               ) : (
-                <div className="flex items-center justify-center w-10 h-10 text-white rounded-full foxnt-bold tet-xs bg-primary">
+                <div className="flex items-center justify-center w-10 h-10 text-xs font-bold text-white rounded-full bg-primary">
                   {displayUser.name.charAt(0).toUpperCase()}
                 </div>
+              )}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-4.5 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
               )}
             </div>
           }
@@ -116,6 +140,24 @@ export default function Sidebar() {
   const router = useRouter()
   const { isAuthenticated, user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await messageApi.getUnreadCount()
+        setUnreadCount(count)
+      } catch (error) {
+        // Silently fail
+      }
+    }
+
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
 
   const items = useMemo(() => NAV_ITEMS, [])
 
@@ -241,7 +283,7 @@ export default function Sidebar() {
           <div className="flex-shrink-0 p-2 border-t border-white/10">
             <ButtonDropdown
               buttonContent={
-                <div className={`flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
+                <div className={`relative flex items-center gap-3 w-full ${collapsed ? 'justify-center' : ''}`}>
                   {user.profilePhotoPath ? (
                     <img
                       src={user.profilePhotoPath}
@@ -252,6 +294,11 @@ export default function Sidebar() {
                     <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9 bg-primary">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 left-6 flex items-center justify-center min-w-[18px] h-4.5 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
                   )}
                   <div
                     className={`flex-1 text-left transition-all duration-300 overflow-hidden ${

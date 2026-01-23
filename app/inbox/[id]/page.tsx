@@ -196,7 +196,7 @@ export default function InboxPage() {
         </div>
 
         {/* Input */}
-        <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4">
+        <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 md:mb-0 mb-20">
           <div className="flex items-center gap-3">
             <input
               type="text"
@@ -224,7 +224,7 @@ export default function InboxPage() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
         <MobileBottomNav />
       </div>
     </div>

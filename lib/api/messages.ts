@@ -13,9 +13,24 @@ export interface Message {
   isRead?: boolean;
 }
 
+export interface Conversation {
+  userId: number;
+  name: string;
+  username: string;
+  photo?: string | null;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+}
+
 export const messageApi = {
   getConversation: async (userId: number): Promise<Message[]> => {
     const response = await api.get(`/messages/${userId}`);
+    return response.data.data;
+  },
+
+  getAllConversations: async (): Promise<Conversation[]> => {
+    const response = await api.get("/messages/conversations");
     return response.data.data;
   },
 
@@ -25,6 +40,11 @@ export const messageApi = {
       content,
     });
     return response.data.data;
+  },
+
+  getUnreadCount: async (): Promise<number> => {
+    const response = await api.get("/messages/unread/count");
+    return response.data.data.count || 0;
   },
 };
 

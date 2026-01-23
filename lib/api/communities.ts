@@ -9,6 +9,7 @@ export interface Community {
   ownerId?: number;
   userRole?: "owner" | "admin" | "member";
   category?: string;
+  isMember?: boolean;
   isActive?: boolean;
   lastActive?: string;
   createdAt?: string;
@@ -44,7 +45,7 @@ export interface PaginatedResponse<T> {
 }
 
 export const communityApi = {
-  getCommunities: async (params?: { search?: string; limit?: number; offset?: number }): Promise<PaginatedResponse<Community>> => {
+  getCommunities: async (params?: { search?: string; limit?: number; offset?: number; filter?: 'all' | 'discover' | 'joined' | 'created' }): Promise<PaginatedResponse<Community>> => {
     const response = await api.get("/communities", { params });
     return {
       data: response.data.data,
@@ -82,6 +83,80 @@ export const communityApi = {
 
   joinCommunity: async (communityId: number) => {
     const response = await api.post(`/communities/${communityId}/join`);
+    return response.data;
+  },
+
+  leaveCommunity: async (communityId: number) => {
+    const response = await api.post(`/communities/${communityId}/leave`);
+    return response.data;
+  },
+
+  removeMember: async (communityId: number, memberId: number) => {
+    const response = await api.delete(`/communities/${communityId}/members/${memberId}`);
+    return response.data;
+  },
+
+  getCommunityPosts: async (communityId: number, params?: { limit?: number; offset?: number }) => {
+    const response = await api.get(`/communities/${communityId}/posts`, { params });
+    return response.data.data;
+  },
+
+  createCommunityPost: async (communityId: number, content: string) => {
+    const response = await api.post(`/communities/${communityId}/posts`, { content });
+    return response.data.data;
+  },
+
+  likeCommunityPost: async (postId: number) => {
+    const response = await api.post(`/communities/posts/${postId}/like`);
+    return response.data.data;
+  },
+
+  unlikeCommunityPost: async (postId: number) => {
+    const response = await api.delete(`/communities/posts/${postId}/like`);
+    return response.data.data;
+  },
+
+  getCommunityComments: async (postId: number, params?: { limit?: number; offset?: number }) => {
+    const response = await api.get(`/communities/posts/${postId}/comments`, { params });
+    return response.data.data;
+  },
+
+  createCommunityComment: async (postId: number, content: string) => {
+    const response = await api.post(`/communities/posts/${postId}/comments`, { content });
+    return response.data.data;
+  },
+
+  deleteCommunityComment: async (commentId: number) => {
+    const response = await api.delete(`/communities/comments/${commentId}`);
+    return response.data;
+  },
+
+  likeCommunityComment: async (commentId: number) => {
+    const response = await api.post(`/communities/comments/${commentId}/like`);
+    return response.data.data;
+  },
+
+  unlikeCommunityComment: async (commentId: number) => {
+    const response = await api.delete(`/communities/comments/${commentId}/like`);
+    return response.data.data;
+  },
+
+  getFiles: async (communityId: number, params?: { limit?: number; offset?: number }) => {
+    const response = await api.get(`/communities/${communityId}/files`, { params });
+    return response.data.data;
+  },
+
+  uploadFile: async (communityId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/communities/${communityId}/files`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
+
+  deleteFile: async (fileId: number) => {
+    const response = await api.delete(`/communities/files/${fileId}`);
     return response.data;
   },
 };

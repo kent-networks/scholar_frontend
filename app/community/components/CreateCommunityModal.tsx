@@ -127,7 +127,7 @@ export default function CreateCommunityModal({
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="flex w-full h-12 px-4 text-base font-normal leading-normal transition-all bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="flex w-full h-12 px-4 text-base font-normal leading-normal transition-all duration-200 bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 placeholder="e.g. Quantum Computing Research Group"
               />
             </div>
@@ -162,7 +162,7 @@ export default function CreateCommunityModal({
             </div>
 
             {/* Privacy Setting */}
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-slate-900 dark:text-white">
                 Privacy Setting
               </label>
@@ -192,7 +192,7 @@ export default function CreateCommunityModal({
                   Private
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Description Textarea */}
             <div className="flex flex-col gap-2 md:col-span-2">
