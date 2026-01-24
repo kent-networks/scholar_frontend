@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   LogOut,
   UserRound,
+  Home,
 } from 'lucide-react'
 
 interface NavItem {
@@ -58,8 +59,23 @@ export function MobileBottomNav() {
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
+  // Home nav item for non-authenticated users
+  const homeNavItem: NavItem = { name: 'Home', href: '/', icon: Home }
+
   return (
     <nav className="flex items-center justify-around px-2 py-2">
+      {/* Show Home first if not authenticated */}
+      {!isAuthenticated && (
+        <Link
+          href={homeNavItem.href}
+          className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
+            pathname === homeNavItem.href ? 'text-primary bg-primary/10' : 'text-slate-700'
+          }`}
+        >
+          <Home className="w-6 h-6" />
+          <span className="text-[10px] font-medium leading-tight text-center">{homeNavItem.name}</span>
+        </Link>
+      )}
       {NAV_ITEMS.map((item) => {
         if (item.requiresAuth && !isAuthenticated) return null
         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')

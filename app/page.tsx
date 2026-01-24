@@ -91,7 +91,7 @@ export default function Home() {
       width: "10rem",
       opacity: 1,
       transition: {
-        duration: 1.5,
+        duration: 0.5,
         ease: "easeOut",
       },
     },
@@ -103,7 +103,7 @@ export default function Home() {
       opacity: 1,
       transition: {
         staggerChildren: 0.06,
-        delayChildren: 0.5,
+        delayChildren: 0.3,
       },
     },
   };
@@ -118,7 +118,7 @@ export default function Home() {
         type: "spring",
         stiffness: 110,
         damping: 16,
-        duration: 0.8,
+        duration: 0.5,
       },
     },
   };

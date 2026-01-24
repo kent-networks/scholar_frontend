@@ -91,7 +91,7 @@ export default function TopNav() {
                   href="/login"
                   className="px-4 py-2 text-sm font-bold transition-colors text-slate-700 dark:text-slate-300 hover:text-primary"
                 >
-                  Sign in
+                  Sign In
                 </Link>
                 <Link
                   href="/signup"
