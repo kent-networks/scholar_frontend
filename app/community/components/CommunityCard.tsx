@@ -100,8 +100,13 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
     <div className="overflow-hidden transition-all bg-white border group dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-xl">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
-          <div className={`${colorConfig.bg} p-3 rounded-lg ${colorConfig.text}`}>
+          <div className={`${colorConfig.bg} p-3 rounded-lg ${colorConfig.text} relative`}>
             <IconComponent className="w-8 h-8" />
+            {isMember && community.notificationCount && community.notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                {community.notificationCount > 99 ? "99+" : community.notificationCount}
+              </span>
+            )}
           </div>
           <span className={`${colorConfig.bg} ${colorConfig.text} text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded`}>
             {category}
@@ -126,7 +131,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
             isMember || isOwner
               ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
               : "bg-primary text-white hover:bg-primary/90"
-          } font-bold rounded-lg transition-colors disabled:opacity-50`}
+          } font-bold rounded-2xl transition-colors disabled:opacity-50`}
         >
           {loading ? "Joining..." : isMember || isOwner ? "Open Community" : "Join Community"}
         </button>

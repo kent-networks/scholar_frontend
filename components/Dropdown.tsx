@@ -179,7 +179,7 @@ export default function Dropdown({
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={handleInputFocus}
             className={`
-              w-full px-3 py-2 ${Icon ? "pl-10" : ""} pr-9 rounded-lg bg-surface-light border border-border-light text-sm
+              w-full px-3 py-3 ${Icon ? "pl-10" : ""} pr-9 rounded-2xl bg-surface-light border border-border-light text-sm
               focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
               placeholder-slate-400
               cursor-default
@@ -206,7 +206,7 @@ export default function Dropdown({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: openUpwards ? 10 : -10 }}
               transition={{ type: "spring", stiffness: 180, damping: 20 }}
-              className={`fixed z-50 bg-surface-light rounded-lg shadow-lg overflow-hidden border border-border-light ${
+              className={`fixed z-50 bg-surface-light rounded-2xl shadow-lg overflow-hidden border border-border-light ${
                 openUpwards ? "mb-2" : "mt-2"
               }`}
               style={{

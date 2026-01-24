@@ -7,9 +7,13 @@ export interface Message {
   content: string;
   createdAt: string;
   senderName?: string;
+  senderUsername?: string;
   senderPhoto?: string;
+  senderBio?: string | null;
   recipientName?: string;
+  recipientUsername?: string;
   recipientPhoto?: string;
+  recipientBio?: string | null;
   isRead?: boolean;
 }
 
@@ -18,6 +22,7 @@ export interface Conversation {
   name: string;
   username: string;
   photo?: string | null;
+  bio?: string | null;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;

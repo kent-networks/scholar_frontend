@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowRight,
   Eye,
@@ -18,7 +20,6 @@ import {
 import { statsApi, Stats, TrendingVideo } from "@/lib/api/stats";
 import AnimatedCounter from "@/components/AnimatedCounter";
 
-
 const featuredCategories = [
   { name: "Research Lab", href: "/research-lab", icon: FlaskConical, count: 450 },
   { name: "Scoop", href: "/scoop", icon: Video, count: 120 },
@@ -27,11 +28,20 @@ const featuredCategories = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
   const [stats, setStats] = useState<Stats | null>(null);
   const [trendingVideos, setTrendingVideos] = useState<TrendingVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Redirect authenticated users to research-lab
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/research-lab");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,7 +51,6 @@ export default function Home() {
         setScrollY(scrolled);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -61,20 +70,69 @@ export default function Home() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   const imageOffset = scrollY * 0.5;
 
+  // Animation Variants
+  const heroContainer = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.18,
+      },
+    },
+  };
+
+  const barVariants = {
+    hidden: { width: 0, opacity: 0 },
+    visible: {
+      width: "10rem",
+      opacity: 1,
+      transition: {
+        duration: 1.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const scholarContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.06,
+        delayChildren: 0.5,
+      },
+    },
+  };
+
+  const scholarLetter = {
+    hidden: { opacity: 0, y: 48, filter: "blur(8px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: {
+        type: "spring",
+        stiffness: 110,
+        damping: 16,
+        duration: 0.8,
+      },
+    },
+  };
+
+  const scholarText = "Scholar";
+  const scholarLetters = Array.from(scholarText);
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <TopNav />
 
-      {/* Main Content */}
       <main className="overflow-y-auto">
         <div className="">
-          {/* Hero Section - Enhanced */}
+          {/* Hero Section */}
           <div
             ref={heroRef}
             className="mb-12 relative overflow-hidden shadow-2xl shadow-primary/20 min-h-[400px] md:min-h-[500px]"
@@ -89,71 +147,118 @@ export default function Home() {
             >
               <img
                 src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1600&q=80"
+                loading="eager"
                 alt="Academic campus"
                 className="absolute inset-0 object-cover w-full h-full scale-110"
               />
             </div>
+
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/30" />
+
             {/* Animated Background Pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-                backgroundSize: '40px 40px'
-              }} />
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                  backgroundSize: "40px 40px",
+                }}
+              />
             </div>
-            {/* Content */}
-            <div className="relative z-10 p-8 text-white md:p-12">
-              <div className="max-w-6xl">
-                
-                <div className="w-40 h-2 mb-3 bg-primary"/>
 
-                <div className="pb-2 text-5xl font-bold text-primary">
-                  Scholar
-                </div>
+            {/* Hero Content with Animations */}
+            <motion.div
+              className="relative z-10 p-8 text-white md:p-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.35 }}
+              variants={heroContainer}
+            >
+              <div className="max-w-6xl">
+                {/* Growing progress bar */}
+                <motion.div
+                  className="h-2 mb-3 bg-primary rounded-full"
+                  variants={barVariants}
+                  style={{ originX: 0 }}
+                />
+
+                {/* Scholar – letter by letter */}
+                <motion.div
+                  className="pb-2 text-5xl font-bold text-primary flex"
+                  variants={scholarContainer}
+                >
+                  {scholarLetters.map((letter, i) => (
+                    <motion.span
+                      key={`${letter}-${i}`}
+                      variants={scholarLetter}
+                      className="inline-block"
+                    >
+                      {letter === " " ? "\u00A0" : letter}
+                    </motion.span>
+                  ))}
+                </motion.div>
+
                 <motion.h1
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.8, delay: 1.1, ease: "easeOut" },
+                    },
+                  }}
                   className="mb-4 text-5xl font-bold leading-tight text-white md:text-6xl"
                 >
                   Your Academic Ecosystem
                 </motion.h1>
+
                 <motion.p
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.8, delay: 1.3, ease: "easeOut" },
+                    },
+                  }}
                   className="mb-8 text-xl leading-relaxed text-blue-100 md:text-2xl"
                 >
                   Connect, collaborate, and discover groundbreaking research in one unified platform
                 </motion.p>
+
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.8, delay: 1.5, ease: "easeOut" },
+                    },
+                  }}
                   className="flex flex-col gap-4 sm:flex-row"
                 >
                   <Link
                     href="/research-lab"
-                    className="px-8 py-4 text-lg transition-all transform bg-white shadow-lg rounded-xl text-primary hover:scale-105"
+                    className="px-8 py-4 text-lg font-medium transition-all transform bg-white shadow-lg rounded-xl text-primary hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/40"
                   >
                     Explore Research
                   </Link>
                   <Link
                     href="/login"
-                    className="px-8 py-4 text-lg transition-all border-2 border-white rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30"
+                    className="px-8 py-4 text-lg font-medium transition-all border-2 border-white rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30 focus:outline-none focus:ring-2 focus:ring-white/40"
                   >
                     Get Started
                   </Link>
                 </motion.div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           <div className="p-4 md:p-8">
-              
-            {/* Stats Section */}
+            {/* Stats Section – all 4 cards restored */}
             <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-4">
+              {/* Active Researchers */}
               <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-primary">
@@ -169,6 +274,8 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {/* Research Projects */}
               <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
                 <div className="flex items-start justify-between">
                   <div className="p-2 text-purple-600 rounded-lg bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400">
@@ -184,6 +291,8 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {/* Partner Institutions */}
               <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
@@ -199,6 +308,8 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {/* Community Members */}
               <div className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 group hover:border-primary/50">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
@@ -222,32 +333,30 @@ export default function Home() {
                 Explore Scholar
               </h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {featuredCategories.map((category) => (
-                  (() => {
-                    const Icon = category.icon
-                    return (
-                  <Link
-                    key={category.href}
-                    href={category.href}
-                    className="p-5 transition-all border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
-                  >
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
-                        <Icon className="w-5 h-5" />
+                {featuredCategories.map((category) => {
+                  const Icon = category.icon;
+                  return (
+                    <Link
+                      key={category.href}
+                      href={category.href}
+                      className="p-5 transition-all border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
+                    >
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
+                            {category.name}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {category.count} items
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
-                          {category.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {category.count} items
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                    )
-                  })()
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -259,18 +368,61 @@ export default function Home() {
                 </h2>
                 <Link
                   href="/research-lab"
-                  className="flex items-center gap-2 font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                  className="
+                    group inline-flex items-center gap-2 px-5 py-2.5
+                    text-sm font-medium text-primary
+                    bg-white
+                    hover:scale-105
+                    active:bg-primary/90
+                    border border-primary/20
+                    rounded-full transition-all duration-300
+                    focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2
+                  "
                 >
                   View All
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {loading ? (
-                  <div className="py-12 text-center col-span-full text-slate-500 dark:text-slate-400">
-                    Loading trending content...
-                  </div>
+
+                  [...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-dark animate-pulse"
+                    >
+                      {/* Image placeholder */}
+                      <div className="relative h-48 bg-slate-200 dark:bg-slate-700">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-wave" />
+                      </div>
+
+                      {/* Content placeholder */}
+                      <div className="p-5 space-y-4">
+                        {/* Category badge */}
+                        <div className="w-24 h-5 rounded-full bg-slate-200 dark:bg-slate-700" />
+
+                        {/* Title lines */}
+                        <div className="space-y-2">
+                          <div className="h-6 w-5/6 rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-6 w-4/6 rounded bg-slate-200 dark:bg-slate-700" />
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                          <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-700" />
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex justify-between">
+                          <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+
                 ) : trendingVideos.length === 0 ? (
                   <div className="py-12 text-center col-span-full text-slate-500 dark:text-slate-400">
                     No trending content available
@@ -317,7 +469,6 @@ export default function Home() {
                 )}
               </div>
             </div>
-
           </div>
         </div>
       </main>

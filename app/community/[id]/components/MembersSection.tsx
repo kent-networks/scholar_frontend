@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Inbox, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { communityApi, CommunityMember } from "@/lib/api/communities";
+import ModalDialog from "@/components/ModalDialog";
 import toast from "react-hot-toast";
 
 interface MembersSectionProps {
@@ -20,6 +21,7 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
   const [searchQuery, setSearchQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [removeMemberConfirm, setRemoveMemberConfirm] = useState<{ memberId: number | null; open: boolean }>({ memberId: null, open: false });
 
   useEffect(() => {
     fetchMembers(true);
@@ -32,7 +34,6 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
       const result = await communityApi.getCommunityMembers(communityId, {
         limit: 50,
         offset: currentOffset,
-        search: searchQuery || undefined,
       });
 
       if (reset) {
@@ -59,12 +60,13 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleRemoveMember = async (memberId: number) => {
-    if (!confirm("Are you sure you want to remove this member?")) return;
+  const handleRemoveMember = async () => {
+    if (!removeMemberConfirm.memberId) return;
 
     try {
-      await communityApi.removeMember(communityId, memberId);
+      await communityApi.removeMember(communityId, removeMemberConfirm.memberId);
       toast.success("Member removed successfully");
+      setRemoveMemberConfirm({ memberId: null, open: false });
       fetchMembers(true);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to remove member");
@@ -93,7 +95,7 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search members..."
-          className="w-full pl-10 pr-10 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          className="w-full pl-10 pr-10 py-2 rounded-lg border border-slate-300 dark:border-slate-700 transition-[color,border-color,box-shadow] duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
         />
         {searchQuery && (
           <button
@@ -145,17 +147,19 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
                   </p>
                 </button>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleInboxClick(member)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-bold text-slate-900 dark:text-white"
-                  >
-                    <Inbox className="h-4 w-4" />
-                    Inbox
-                  </button>
+                  {!isOwner && (
+                    <button
+                      onClick={() => handleInboxClick(member)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300  bg-white  hover:bg-slate-50 transition-colors font-bold text-slate-900"
+                    >
+                      <Inbox className="h-4 w-4" />
+                      Inbox
+                    </button>
+                  )}
                   {isOwner && member.userId !== user?.id && member.role !== "owner" && (
                     <button
-                      onClick={() => handleRemoveMember(member.userId)}
-                      className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-bold"
+                      onClick={() => setRemoveMemberConfirm({ memberId: member.userId, open: true })}
+                      className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                     >
                       Remove
                     </button>
@@ -177,6 +181,42 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
           )}
         </>
       )}
+
+      {/* Remove Member Confirmation Modal */}
+      <ModalDialog
+        isOpen={removeMemberConfirm.open}
+        onClose={() => setRemoveMemberConfirm({ memberId: null, open: false })}
+        title="Remove Member"
+        width="md"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to remove this member? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRemoveMemberConfirm({ memberId: null, open: false });
+              }}
+              className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveMember();
+              }}
+              className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
     </div>
   );
 }

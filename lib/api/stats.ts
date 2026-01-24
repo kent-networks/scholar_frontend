@@ -18,6 +18,12 @@ export interface TrendingVideo {
   date: string;
 }
 
+export interface FeaturedCategory {
+  name: string;
+  href: string;
+  count: number;
+}
+
 export const statsApi = {
   getStats: async (): Promise<Stats> => {
     const response = await api.get("/stats/stats");
@@ -26,6 +32,11 @@ export const statsApi = {
 
   getTrendingVideos: async (limit?: number): Promise<TrendingVideo[]> => {
     const response = await api.get("/stats/trending", { params: { limit } });
+    return response.data.data;
+  },
+
+  getFeaturedCategories: async (): Promise<FeaturedCategory[]> => {
+    const response = await api.get("/stats/categories");
     return response.data.data;
   },
 };

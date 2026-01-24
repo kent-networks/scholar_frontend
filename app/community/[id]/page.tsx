@@ -117,11 +117,12 @@ export default function CommunityDetailPage() {
               {isOwner && (
                 <ButtonDropdown
                   buttonContent={
-                    <button className="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white">
+                    <div className="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white">
                       <MoreVertical className="w-4 h-4" />
                       <span className="hidden sm:inline">Actions</span>
-                    </button>
+                    </div>
                   }
+                  buttonClassName="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
                   options={[
                     {
                       label: "Edit Community",
@@ -191,10 +192,11 @@ export default function CommunityDetailPage() {
                   {isOwner && (
                     <ButtonDropdown
                       buttonContent={
-                        <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <div className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                           <MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        </button>
+                        </div>
                       }
+                      buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                       options={[
                         {
                           label: "Edit Community",

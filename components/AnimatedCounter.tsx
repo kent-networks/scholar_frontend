@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 
 interface AnimatedCounterProps {
@@ -13,54 +13,43 @@ interface AnimatedCounterProps {
 
 export default function AnimatedCounter({
   value,
-  duration = 2000,
+  duration = 600,
   prefix = "",
   suffix = "",
   className = "",
 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    if (isInView && !hasAnimated.current) {
-      hasAnimated.current = true;
-      const startTime = Date.now();
-      const startValue = 0;
-      const endValue = value;
+    if (!isInView || hasAnimated.current) return;
 
-      const animate = () => {
-        const now = Date.now();
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
+    hasAnimated.current = true;
 
-        // Easing function for smooth animation
-        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-        const currentValue = Math.floor(startValue + (endValue - startValue) * easeOutQuart);
+    const start = performance.now();
+    const endValue = value;
 
-        setCount(currentValue);
+    const easeOutExpo = (t: number) =>
+      t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setCount(endValue);
-        }
-      };
+    const animate = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutExpo(progress);
 
-      requestAnimationFrame(animate);
-    }
+      setCount(Math.round(endValue * eased));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(endValue);
+      }
+    };
+
+    requestAnimationFrame(animate);
   }, [isInView, value, duration]);
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M";
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K";
-    }
-    return num.toString();
-  };
 
   return (
     <span ref={ref} className={className}>
@@ -71,3 +60,8 @@ export default function AnimatedCounter({
   );
 }
 
+function formatNumber(num: number): string {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+}

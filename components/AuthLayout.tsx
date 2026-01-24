@@ -17,6 +17,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
         <div className="absolute inset-0 lg:hidden">
           <img
             src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            loading="eager"
             alt="Education"
             className="absolute inset-0 object-cover w-full h-full"
           />
@@ -37,6 +38,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
       <div className="relative hidden w-1/2 lg:block">
         <img
           src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          loading="eager"
           alt="Education"
           className="absolute inset-0 object-cover w-full h-full"
         />

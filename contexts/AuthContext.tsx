@@ -13,7 +13,7 @@ interface AuthContextType {
     email: string;
     password: string;
     name: string;
-    role: "student" | "educator" | "creator";
+    role: "student" | "educator" | "creator" | "admin";
   }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.login({ email, password });
       if (response.success) {
         setUser(response.data.user);
-        router.push("/");
+        router.push("/research-lab");
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Login failed");
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.register(data);
       if (response.success) {
         setUser(response.data.user);
-        router.push("/");
+        router.push("/research-lab");
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Registration failed");

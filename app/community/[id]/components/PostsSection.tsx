@@ -6,6 +6,7 @@ import { MessageSquareText, Heart, Plus, Trash2, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { communityApi } from "@/lib/api/communities";
 import ModalDialog from "@/components/ModalDialog";
+import CommunityCommentsPanel from "./CommunityCommentsPanel";
 import toast from "react-hot-toast";
 
 interface Post {
@@ -49,6 +50,8 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [newComment, setNewComment] = useState("");
   const [commenting, setCommenting] = useState(false);
+  const [deleteCommentConfirm, setDeleteCommentConfirm] = useState<{ postId: number | null; commentId: number | null; open: boolean }>({ postId: null, commentId: null, open: false });
+  const [showCommentsPanel, setShowCommentsPanel] = useState<number | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -139,12 +142,15 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
     }
   };
 
-  const handleDeleteComment = async (postId: number, commentId: number) => {
+  const handleDeleteComment = async () => {
+    if (!deleteCommentConfirm.postId || !deleteCommentConfirm.commentId) return;
+    const { postId, commentId } = deleteCommentConfirm;
     try {
       await communityApi.deleteCommunityComment(commentId);
       toast.success("Comment deleted");
       fetchComments(postId);
       fetchPosts();
+      setDeleteCommentConfirm({ postId: null, commentId: null, open: false });
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete comment");
     }
@@ -235,7 +241,7 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                  {post.userName.charAt(0)}
+                  {post.userName?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
               <div>
@@ -270,49 +276,103 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
 
             {selectedPost === post.id && comments[post.id] && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-                {comments[post.id].map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
-                    {comment.userPhoto ? (
-                      <img
-                        src={comment.userPhoto}
-                        alt={comment.userName}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {comment.userName.charAt(0)}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm text-slate-900 dark:text-white">
-                          {comment.userName}
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {formatTime(comment.createdAt)}
-                        </span>
-                        {(comment.userId === user?.id || isOwner) && (
-                          <button
-                            onClick={() => handleDeleteComment(post.id, comment.id)}
-                            className="ml-auto text-red-500 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                {comments[post.id].length > 3 ? (
+                  <>
+                    {comments[post.id].slice(0, 3).map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        {comment.userPhoto ? (
+                          <img
+                            src={comment.userPhoto}
+                            alt={comment.userName}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            {comment.userName?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
                         )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">
+                              {comment.userName}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {formatTime(comment.createdAt)}
+                            </span>
+                            {(comment.userId === user?.id || isOwner) && (
+                              <button
+                                onClick={() => setDeleteCommentConfirm({ postId: post.id, commentId: comment.id, open: true })}
+                                className="ml-auto text-red-500 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{comment.content}</p>
+                          <button
+                            onClick={() => handleLikeComment(comment.id)}
+                            className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
+                              comment.isLiked ? "text-red-500" : "text-slate-500"
+                            }`}
+                          >
+                            <Heart className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
+                            <span>{comment.likesCount}</span>
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{comment.content}</p>
-                      <button
-                        onClick={() => handleLikeComment(comment.id)}
-                        className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
-                          comment.isLiked ? "text-red-500" : "text-slate-500"
-                        }`}
-                      >
-                        <Heart className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
-                        <span>{comment.likesCount}</span>
-                      </button>
+                    ))}
+                    <button
+                      onClick={() => setShowCommentsPanel(post.id)}
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      View all {comments[post.id].length} comments
+                    </button>
+                  </>
+                ) : (
+                  comments[post.id].map((comment) => (
+                    <div key={comment.id} className="flex gap-3">
+                      {comment.userPhoto ? (
+                        <img
+                          src={comment.userPhoto}
+                          alt={comment.userName}
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          {comment.userName?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-sm text-slate-900 dark:text-white">
+                            {comment.userName}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {formatTime(comment.createdAt)}
+                          </span>
+                          {(comment.userId === user?.id || isOwner) && (
+                            <button
+                              onClick={() => setDeleteCommentConfirm({ postId: post.id, commentId: comment.id, open: true })}
+                              className="ml-auto text-red-500 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{comment.content}</p>
+                        <button
+                          onClick={() => handleLikeComment(comment.id)}
+                          className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
+                            comment.isLiked ? "text-red-500" : "text-slate-500"
+                          }`}
+                        >
+                          <Heart className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
+                          <span>{comment.likesCount}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
                 <div className="flex gap-2 pt-2">
                   <input
                     type="text"
@@ -344,34 +404,102 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
       <ModalDialog
         isOpen={showCreatePost}
         onClose={() => setShowCreatePost(false)}
-        title="Create Post"
-        width="md"
+        title=""
+        width="lg"
       >
-        <div className="space-y-4">
-          <textarea
-            value={newPostContent}
-            onChange={(e) => setNewPostContent(e.target.value)}
-            rows={6}
-            placeholder="What's on your mind?"
-            className="w-full p-4 text-base font-normal leading-normal transition-all bg-white border resize-none rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="space-y-6">
+          {/* Custom Header */}
+          <div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Create Post
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Share your thoughts with the community.
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-4">
+            <textarea
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              rows={6}
+              placeholder="What's on your mind?"
+              className="w-full p-4 text-base font-normal leading-normal transition-all bg-white border resize-none rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-700">
             <button
+              type="button"
               onClick={() => setShowCreatePost(false)}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+              className="flex min-w-[100px] cursor-pointer items-center justify-center rounded-xl h-11 px-5 bg-transparent text-slate-900 dark:text-white text-sm font-bold transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleCreatePost}
               disabled={!newPostContent.trim() || posting}
-              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="flex min-w-[160px] cursor-pointer items-center justify-center rounded-xl h-11 px-5 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {posting ? "Posting..." : "Post"}
             </button>
           </div>
         </div>
       </ModalDialog>
+
+      {/* Delete Comment Confirmation Modal */}
+      <ModalDialog
+        isOpen={deleteCommentConfirm.open}
+        onClose={() => setDeleteCommentConfirm({ postId: null, commentId: null, open: false })}
+        title="Delete Comment"
+        width="md"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to delete this comment? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteCommentConfirm({ postId: null, commentId: null, open: false });
+              }}
+              className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteComment();
+              }}
+              className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
+
+      {/* Comments Side Panel */}
+      <CommunityCommentsPanel
+        isOpen={showCommentsPanel !== null}
+        onClose={() => setShowCommentsPanel(null)}
+        postId={showCommentsPanel || 0}
+        commentsCount={showCommentsPanel ? (comments[showCommentsPanel]?.length || 0) : 0}
+        isOwner={isOwner}
+        onCommentsUpdate={() => {
+          if (showCommentsPanel) {
+            fetchComments(showCommentsPanel);
+            fetchPosts();
+          }
+        }}
+      />
     </div>
   );
 }

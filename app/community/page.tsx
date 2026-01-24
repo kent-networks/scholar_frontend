@@ -10,6 +10,7 @@ import SearchAndFilters from "./components/SearchAndFilters";
 import Tabs from "./components/Tabs";
 import CreateCommunityModal from "./components/CreateCommunityModal";
 import { PlusIcon } from "lucide-react";
+import NoDataYet from "@/components/NoDataYet";
 
 export default function CommunityPage() {
   const router = useRouter();
@@ -158,9 +159,7 @@ export default function CommunityPage() {
               ))}
             </div>
           ) : filteredCommunities.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-              No communities found
-            </div>
+            <NoDataYet title="No communities found" message="Try adjusting your search or filter criteria" icon="search" />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

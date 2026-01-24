@@ -52,10 +52,14 @@ export default function SearchAndFilters({
           <label className="flex flex-col w-full">
             <div className="flex items-stretch h-12 rounded-xl bg-slate-100 dark:bg-slate-800">
               <div className="flex items-center justify-center pl-4 text-slate-400">
-                <Search className="w-5 h-5" />
+                <Search className="w-5 h-5 mr-1" />
               </div>
               <input
-                className="w-full px-4 text-base transition-all bg-transparent border-none focus:outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+className="w-full px-4 text-base bg-transparent outline-none rounded-r-xl
+text-slate-900  placeholder:text-slate-400  border-1 border-slate-100
+focus:outline-none focus:ring-1 focus:border-primary focus:shadow-sm
+transition-all duration-200"
+
                 placeholder="Search for research topics, groups, or keywords..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}

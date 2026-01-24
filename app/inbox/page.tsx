@@ -34,15 +34,30 @@ export default function InboxPage() {
     };
 
     fetchConversations();
+    
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(() => {
+      fetchConversations();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [isAuthenticated, router]);
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations.filter((conv) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      conv.name.toLowerCase().includes(query) ||
+      conv.username.toLowerCase().includes(query) ||
+      conv.lastMessage.toLowerCase().includes(query)
+    );
+  });
 
-  const formatTime = (dateString: string) => {
+  const formatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return "Just now";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Just now";
+    
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);

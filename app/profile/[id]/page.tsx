@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
-import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2, Inbox } from "lucide-react";
+import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2, Inbox, MoreVertical } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import ModalDialog from "@/components/ModalDialog";
+import ButtonDropdown from "@/components/ButtonDropdown";
 import Link from "next/link";
 import { userApi, UserProfile } from "@/lib/api/users";
 import { videoApi, Video as VideoType } from "@/lib/api/videos";
@@ -94,7 +95,12 @@ export default function ProfilePage() {
 
         setVideos(fetchedVideos);
       } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to load videos");
+        if (error.response?.status === 403) {
+          toast.error("You don't have permission to view this content");
+          setVideos([]);
+        } else {
+          toast.error(error.response?.data?.message || "Failed to load videos");
+        }
       } finally {
         setVideosLoading(false);
       }
@@ -357,32 +363,36 @@ export default function ProfilePage() {
                     Videos
                   </div>
                 </button>
-                <button
-                  onClick={() => setActiveTab("liked")}
-                  className={`pb-4 px-1 font-bold transition-colors border-b-2 ${
-                    activeTab === "liked"
-                      ? "text-primary border-primary"
-                      : "text-slate-500 dark:text-slate-400 border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4" />
-                    Liked
-                  </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab("saved")}
-                  className={`pb-4 px-1 font-bold transition-colors border-b-2 ${
-                    activeTab === "saved"
-                      ? "text-primary border-primary"
-                      : "text-slate-500 dark:text-slate-400 border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Bookmark className="w-4 h-4" />
-                    Saved
-                  </div>
-                </button>
+                {profile.isOwnProfile && (
+                  <>
+                    <button
+                      onClick={() => setActiveTab("liked")}
+                      className={`pb-4 px-1 font-bold transition-colors border-b-2 ${
+                        activeTab === "liked"
+                          ? "text-primary border-primary"
+                          : "text-slate-500 dark:text-slate-400 border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4" />
+                        Liked
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("saved")}
+                      className={`pb-4 px-1 font-bold transition-colors border-b-2 ${
+                        activeTab === "saved"
+                          ? "text-primary border-primary"
+                          : "text-slate-500 dark:text-slate-400 border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Bookmark className="w-4 h-4" />
+                        Saved
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* View Mode Toggle */}
@@ -455,18 +465,37 @@ export default function ProfilePage() {
                     </div>
                   </button>
                   {profile.isOwnProfile && (
-                    <Tooltip content="Delete video">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          setDeleteConfirm({ videoId: video.id, open: true });
-                        }}
-                        className="absolute top-2 right-2 p-2 text-white transition-opacity opacity-0 bg-red-500 rounded-full hover:bg-red-600 group-hover:opacity-100 z-10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </Tooltip>
+                    <>
+                      <Tooltip content="Delete video">
+                        <div className="absolute top-2 right-2 hidden md:block z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setDeleteConfirm({ videoId: video.id, open: true });
+                            }}
+                            className="p-2 text-white transition-opacity opacity-0 bg-red-500 rounded-full hover:bg-red-600 group-hover:opacity-100"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </Tooltip>
+                      <div className="absolute top-2 right-2 md:hidden z-10">
+                        <ButtonDropdown
+                          buttonContent={<MoreVertical className="w-5 h-5 text-white" />}
+                          buttonClassName="p-2 text-white transition-opacity opacity-0 bg-black/50 rounded-full hover:bg-black/70 group-hover:opacity-100"
+                          options={[
+                            {
+                              label: "Delete video",
+                              value: "delete",
+                              icon: Trash2,
+                              danger: true,
+                              onClick: () => setDeleteConfirm({ videoId: video.id, open: true }),
+                            },
+                          ]}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               ))}
@@ -543,13 +572,21 @@ export default function ProfilePage() {
           </p>
           <div className="flex justify-end gap-3">
             <button
-              onClick={() => setDeleteConfirm({ videoId: null, open: false })}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirm({ videoId: null, open: false });
+              }}
               className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               Cancel
             </button>
             <button
-              onClick={handleDeleteVideo}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteVideo();
+              }}
               className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
             >
               Delete

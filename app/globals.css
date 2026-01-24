@@ -84,3 +84,15 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+@keyframes shimmer-wave {
+  0% {
+    transform: translateX(-150%) rotate(12deg);
+  }
+  100% {
+    transform: translateX(150%) rotate(12deg);
+  }
+}
+
+.animate-shimmer-wave {
+  animation: shimmer-wave 1.4s infinite linear;
+}

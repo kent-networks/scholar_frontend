@@ -13,6 +13,7 @@ export interface Community {
   isActive?: boolean;
   lastActive?: string;
   createdAt?: string;
+  notificationCount?: number;
 }
 
 export interface CreateCommunityData {
@@ -146,11 +147,17 @@ export const communityApi = {
     return response.data.data;
   },
 
-  uploadFile: async (communityId: number, file: File) => {
+  uploadFile: async (communityId: number, file: File, onProgress?: (progress: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post(`/communities/${communityId}/files`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
     });
     return response.data.data;
   },

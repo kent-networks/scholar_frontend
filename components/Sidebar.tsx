@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  UserRound,
 } from 'lucide-react'
 
 interface NavItem {
@@ -87,10 +88,10 @@ export function MobileBottomNav() {
                 <img
                   src={displayUser.photo}
                   alt={displayUser.name}
-                  className="object-cover w-8 h-8 border-2 border-white rounded-full"
+                  className="object-cover w-[45px] h-[45px] border-2 border-white rounded-full"
                 />
               ) : (
-                <div className="flex items-center justify-center w-10 h-10 text-xs font-bold text-white rounded-full bg-primary">
+                <div className="flex items-center justify-center w-[45px] h-[45px] text-xs font-bold text-white rounded-full bg-primary">
                   {displayUser.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -104,21 +105,21 @@ export function MobileBottomNav() {
           buttonClassName=""
           options={[
             {
-              label: 'My Profile',
+              label: 'My Account',
               value: 'profile',
-              icon: UserCircle2,
+              icon: UserRound,
               onClick: () => {
                 router.push(`/profile/${displayUser.username || displayUser.name.toLowerCase().replace(/\s+/g, '-')}`)
               },
             },
-            {
-              label: 'My Account',
-              value: 'account',
-              icon: UserCircle2,
-              onClick: () => {
-                router.push('/account')
-              },
-            },
+            // {
+            //   label: 'My Account',
+            //   value: 'account',
+            //   icon: UserRound,
+            //   onClick: () => {
+            //     router.push('/account')
+            //   },
+            // },
             {
               label: 'Logout',
               value: 'logout',
@@ -296,7 +297,7 @@ export default function Sidebar() {
                     </div>
                   )}
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 left-6 flex items-center justify-center min-w-[18px] h-4.5 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                    <span className="absolute -top-1 left-6 flex items-center justify-center min-w-[18px] h-4.5 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
@@ -313,21 +314,21 @@ export default function Sidebar() {
               buttonClassName="w-full hover:bg-white/5 rounded-lg p-2 transition-colors"
               options={[
                 {
-                  label: 'My Profile',
+                  label: 'My Account',
                   value: 'profile',
-                  icon: UserCircle2,
+                  icon: UserRound,
                   onClick: () => {
                     router.push(`/profile/${user.username || user.name.toLowerCase().replace(/\s+/g, '-')}`)
                   },
                 },
-                {
-                  label: 'My Account',
-                  value: 'account',
-                  icon: UserCircle2,
-                  onClick: () => {
-                    router.push('/account')
-                  },
-                },
+                // {
+                //   label: 'My Account',
+                //   value: 'account',
+                //   icon: UserRound,
+                //   onClick: () => {
+                //     router.push('/account')
+                //   },
+                // },
                 {
                   label: 'Logout',
                   value: 'logout',

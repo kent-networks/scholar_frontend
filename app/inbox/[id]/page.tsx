@@ -5,8 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, Send, Search } from "lucide-react";
 import { messageApi, Message } from "@/lib/api/messages";
+import { userApi } from "@/lib/api/users";
 import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export default function InboxPage() {
   const router = useRouter();
@@ -22,18 +24,30 @@ export default function InboxPage() {
 
   // Fetch conversation
   useEffect(() => {
-    const fetchData = async () => {
-      if (!recipientUserId || !isAuthenticated) {
-        if (!isAuthenticated) {
-          router.push("/login");
-        }
-        return;
+    if (!recipientUserId || !isAuthenticated) {
+      if (!isAuthenticated) {
+        router.push("/login");
       }
+      return;
+    }
 
+    const fetchData = async () => {
       try {
         setLoading(true);
         const conversationMessages = await messageApi.getConversation(recipientUserId);
-        setMessages(conversationMessages);
+        // Only update if we don't have an optimistic message pending
+        setMessages((prev) => {
+          const hasOptimistic = prev.some(m => typeof m.id === 'number' && m.id > 1000000000000);
+          if (hasOptimistic) {
+            // Keep optimistic messages and merge with fetched ones
+            const optimisticIds = prev.filter(m => typeof m.id === 'number' && m.id > 1000000000000).map(m => m.id);
+            const fetched = conversationMessages.filter(m => !optimisticIds.includes(m.id));
+            return [...prev.filter(m => typeof m.id === 'number' && m.id > 1000000000000), ...fetched].sort((a, b) => 
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+          }
+          return conversationMessages;
+        });
       } catch (error: any) {
         if (error.response?.status === 401) {
           router.push("/login");
@@ -46,6 +60,13 @@ export default function InboxPage() {
     };
 
     fetchData();
+    
+    // Poll for new messages every 30 seconds
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [recipientUserId, isAuthenticated, router]);
 
   // Scroll to bottom when messages change
@@ -64,26 +85,39 @@ export default function InboxPage() {
     const messageText = message.trim();
     setMessage("");
 
-    // Optimistic update
+    // Optimistic update - immediately show the message
     const optimisticMessage: Message = {
       id: Date.now(), // Temporary ID
       senderId: user!.id,
       recipientId: recipientUserId,
       content: messageText,
       createdAt: new Date().toISOString(),
+      senderName: user!.name,
+      senderUsername: user!.username,
+      isRead: true,
     };
     setMessages((prev) => [...prev, optimisticMessage]);
+    // Scroll to bottom immediately
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
 
     try {
       setSending(true);
       const sentMessage = await messageApi.sendMessage(recipientUserId, messageText);
       
-      // Replace optimistic message with real one
-      setMessages((prev) => 
-        prev.map((m) => 
-          m.id === optimisticMessage.id ? sentMessage : m
-        )
-      );
+      // Replace optimistic message with real one, maintaining order
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m.id !== optimisticMessage.id);
+        return [...filtered, sentMessage].sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      });
+      
+      // Scroll to bottom after update
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     } catch (error: any) {
       // Remove optimistic message on error
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id));
@@ -118,15 +152,55 @@ export default function InboxPage() {
   const recipientName = recipientInfo 
     ? (recipientInfo.senderId === user?.id ? recipientInfo.recipientName : recipientInfo.senderName) || "User"
     : "User";
+  const recipientUsername = recipientInfo
+    ? (recipientInfo.senderId === user?.id ? recipientInfo.recipientUsername : recipientInfo.senderUsername) || null
+    : null;
   const recipientPhoto = recipientInfo
     ? (recipientInfo.senderId === user?.id ? recipientInfo.recipientPhoto : recipientInfo.senderPhoto)
     : undefined;
+  const recipientBio = recipientInfo
+    ? (recipientInfo.senderId === user?.id ? recipientInfo.recipientBio : recipientInfo.senderBio) || null
+    : null;
 
   // Format timestamp like "10:30 AM"
-  const formatTime = (dateString: string) => {
+  const formatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Format date header like "Today", "Yesterday", "January 16, 2025"
+  const formatDateHeader = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const messageDate = new Date(date);
+    messageDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - messageDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  // Group messages by date
+  const groupedMessages = messages.reduce((groups: { [key: string]: Message[] }, msg) => {
+    const dateKey = msg.createdAt ? new Date(msg.createdAt).toDateString() : 'unknown';
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(msg);
+    return groups;
+  }, {});
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -157,8 +231,18 @@ export default function InboxPage() {
                 </div>
               )}
               <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">{recipientName}</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Online</p>
+                {recipientUsername ? (
+                  <Link href={`/profile/${recipientUsername}`}>
+                    <h1 className="text-lg font-bold text-slate-900 dark:text-white hover:text-primary transition-colors cursor-pointer">
+                      {recipientName}
+                    </h1>
+                  </Link>
+                ) : (
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-white">{recipientName}</h1>
+                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {recipientBio || "No bio"}
+                </p>
               </div>
             </div>
           </div>
@@ -166,29 +250,45 @@ export default function InboxPage() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg) => {
-            const isMe = msg.senderId === user?.id;
+          {Object.entries(groupedMessages).map(([dateKey, dateMessages]) => {
+            const firstMessage = dateMessages[0];
+            const dateHeader = formatDateHeader(firstMessage.createdAt);
+            
             return (
-              <div
-                key={msg.id}
-                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                    isMe
-                      ? "bg-primary text-white rounded-br-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm"
-                  }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isMe ? "text-white/70" : "text-slate-500 dark:text-slate-400"
-                    }`}
-                  >
-                    {formatTime(msg.createdAt)}
-                  </p>
-                </div>
+              <div key={dateKey}>
+                {dateHeader && (
+                  <div className="flex items-center justify-center my-4">
+                    <div className="px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full">
+                      {dateHeader}
+                    </div>
+                  </div>
+                )}
+                {dateMessages.map((msg) => {
+                  const isMe = msg.senderId === user?.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex ${isMe ? "justify-end" : "justify-start"} mb-4`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                          isMe
+                            ? "bg-primary text-white rounded-br-sm"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm"
+                        }`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            isMe ? "text-white/70" : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          {formatTime(msg.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

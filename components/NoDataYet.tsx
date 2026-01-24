@@ -1,7 +1,15 @@
 import React from "react";
 import { SearchX, Package, Users, MapPin, FolderOpen } from "lucide-react";
 
-const NoDataYet = ({
+interface NoDataYetProps {
+  title?: string;
+  message?: string;
+  icon?: "search" | "assets" | "users" | "locations" | "categories";
+  showSearch?: boolean;
+  className?: string;
+}
+
+const NoDataYet: React.FC<NoDataYetProps> = ({
   title = "No data found",
   message = "Try adjusting your search or filter criteria",
   icon = "search",
@@ -27,9 +35,9 @@ const NoDataYet = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center py-12 px-4 ${className}`}
+      className={`flex flex-col items-center justify-center py-12 px-4 ${className} `}
     >
-      <div className="flex flex-col items-center space-y-4 text-center">
+      <div className="flex flex-col items-center space-y-4 text-center bg-white rounded-2xl p-4">
         {/* Icon */}
         <div className="flex items-center justify-center p-6 rounded-full bg-gray-100">
           {getIcon()}
@@ -55,3 +63,4 @@ const NoDataYet = ({
 };
 
 export default NoDataYet;
+

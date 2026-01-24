@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FileText, UploadCloud, Download, X, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { communityApi } from "@/lib/api/communities";
@@ -11,11 +11,14 @@ interface CommunityFile {
   id: number;
   fileName: string;
   filePath: string;
+  url?: string;
   fileType?: string;
   fileSize?: number;
-  uploadedAt: string;
+  createdAt?: string;
+  uploadedAt?: string;
   uploadedBy?: number;
   uploadedByName?: string;
+  uploaderName?: string;
 }
 
 interface FilesSectionProps {
@@ -28,8 +31,12 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
   const [files, setFiles] = useState<CommunityFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<CommunityFile | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchFiles();
@@ -38,7 +45,7 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
   const fetchFiles = async () => {
     try {
       setLoading(true);
-      const data = await communityApi.getCommunityFiles(communityId);
+      const data = await communityApi.getFiles(communityId);
       setFiles(data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to load files");
@@ -47,10 +54,7 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     // Check file type
     const allowedTypes = [
       "application/pdf",
@@ -67,16 +71,52 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
 
     try {
       setUploading(true);
-      await communityApi.uploadCommunityFile(communityId, file);
+      setUploadProgress(0);
+      
+      await communityApi.uploadFile(communityId, file, (progress) => {
+        setUploadProgress(progress);
+      });
+      
       toast.success("File uploaded successfully");
+      setUploadProgress(0);
       fetchFiles();
-      if (e.target) {
-        e.target.value = "";
-      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to upload file");
+      setUploadProgress(0);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    if (e.target) {
+      e.target.value = "";
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processFile(file);
     }
   };
 
@@ -84,7 +124,7 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
     if (!confirm("Are you sure you want to delete this file?")) return;
 
     try {
-      await communityApi.deleteCommunityFile(fileId);
+      await communityApi.deleteFile(fileId);
       toast.success("File deleted successfully");
       fetchFiles();
     } catch (error: any) {
@@ -126,18 +166,44 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
   return (
     <div className="space-y-4">
       {isMember && isAuthenticated && (
-        <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div
+          ref={dropZoneRef}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`bg-surface-light dark:bg-surface-dark rounded-xl border-2 border-dashed p-5 shadow-sm transition-all ${
+            isDragging
+              ? "border-primary bg-primary/5 dark:bg-primary/10"
+              : "border-slate-200 dark:border-slate-800"
+          }`}
+        >
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Upload files</h3>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-1">Upload files</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Share PDFs, PowerPoint presentations, or Word documents
+                {isDragging && <span className="text-primary font-bold"> - Drop file here</span>}
               </p>
+              {uploading && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-600 dark:text-slate-400">Uploading...</span>
+                    <span className="text-xs font-bold text-primary">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg cursor-pointer transition-colors disabled:opacity-50">
               <UploadCloud className="h-4 w-4" />
               {uploading ? "Uploading..." : "Upload"}
               <input
+                ref={fileInputRef}
                 type="file"
                 className="hidden"
                 accept=".pdf,.ppt,.pptx,.doc,.docx"
@@ -167,8 +233,8 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-slate-900 dark:text-white truncate">{file.fileName}</p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {formatFileSize(file.fileSize)} • {formatTime(file.uploadedAt)}
-                    {file.uploadedByName && ` • by ${file.uploadedByName}`}
+                    {formatFileSize(file.fileSize)} • {formatTime(file.createdAt || file.uploadedAt || '')}
+                    {(file.uploaderName || file.uploadedByName) && ` • by ${file.uploaderName || file.uploadedByName}`}
                   </p>
                 </div>
               </div>
@@ -181,8 +247,8 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
                   View
                 </button>
                 <a
-                  href={file.filePath}
-                  download
+                  href={file.url || file.filePath}
+                  download={file.fileName}
                   className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg transition-colors flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" />
@@ -215,7 +281,7 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
           <div className="w-full h-[80vh]">
             {selectedFile.fileName.toLowerCase().endsWith(".pdf") ? (
               <iframe
-                src={selectedFile.filePath}
+                src={selectedFile.url || selectedFile.filePath}
                 className="w-full h-full border-0 rounded-lg"
                 title={selectedFile.fileName}
               />
@@ -226,8 +292,8 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
                     Preview not available for this file type
                   </p>
                   <a
-                    href={selectedFile.filePath}
-                    download
+                    href={selectedFile.url || selectedFile.filePath}
+                    download={selectedFile.fileName}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
                   >
                     <Download className="w-4 h-4" />

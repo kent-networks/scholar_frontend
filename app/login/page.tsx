@@ -23,7 +23,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      router.push("/research-lab");
     }
   }, [isAuthenticated, router]);
 
