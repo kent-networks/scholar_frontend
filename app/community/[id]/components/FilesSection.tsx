@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { FileText, UploadCloud, Download, X, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { UploadCloud, Download, X, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { communityApi } from "@/lib/api/communities";
 import ModalDialog from "@/components/ModalDialog";
+import Tooltip from "@/components/Tooltip";
 import toast from "react-hot-toast";
 
 interface CommunityFile {
@@ -27,26 +29,40 @@ interface FilesSectionProps {
 }
 
 export default function FilesSection({ communityId, isMember }: FilesSectionProps) {
-  const { isAuthenticated } = useAuth();
-  const [files, setFiles] = useState<CommunityFile[]>([]);
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
+  const [allFiles, setAllFiles] = useState<CommunityFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<CommunityFile | null>(null);
-  const [viewerOpen, setViewerOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ fileId: number | null; open: boolean }>({ fileId: null, open: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const filesPerPage = 10;
 
   useEffect(() => {
     fetchFiles();
   }, [communityId]);
 
+  useEffect(() => {
+    // Reset to page 1 when search changes
+    if (searchQuery) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
+
   const fetchFiles = async () => {
     try {
       setLoading(true);
-      const data = await communityApi.getFiles(communityId);
-      setFiles(data);
+      // Fetch all files for search functionality
+      const data = await communityApi.getFiles(communityId, {
+        limit: 1000, // Fetch a large number to enable search
+        offset: 0,
+      });
+      setAllFiles(data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to load files");
     } finally {
@@ -120,12 +136,13 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
     }
   };
 
-  const handleDeleteFile = async (fileId: number) => {
-    if (!confirm("Are you sure you want to delete this file?")) return;
+  const handleDeleteFile = async () => {
+    if (!deleteConfirm.fileId) return;
 
     try {
-      await communityApi.deleteFile(fileId);
+      await communityApi.deleteFile(deleteConfirm.fileId);
       toast.success("File deleted successfully");
+      setDeleteConfirm({ fileId: null, open: false });
       fetchFiles();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete file");
@@ -140,7 +157,9 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
   };
 
   const formatTime = (dateString: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / 86400000);
@@ -158,10 +177,30 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
     return "📎";
   };
 
-  const handleViewFile = (file: CommunityFile) => {
-    setSelectedFile(file);
-    setViewerOpen(true);
+  const handleFileClick = (file: CommunityFile) => {
+    if (file.fileName.toLowerCase().endsWith(".pdf")) {
+      // Open PDF in full page
+      window.open(file.url || file.filePath, "_blank");
+    } else {
+      // For non-PDF files, download
+      const link = document.createElement("a");
+      link.href = file.url || file.filePath;
+      link.download = file.fileName;
+      link.click();
+    }
   };
+
+  // Filter files based on search query
+  const filteredFiles = allFiles.filter((file) =>
+    file.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Paginate filtered files
+  const totalFiltered = filteredFiles.length;
+  const totalPagesFiltered = Math.ceil(totalFiltered / filesPerPage);
+  const startIndex = (currentPage - 1) * filesPerPage;
+  const endIndex = startIndex + filesPerPage;
+  const paginatedFiles = filteredFiles.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-4">
@@ -171,14 +210,14 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`bg-surface-light dark:bg-surface-dark rounded-xl border-2 border-dashed p-5 shadow-sm transition-all ${
+          className={`bg-surface-light dark:bg-surface-dark rounded-xl border-2 border-dashed p-4 md:p-5 shadow-sm transition-all ${
             isDragging
               ? "border-primary bg-primary/5 dark:bg-primary/10"
               : "border-slate-200 dark:border-slate-800"
           }`}
         >
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1 w-full">
               <h3 className="font-bold text-slate-900 dark:text-white mb-1">Upload files</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Share PDFs, PowerPoint presentations, or Word documents
@@ -199,9 +238,10 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
                 </div>
               )}
             </div>
-            <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg cursor-pointer transition-colors disabled:opacity-50">
+            <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg cursor-pointer transition-colors disabled:opacity-50 whitespace-nowrap">
               <UploadCloud className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Upload"}
+              <span className="hidden sm:inline">{uploading ? "Uploading..." : "Upload"}</span>
+              <span className="sm:hidden">{uploading ? "..." : "Upload"}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -215,97 +255,137 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search files..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+        />
+      </div>
+
       {loading ? (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">Loading files...</div>
-      ) : files.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">No files uploaded yet</div>
+      ) : filteredFiles.length === 0 ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+          {searchQuery ? "No files found matching your search" : "No files uploaded yet"}
+        </div>
       ) : (
-        files.map((file) => (
-          <div
-            key={file.id}
-            className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
-                  {getFileIcon(file.fileName)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900 dark:text-white truncate">{file.fileName}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {formatFileSize(file.fileSize)} • {formatTime(file.createdAt || file.uploadedAt || '')}
-                    {(file.uploaderName || file.uploadedByName) && ` • by ${file.uploaderName || file.uploadedByName}`}
-                  </p>
+        <>
+          <div className="space-y-3">
+            {paginatedFiles.map((file) => (
+              <div
+                key={file.id}
+                onClick={() => handleFileClick(file)}
+                className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-4 md:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full sm:w-auto">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
+                      {getFileIcon(file.fileName)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-900 dark:text-white truncate">{file.fileName}</p>
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        {formatFileSize(file.fileSize)} • {formatTime(file.createdAt || file.uploadedAt || '')}
+                        {(file.uploaderName || file.uploadedByName) && ` • by ${file.uploaderName || file.uploadedByName}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end sm:justify-start">
+                    <a
+                      href={file.url || file.filePath}
+                      download={file.fileName}
+                      onClick={(e) => e.stopPropagation()}
+                      className="px-3 sm:px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors flex items-center gap-2 text-sm sm:text-base"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Download</span>
+                    </a>
+                    {isMember && (
+                      <Tooltip content="Delete file">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirm({ fileId: file.id, open: true });
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </Tooltip>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleViewFile(file)}
-                  className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  View
-                </button>
-                <a
-                  href={file.url || file.filePath}
-                  download={file.fileName}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </a>
-                {isMember && (
-                  <button
-                    onClick={() => handleDeleteFile(file.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
-        ))
+
+          {/* Pagination */}
+          {totalPagesFiltered > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="px-4 py-2 text-sm font-bold text-slate-900 dark:text-white">
+                Page {currentPage} of {totalPagesFiltered}
+                {searchQuery && ` (${totalFiltered} found)`}
+              </span>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(totalPagesFiltered, prev + 1))}
+                disabled={currentPage === totalPagesFiltered}
+                className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
+      {/* Delete Confirmation Modal */}
       <ModalDialog
-        isOpen={viewerOpen}
-        onClose={() => {
-          setViewerOpen(false);
-          setSelectedFile(null);
-        }}
-        title={selectedFile?.fileName || "File Viewer"}
-        width="xl"
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ fileId: null, open: false })}
+        title="Delete File"
+        width="md"
+        clickOutside={false}
       >
-        {selectedFile && (
-          <div className="w-full h-[80vh]">
-            {selectedFile.fileName.toLowerCase().endsWith(".pdf") ? (
-              <iframe
-                src={selectedFile.url || selectedFile.filePath}
-                className="w-full h-full border-0 rounded-lg"
-                title={selectedFile.fileName}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <p className="text-slate-500 dark:text-slate-400 mb-4">
-                    Preview not available for this file type
-                  </p>
-                  <a
-                    href={selectedFile.url || selectedFile.filePath}
-                    download={selectedFile.fileName}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download to view
-                  </a>
-                </div>
-              </div>
-            )}
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to delete this file? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setDeleteConfirm({ fileId: null, open: false })}
+              className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleDeleteFile();
+                setDeleteConfirm({ fileId: null, open: false });
+              }}
+              className="px-4 py-2 font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+            >
+              Delete
+            </button>
           </div>
-        )}
+        </div>
       </ModalDialog>
     </div>
   );
 }
-

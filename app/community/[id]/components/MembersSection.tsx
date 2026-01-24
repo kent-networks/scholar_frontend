@@ -150,7 +150,7 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
                   {!isOwner && (
                     <button
                       onClick={() => handleInboxClick(member)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300  bg-white  hover:bg-slate-50 transition-colors font-bold text-slate-900"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300  bg-white  hover:bg-slate-50 transition-colors text-slate-900"
                     >
                       <Inbox className="h-4 w-4" />
                       Inbox

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Trash2, Edit2, Users, MoreVertical } from "lucide-react";
+import { ArrowLeft, Trash2, Edit2, Users, MoreVertical, LogOut } from "lucide-react";
 import { communityApi, Community } from "@/lib/api/communities";
 import toast from "react-hot-toast";
 import PostsSection from "./components/PostsSection";
@@ -22,6 +22,7 @@ export default function CommunityDetailPage() {
   const [activeTab, setActiveTab] = useState<"posts" | "files" | "members">("posts");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", description: "" });
 
   const communityId = parseInt(params.id as string);
@@ -71,6 +72,16 @@ export default function CommunityDetailPage() {
     }
   };
 
+  const handleLeave = async () => {
+    try {
+      await communityApi.leaveCommunity(communityId);
+      toast.success("You have left the community");
+      router.push("/community");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to leave community");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -107,135 +118,123 @@ export default function CommunityDetailPage() {
             </button>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
-                  {community.name}
-                </h1>
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                    {community.name}
+                  </h1>
+                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        {/* <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Members</p> */}
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                          {community.memberCount}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  </div>
+                </div>
                 <p className="text-slate-600 dark:text-slate-400">
                   {community.description || "No description available"}
                 </p>
               </div>
-              {isOwner && (
-                <ButtonDropdown
-                  buttonContent={
-                    <div className="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white">
-                      <MoreVertical className="w-4 h-4" />
-                      <span className="hidden sm:inline">Actions</span>
-                    </div>
-                  }
-                  buttonClassName="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
-                  options={[
-                    {
-                      label: "Edit Community",
-                      value: "edit",
-                      icon: Edit2,
-                      onClick: () => setEditModalOpen(true),
-                    },
-                    {
-                      label: "Delete Community",
-                      value: "delete",
-                      icon: Trash2,
-                      danger: true,
-                      onClick: () => setDeleteModalOpen(true),
-                    },
-                  ]}
-                />
-              )}
             </div>
           </div>
 
           {/* Tabs */}
           <div className="mb-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex gap-8">
-              <button
-                onClick={() => setActiveTab("posts")}
-                className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
-                  activeTab === "posts"
-                    ? "border-primary text-slate-900 dark:text-white"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                }`}
-              >
-                <p className="text-sm font-bold">Posts</p>
-              </button>
-              <button
-                onClick={() => setActiveTab("files")}
-                className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
-                  activeTab === "files"
-                    ? "border-primary text-slate-900 dark:text-white"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                }`}
-              >
-                <p className="text-sm font-bold">Files</p>
-              </button>
-              <button
-                onClick={() => setActiveTab("members")}
-                className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
-                  activeTab === "members"
-                    ? "border-primary text-slate-900 dark:text-white"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                }`}
-              >
-                <p className="text-sm font-bold">Members</p>
-              </button>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-8">
+                <button
+                  onClick={() => setActiveTab("posts")}
+                  className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
+                    activeTab === "posts"
+                      ? "border-primary text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <p className="text-sm font-bold">Posts</p>
+                </button>
+                <button
+                  onClick={() => setActiveTab("files")}
+                  className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
+                    activeTab === "files"
+                      ? "border-primary text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <p className="text-sm font-bold">Files</p>
+                </button>
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={`flex flex-col items-center justify-center border-b-[3px] pb-3 pt-2 px-1 transition-colors ${
+                    activeTab === "members"
+                      ? "border-primary text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <p className="text-sm font-bold">Members</p>
+                </button>
+              </div>
+              {(isOwner || isMember) && (
+                <ButtonDropdown
+                  buttonContent={
+                    <>
+                      <MoreVertical className="w-4 h-4" />
+                      <span className="hidden sm:inline">Actions</span>
+                    </>
+                  }
+                  buttonClassName="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-white hover:bg-slate-200 text-slate-900"
+                  options={
+                    isOwner
+                      ? [
+                          {
+                            label: "Edit Community",
+                            value: "edit",
+                            icon: Edit2,
+                            onClick: () => setEditModalOpen(true),
+                          },
+                          {
+                            label: "Delete Community",
+                            value: "delete",
+                            icon: Trash2,
+                            danger: true,
+                            onClick: () => setDeleteModalOpen(true),
+                          },
+                        ]
+                      : [
+                          {
+                            label: "Exit Community",
+                            value: "leave",
+                            icon: LogOut,
+                            danger: true,
+                            onClick: () => setLeaveModalOpen(true),
+                          },
+                        ]
+                  }
+                />
+              )}
             </div>
           </div>
 
           {/* Tab Content */}
-          <div className="flex flex-col gap-8 lg:grid lg:grid-cols-3">
-            {/* Sidebar - shown first on mobile, right on desktop */}
-            <div className="space-y-6 order-2 lg:order-1 lg:col-span-1">
-              <div className="p-5 border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-slate-900 dark:text-white">Members</h3>
-                  </div>
-                  {isOwner && (
-                    <ButtonDropdown
-                      buttonContent={
-                        <div className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                          <MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        </div>
-                      }
-                      buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                      options={[
-                        {
-                          label: "Edit Community",
-                          value: "edit",
-                          icon: Edit2,
-                          onClick: () => setEditModalOpen(true),
-                        },
-                        {
-                          label: "Delete Community",
-                          value: "delete",
-                          icon: Trash2,
-                          danger: true,
-                          onClick: () => setDeleteModalOpen(true),
-                        },
-                      ]}
-                    />
-                  )}
-                </div>
-                <p className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {community.memberCount}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total members</p>
-              </div>
-            </div>
+          <div>
+            {activeTab === "posts" && (
+              <PostsSection communityId={communityId} isMember={isMember || false} isOwner={isOwner} />
+            )}
 
-            {/* Main Content */}
-            <div className="order-1 lg:order-2 lg:col-span-2">
-              {activeTab === "posts" && (
-                <PostsSection communityId={communityId} isMember={isMember || false} isOwner={isOwner} />
-              )}
+            {activeTab === "files" && (
+              <FilesSection communityId={communityId} isMember={isMember || false} />
+            )}
 
-              {activeTab === "files" && (
-                <FilesSection communityId={communityId} isMember={isMember || false} />
-              )}
-
-              {activeTab === "members" && (
-                <MembersSection communityId={communityId} isOwner={isOwner} />
-              )}
-            </div>
+            {activeTab === "members" && (
+              <MembersSection communityId={communityId} isOwner={isOwner} />
+            )}
           </div>
         </div>
       </main>
@@ -300,6 +299,7 @@ export default function CommunityDetailPage() {
         onClose={() => setDeleteModalOpen(false)}
         title="Delete Community"
         width="md"
+        clickOutside={false}
       >
         <div className="space-y-4">
           <p className="text-slate-700 dark:text-slate-300">
@@ -307,16 +307,49 @@ export default function CommunityDetailPage() {
           </p>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
+              type="button"
               onClick={() => setDeleteModalOpen(false)}
               className="px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleDelete}
               className="px-4 py-2 text-white transition-colors bg-red-500 rounded-lg hover:bg-red-600"
             >
               Delete
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
+
+      {/* Leave Community Confirmation Modal */}
+      <ModalDialog
+        isOpen={leaveModalOpen}
+        onClose={() => setLeaveModalOpen(false)}
+        title="Leave Community"
+        width="md"
+        clickOutside={false}
+      >
+        <div className="space-y-4">
+          <p className="text-slate-700 dark:text-slate-300">
+            Are you sure you want to leave this community? You will need to be invited again to rejoin.
+          </p>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setLeaveModalOpen(false)}
+              className="px-4 py-2 transition-colors rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleLeave}
+              className="px-4 py-2 text-white transition-colors bg-red-500 rounded-lg hover:bg-red-600"
+            >
+              Leave
             </button>
           </div>
         </div>

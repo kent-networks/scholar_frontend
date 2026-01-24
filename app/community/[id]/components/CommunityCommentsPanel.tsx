@@ -168,7 +168,7 @@ export default function CommunityCommentsPanel({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-50"
+              className="fixed -inset-4  bg-black/50 z-[100]"
               onClick={onClose}
             />
 
@@ -179,7 +179,7 @@ export default function CommunityCommentsPanel({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-white dark:bg-slate-800 z-50 shadow-2xl flex flex-col"
+              className="fixed right-0 -top-4 bottom-0 w-full md:w-[400px] bg-white dark:bg-slate-800 z-[100] shadow-2xl flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

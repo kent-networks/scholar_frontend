@@ -56,10 +56,9 @@ export default function ModalDialog({
    Mount / unmount control (KEY FIX)
   --------------------------------------------- */
   useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-    }
+    setShouldRender(isOpen);
   }, [isOpen]);
+  
 
   /* --------------------------------------------
    Lock body scroll
@@ -93,6 +92,7 @@ export default function ModalDialog({
   --------------------------------------------- */
   const requestClose = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    onClose();
     setShouldRender(false);
   };
 
@@ -104,7 +104,7 @@ export default function ModalDialog({
     >
       {shouldRender && (
         <motion.div
-          className="fixed z-50 -inset-6 bg-black/50"
+          className="fixed z-[100] -inset-6 bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

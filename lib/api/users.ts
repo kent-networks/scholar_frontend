@@ -32,5 +32,15 @@ export const userApi = {
   deleteProfilePhoto: async (): Promise<void> => {
     await api.delete("/users/profile-photo");
   },
+
+  getFollowers: async (userId: number): Promise<Array<{ id: number; username: string; name: string; photo?: string | null }>> => {
+    const response = await api.get(`/users/${userId}/followers`);
+    return response.data.data;
+  },
+
+  getFollowing: async (userId: number): Promise<Array<{ id: number; username: string; name: string; photo?: string | null }>> => {
+    const response = await api.get(`/users/${userId}/following`);
+    return response.data.data;
+  },
 };
 

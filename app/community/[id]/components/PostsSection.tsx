@@ -8,6 +8,7 @@ import { communityApi } from "@/lib/api/communities";
 import ModalDialog from "@/components/ModalDialog";
 import CommunityCommentsPanel from "./CommunityCommentsPanel";
 import toast from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Post {
   id: number;
@@ -276,103 +277,139 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
 
             {selectedPost === post.id && comments[post.id] && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-                {comments[post.id].length > 3 ? (
-                  <>
-                    {comments[post.id].slice(0, 3).map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        {comment.userPhoto ? (
-                          <img
-                            src={comment.userPhoto}
-                            alt={comment.userName}
-                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-sm text-slate-900 dark:text-white">
-                              {comment.userName}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {formatTime(comment.createdAt)}
-                            </span>
-                            {(comment.userId === user?.id || isOwner) && (
-                              <button
-                                onClick={() => setDeleteCommentConfirm({ postId: post.id, commentId: comment.id, open: true })}
-                                className="ml-auto text-red-500 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{comment.content}</p>
-                          <button
-                            onClick={() => handleLikeComment(comment.id)}
-                            className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
-                              comment.isLiked ? "text-red-500" : "text-slate-500"
-                            }`}
-                          >
-                            <Heart className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
-                            <span>{comment.likesCount}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+<AnimatePresence>
+  {selectedPost === post.id && comments[post.id] && (
+    <motion.div
+      initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1], // nice smooth curve (easeOutQuad-like)
+      }}
+      className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3 overflow-hidden"
+    >
+      {comments[post.id].length > 3 ? (
+        <>
+          {comments[post.id].slice(0, 3).map((comment) => (
+            <div key={comment.id} className="flex gap-3">
+              {comment.userPhoto ? (
+                <img
+                  src={comment.userPhoto}
+                  alt={comment.userName}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {comment.userName?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">
+                    {comment.userName}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatTime(comment.createdAt)}
+                  </span>
+                  {(comment.userId === user?.id || isOwner) && (
                     <button
-                      onClick={() => setShowCommentsPanel(post.id)}
-                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                      onClick={() =>
+                        setDeleteCommentConfirm({
+                          postId: post.id,
+                          commentId: comment.id,
+                          open: true,
+                        })
+                      }
+                      className="ml-auto text-red-500 hover:text-red-600 transition-colors"
                     >
-                      View all {comments[post.id].length} comments
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                  </>
-                ) : (
-                  comments[post.id].map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
-                      {comment.userPhoto ? (
-                        <img
-                          src={comment.userPhoto}
-                          alt={comment.userName}
-                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-sm text-slate-900 dark:text-white">
-                            {comment.userName}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatTime(comment.createdAt)}
-                          </span>
-                          {(comment.userId === user?.id || isOwner) && (
-                            <button
-                              onClick={() => setDeleteCommentConfirm({ postId: post.id, commentId: comment.id, open: true })}
-                              className="ml-auto text-red-500 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{comment.content}</p>
-                        <button
-                          onClick={() => handleLikeComment(comment.id)}
-                          className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
-                            comment.isLiked ? "text-red-500" : "text-slate-500"
-                          }`}
-                        >
-                          <Heart className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
-                          <span>{comment.likesCount}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                  )}
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">
+                  {comment.content}
+                </p>
+                <button
+                  onClick={() => handleLikeComment(comment.id)}
+                  className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
+                    comment.isLiked ? "text-red-500" : "text-slate-500"
+                  }`}
+                >
+                  <Heart
+                    className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`}
+                  />
+                  <span>{comment.likesCount}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <button
+            onClick={() => setShowCommentsPanel(post.id)}
+            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            View all {comments[post.id].length} comments
+          </button>
+        </>
+      ) : (
+        comments[post.id].map((comment) => (
+          <div key={comment.id} className="flex gap-3">
+            {comment.userPhoto ? (
+              <img
+                src={comment.userPhoto}
+                alt={comment.userName}
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {comment.userName?.charAt(0)?.toUpperCase() || "?"}
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-bold text-sm text-slate-900 dark:text-white">
+                  {comment.userName}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {formatTime(comment.createdAt)}
+                </span>
+                {(comment.userId === user?.id || isOwner) && (
+                  <button
+                    onClick={() =>
+                      setDeleteCommentConfirm({
+                        postId: post.id,
+                        commentId: comment.id,
+                        open: true,
+                      })
+                    }
+                    className="ml-auto text-red-500 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 )}
+              </div>
+              <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">
+                {comment.content}
+              </p>
+              <button
+                onClick={() => handleLikeComment(comment.id)}
+                className={`flex items-center gap-1 text-xs hover:text-primary transition-colors ${
+                  comment.isLiked ? "text-red-500" : "text-slate-500"
+                }`}
+              >
+                <Heart
+                  className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`}
+                />
+                <span>{comment.likesCount}</span>
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </motion.div>
+  )}
+</AnimatePresence>
                 <div className="flex gap-2 pt-2">
                   <input
                     type="text"
@@ -485,22 +522,24 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
           </div>
         </div>
       </ModalDialog>
-
+      
       {/* Comments Side Panel */}
       <CommunityCommentsPanel
-        isOpen={showCommentsPanel !== null}
-        onClose={() => setShowCommentsPanel(null)}
-        postId={showCommentsPanel || 0}
-        commentsCount={showCommentsPanel ? (comments[showCommentsPanel]?.length || 0) : 0}
-        isOwner={isOwner}
-        onCommentsUpdate={() => {
-          if (showCommentsPanel) {
-            fetchComments(showCommentsPanel);
-            fetchPosts();
-          }
-        }}
+      isOpen={showCommentsPanel !== null}
+      onClose={() => setShowCommentsPanel(null)}
+      postId={showCommentsPanel || 0}
+      commentsCount={showCommentsPanel ? (comments[showCommentsPanel]?.length || 0) : 0}
+      isOwner={isOwner}
+      onCommentsUpdate={() => {
+        if (showCommentsPanel) {
+          fetchComments(showCommentsPanel);
+          fetchPosts();
+        }
+      }}
       />
+
     </div>
+    
   );
 }
 

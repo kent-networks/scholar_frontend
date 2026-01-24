@@ -12,6 +12,7 @@ import { userApi, UserProfile } from "@/lib/api/users";
 import { videoApi, Video as VideoType } from "@/lib/api/videos";
 import { messageApi } from "@/lib/api/messages";
 import { useAuth } from "@/contexts/AuthContext";
+import UsersSidePanel from "@/components/UsersSidePanel";
 import toast from "react-hot-toast";
 
 export default function ProfilePage() {
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
   const [unreadCount, setUnreadCount] = useState(0);
+  const [usersPanel, setUsersPanel] = useState<{ open: boolean; type: "followers" | "following" | null }>({ open: false, type: null });
 
   // Fetch profile data
   useEffect(() => {
@@ -306,7 +308,7 @@ export default function ProfilePage() {
                     <>
                       <Link
                         href="/inbox"
-                        className="relative flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                        className="relative flex items-center gap-2 px-4 py-2 transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
                       >
                         <Inbox className="w-4 h-4" />
                         Inbox
@@ -330,14 +332,20 @@ export default function ProfilePage() {
 
               {/* Stats */}
               <div className="flex gap-6">
-                <div>
+                <button
+                  onClick={() => setUsersPanel({ open: true, type: "followers" })}
+                  className="text-left hover:opacity-70 transition-opacity"
+                >
                   <span className="font-bold text-slate-900 dark:text-white">{profile.followers.toLocaleString()}</span>
                   <span className="ml-1 text-slate-600 dark:text-slate-400">Followers</span>
-                </div>
-                <div>
+                </button>
+                <button
+                  onClick={() => setUsersPanel({ open: true, type: "following" })}
+                  className="text-left hover:opacity-70 transition-opacity"
+                >
                   <span className="font-bold text-slate-900 dark:text-white">{profile.following}</span>
                   <span className="ml-1 text-slate-600 dark:text-slate-400">Following</span>
-                </div>
+                </button>
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white">{profile.likes.toLocaleString()}</span>
                   <span className="ml-1 text-slate-600 dark:text-slate-400">Likes</span>
@@ -594,6 +602,17 @@ export default function ProfilePage() {
           </div>
         </div>
       </ModalDialog>
+
+      {/* Users Side Panel */}
+      {usersPanel.type && (
+        <UsersSidePanel
+          isOpen={usersPanel.open}
+          onClose={() => setUsersPanel({ open: false, type: null })}
+          userId={profile.userId}
+          type={usersPanel.type}
+          title={usersPanel.type === "followers" ? "Followers" : "Following"}
+        />
+      )}
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg md:hidden bg-surface-light dark:bg-surface-dark border-slate-200 dark:border-slate-800 pb-safe">
