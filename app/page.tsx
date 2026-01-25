@@ -103,7 +103,7 @@ export default function Home() {
       opacity: 1,
       transition: {
         staggerChildren: 0.06,
-        delayChildren: 0.3,
+        delayChildren: 0.2,
       },
     },
   };
@@ -118,7 +118,7 @@ export default function Home() {
         type: "spring",
         stiffness: 110,
         damping: 16,
-        duration: 0.5,
+        duration: 0.2,
       },
     },
   };
@@ -205,7 +205,7 @@ export default function Home() {
                     visible: {
                       opacity: 1,
                       y: 0,
-                      transition: { duration: 0.8, delay: 1.1, ease: "easeOut" },
+                      transition: { duration: 0.5, delay: 1.1, ease: "easeOut" },
                     },
                   }}
                   className="mb-4 text-5xl font-bold leading-tight text-white md:text-6xl"
@@ -219,7 +219,7 @@ export default function Home() {
                     visible: {
                       opacity: 1,
                       y: 0,
-                      transition: { duration: 0.8, delay: 1.3, ease: "easeOut" },
+                      transition: { duration: 0.5, delay: 1.3, ease: "easeOut" },
                     },
                   }}
                   className="mb-8 text-xl leading-relaxed text-blue-100 md:text-2xl"
@@ -469,6 +469,25 @@ export default function Home() {
                 )}
               </div>
             </div>
+            <div className="flex justify-center md:hidden">
+            <Link
+              href="/research-lab"
+              className="
+                group inline-flex items-center gap-2 px-5 py-2.5
+                text-sm font-medium text-primary
+                bg-white
+                hover:scale-105
+                active:bg-primary/90
+                border border-primary/20
+                rounded-full transition-all duration-300
+                focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2
+              "
+              >
+                View All
+                <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
           </div>
         </div>
       </main>

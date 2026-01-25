@@ -1,11 +1,90 @@
 import type { Metadata } from 'next'
+import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
 
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-inter',
+})
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  variable: '--font-poppins',
+})
+
 export const metadata: Metadata = {
-  title: 'Scholar - Academic Ecosystem',
-  description: 'Research lab, community operations, and academic collaboration platform',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  ),
+  title: {
+    default: 'ClasslyAfrica - Academic Ecosystem',
+    template: '%s | ClasslyAfrica',
+  },
+  description:
+    'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
+  keywords: [
+    'academic',
+    'research',
+    'ClasslyAfrica',
+    'education',
+    'community',
+    'collaboration',
+    'research lab',
+    'academic ecosystem',
+    'knowledge sharing',
+    'academic networking',
+  ],
+  authors: [{ name: 'ClasslyAfrica' }],
+  creator: 'ClasslyAfrica',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    siteName: 'ClasslyAfrica',
+    title: 'ClasslyAfrica - Academic Ecosystem',
+    description:
+      'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
+    images: [
+      {
+        url: 'assets/ClasslyAfrica.png',
+        width: 901,
+        height: 842,
+        alt: 'ClasslyAfrica',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ClasslyAfrica - Academic Ecosystem',
+    description:
+      'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
+    images: ['assets/ClasslyAfrica.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: '/icon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon.ico' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({
@@ -14,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body className="font-body antialiased">
         <AuthProvider>
           {children}
