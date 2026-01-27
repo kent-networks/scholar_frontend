@@ -31,11 +31,20 @@ export const uploadApi = {
     return response.data;
   },
 
-  uploadImages: async (files: File[], data?: { description?: string; subject?: string; videoType?: "research-lab" | "scoop" }) => {
+  uploadImages: async (
+    files: File[],
+    data?: {
+      title?: string;
+      description?: string;
+      subject?: string;
+      videoType?: "research-lab" | "scoop";
+    }
+  ) => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append("files", file);
     });
+    if (data?.title) formData.append("title", data.title);
     if (data?.description) formData.append("description", data.description);
     if (data?.subject) formData.append("subject", data.subject);
     if (data?.videoType) formData.append("videoType", data.videoType);

@@ -113,11 +113,27 @@ export default function ResearchLabUploadPage() {
     setUploadProgress(0);
 
     try {
-      // For now, upload only the first video file (can be extended for multiple)
-      const videoFile = selectedFiles.find((f) => f.file.type.startsWith("video/"));
+      // One upload action should create ONE post.
+      // We support either:
+      // - exactly 1 video, OR
+      // - 1+ images (as an image collection post)
+      const videoFiles = selectedFiles.filter((f) => f.file.type.startsWith("video/"));
       const imageFiles = selectedFiles.filter((f) => f.file.type.startsWith("image/"));
 
-      if (videoFile) {
+      if (videoFiles.length > 0 && imageFiles.length > 0) {
+        toast.error("Please upload either videos or images, not both");
+        setIsUploading(false);
+        return;
+      }
+
+      if (videoFiles.length > 1) {
+        toast.error("Please upload only one video at a time");
+        setIsUploading(false);
+        return;
+      }
+
+      if (videoFiles.length === 1) {
+        const videoFile = videoFiles[0];
         // Upload video
         const uploadPromise = uploadApi.uploadVideo(videoFile.file, {
           title: title || "Untitled Video",
@@ -144,6 +160,7 @@ export default function ResearchLabUploadPage() {
       } else if (imageFiles.length > 0) {
         // Upload images
         const uploadPromise = uploadApi.uploadImages(imageFiles.map((f) => f.file), {
+          title: title || undefined,
           description: caption,
           subject: subject || undefined,
           videoType: "research-lab",
@@ -193,13 +210,14 @@ export default function ResearchLabUploadPage() {
         <div className="max-w-4xl p-4 mx-auto md:p-8">
           {/* Header */}
           <div className="mb-8">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 mb-4 transition-colors text-slate-600 dark:text-slate-400 hover:text-primary"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-3 py-2 text-sm transition-all duration-200 bg-white group rounded-xl text-slate-600 hover:text-primary hover:bg-slate-100"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5"  strokeWidth={1.5}/>
+            <span className="font-medium">Back</span>
+          </button>
             <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
               Upload to Research Lab
             </h1>
@@ -242,85 +260,85 @@ export default function ResearchLabUploadPage() {
                 </div>
               </div>
             )}
+            <div className="flex flex-col gap-4 p-4 bg-white rounded-2xl">
+              
+              {/* Title Input */}
+              <div>
+                <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter video title..."
+                  disabled={isUploading}
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60"                />
+              </div>
 
-            {/* Title Input */}
-            <div>
-              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
-                Title
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter video title..."
-                disabled={isUploading}
-                className="w-full px-4 py-3 transition-colors bg-white border rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
-              />
+              {/* Caption Input */}
+              <div>
+                <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
+                  Caption
+                </label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Write a caption..."
+                  rows={4}
+                  disabled={isUploading}
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none resize-none transition-all disabled:opacity-60"                />
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {caption.length} characters
+                </p>
+              </div>
+
+              {/* Subject Input */}
+              <div>
+                <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
+                  Subject (Optional)
+                </label>
+                <Dropdown
+                  options={[
+                    { value: "", label: "None" },
+                    { value: "Mathematics", label: "Mathematics" },
+                    { value: "Physics", label: "Physics" },
+                    { value: "Chemistry", label: "Chemistry" },
+                    { value: "Biology", label: "Biology" },
+                    { value: "Computer Science", label: "Computer Science" },
+                    { value: "Engineering", label: "Engineering" },
+                    { value: "Medicine", label: "Medicine" },
+                    { value: "Psychology", label: "Psychology" },
+                    { value: "Economics", label: "Economics" },
+                    { value: "History", label: "History" },
+                    { value: "Literature", label: "Literature" },
+                    { value: "Philosophy", label: "Philosophy" },
+                    { value: "Art", label: "Art" },
+                    { value: "Music", label: "Music" },
+                    { value: "Geography", label: "Geography" },
+                    { value: "Astronomy", label: "Astronomy" },
+                    { value: "Environmental Science", label: "Environmental Science" },
+                    { value: "Political Science", label: "Political Science" },
+                    { value: "Sociology", label: "Sociology" },
+                    { value: "Business", label: "Business" },
+                    { value: "Education", label: "Education" },
+                    { value: "Law", label: "Law" },
+                    { value: "Architecture", label: "Architecture" },
+                    { value: "Agriculture", label: "Agriculture" },
+                    { value: "Other", label: "Other" },
+                  ]}
+                  value={subject}
+                  onChange={(e) => {
+                    const value = typeof e === 'string' ? e : e.target.value;
+                    setSubject(value === "" ? "" : value);
+                  }}
+                  placeholder="Select a subject (optional)..."
+                  className="transition-colors"
+                  disabled={isUploading}
+                />
+              </div>
+              
             </div>
-
-            {/* Caption Input */}
-            <div>
-              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
-                Caption
-              </label>
-              <textarea
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="Write a caption..."
-                rows={4}
-                disabled={isUploading}
-                className="w-full px-4 py-3 transition-colors bg-white border rounded-lg resize-none border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
-              />
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                {caption.length} characters
-              </p>
-            </div>
-
-            {/* Subject Input */}
-            <div>
-              <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
-                Subject (Optional)
-              </label>
-              <Dropdown
-                options={[
-                  { value: "", label: "None" },
-                  { value: "Mathematics", label: "Mathematics" },
-                  { value: "Physics", label: "Physics" },
-                  { value: "Chemistry", label: "Chemistry" },
-                  { value: "Biology", label: "Biology" },
-                  { value: "Computer Science", label: "Computer Science" },
-                  { value: "Engineering", label: "Engineering" },
-                  { value: "Medicine", label: "Medicine" },
-                  { value: "Psychology", label: "Psychology" },
-                  { value: "Economics", label: "Economics" },
-                  { value: "History", label: "History" },
-                  { value: "Literature", label: "Literature" },
-                  { value: "Philosophy", label: "Philosophy" },
-                  { value: "Art", label: "Art" },
-                  { value: "Music", label: "Music" },
-                  { value: "Geography", label: "Geography" },
-                  { value: "Astronomy", label: "Astronomy" },
-                  { value: "Environmental Science", label: "Environmental Science" },
-                  { value: "Political Science", label: "Political Science" },
-                  { value: "Sociology", label: "Sociology" },
-                  { value: "Business", label: "Business" },
-                  { value: "Education", label: "Education" },
-                  { value: "Law", label: "Law" },
-                  { value: "Architecture", label: "Architecture" },
-                  { value: "Agriculture", label: "Agriculture" },
-                  { value: "Other", label: "Other" },
-                ]}
-                value={subject}
-                onChange={(e) => {
-                  const value = typeof e === 'string' ? e : e.target.value;
-                  setSubject(value === "" ? "" : value);
-                }}
-                placeholder="Select a subject (optional)..."
-                className="transition-colors"
-                disabled={isUploading}
-              />
-            </div>
-
             {/* Additional Options */}
             <div className="space-y-3">
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
@@ -348,14 +366,14 @@ export default function ResearchLabUploadPage() {
               <button
                 onClick={() => router.back()}
                 disabled={isUploading}
-                className="flex-1 px-6 py-3 font-bold transition-colors border rounded-lg border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                className="flex-1 px-6 py-3 font-bold transition-colors border rounded-2xl border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpload}
                 disabled={selectedFiles.length === 0 || isUploading}
-                className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-bold text-white transition-colors rounded-2xl bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>

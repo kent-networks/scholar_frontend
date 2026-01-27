@@ -81,7 +81,7 @@ export default function FileUploadArea({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              className="px-8 py-4 font-bold text-white transition-all transform shadow-lg bg-primary hover:bg-primary-dark rounded-xl hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-4 font-bold text-white transition-all transform shadow-lg bg-primary hover:bg-primary-dark rounded-2xl hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Select Files
             </button>
