@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ButtonDropdown from "@/components/ButtonDropdown";
 import DataTable from "@/components/DataTable";
@@ -20,9 +20,12 @@ import {
 } from "lucide-react";
 import { adminApi, AdminSummary } from "../../lib/api/admin";
 import { userAdminApi, AdminUser, AdminUsersQuery } from "../../lib/api/users-admin";
+import AdminTabs from "./components/AdminTabs";
+import { institutionsApi, Institution } from "@/lib/api/institutions";
 
 export default function AdminPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [summary, setSummary] = useState<AdminSummary | null>(null);
@@ -38,9 +41,27 @@ export default function AdminPage() {
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [refreshUsersKey, setRefreshUsersKey] = useState(0);
+  const initialTab = (searchParams.get("tab") || "") as any;
+  const [activeTab, setActiveTab] = useState<"users" | "institutions">(
+    initialTab === "institutions" ? "institutions" : "users"
+  );
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60";
 
   const offset = (currentPage - 1) * itemsPerPage;
   const totalPages = Math.max(1, Math.ceil(totalUsers / itemsPerPage));
+
+  // Institutions tab state
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutionsSearch, setInstitutionsSearch] = useState("");
+  const [institutionsItemsPerPage, setInstitutionsItemsPerPage] = useState(10);
+  const [institutionsPage, setInstitutionsPage] = useState(1);
+  const [institutionsTotal, setInstitutionsTotal] = useState(0);
+  const institutionsOffset = (institutionsPage - 1) * institutionsItemsPerPage;
+  const institutionsTotalPages = Math.max(1, Math.ceil(institutionsTotal / institutionsItemsPerPage));
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,7 +125,33 @@ export default function AdminPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, user?.role, search, roleFilter, statusFilter, itemsPerPage, offset]);
+  }, [isAuthenticated, user?.role, search, roleFilter, statusFilter, itemsPerPage, offset, refreshUsersKey]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "admin") return;
+    let cancelled = false;
+    async function loadInstitutions() {
+      try {
+        setInstitutionsLoading(true);
+        const res = await institutionsApi.list({
+          search: institutionsSearch.trim() || undefined,
+          limit: institutionsItemsPerPage,
+          offset: institutionsOffset,
+        });
+        if (cancelled) return;
+        setInstitutions(res.data);
+        setInstitutionsTotal(res.pagination.total);
+      } catch (e: any) {
+        if (!cancelled) toast.error(e?.response?.data?.message || "Failed to load institutions");
+      } finally {
+        if (!cancelled) setInstitutionsLoading(false);
+      }
+    }
+    loadInstitutions();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.role, institutionsSearch, institutionsItemsPerPage, institutionsOffset]);
 
   const columns = useMemo(
     () => [
@@ -213,6 +260,47 @@ export default function AdminPage() {
     []
   );
 
+  const institutionColumns = useMemo(
+    () => [
+      {
+        key: "name",
+        label: "Name",
+        width: "min-w-[220px]",
+        render: (row: Institution) => (
+          <div className="min-w-0">
+            <div className="font-semibold text-slate-900 dark:text-white truncate">{row.name}</div>
+            {row.motto ? (
+              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{row.motto}</div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        key: "assignedUsersCount",
+        label: "Assigned users",
+        width: "min-w-[160px]",
+        render: (row: Institution) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {typeof row.assignedUsersCount === "number" ? row.assignedUsersCount : 0}
+          </span>
+        ),
+      },
+      {
+        key: "createdAt",
+        label: "Created",
+        width: "min-w-[160px]",
+        render: (row: Institution) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—"}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const institutionVisibleColumns = useMemo(() => ["name", "assignedUsersCount", "createdAt"], []);
+
   return (
     <div className="flex h-[100svh] md:h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       <div className="hidden md:block">
@@ -276,76 +364,146 @@ export default function AdminPage() {
             })}
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col w-full gap-3 md:flex-row md:items-center">
-              <input
-                value={search}
-                onChange={(e) => {
-                  setCurrentPage(1);
-                  setSearch(e.target.value);
-                }}
-                placeholder="Search users (name, username, email)..."
-                className="w-full md:w-[420px] py-3 px-4 border rounded-xl bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
-              />
-
-              <Dropdown
-                options={[
-                  { value: "", label: "All roles" },
-                  { value: "student", label: "Student" },
-                  { value: "educator", label: "Educator" },
-                  { value: "creator", label: "Creator" },
-                  { value: "admin", label: "Admin" },
-                ]}
-                value={roleFilter}
-                onChange={(e) => {
-                  const value = typeof e === "string" ? e : e.target.value;
-                  setCurrentPage(1);
-                  setRoleFilter(value as any);
-                }}
-                className="transition-colors"
-              />
-
-              <Dropdown
-                options={[
-                  { value: "", label: "All statuses" },
-                  { value: "true", label: "Active" },
-                  { value: "false", label: "Inactive" },
-                ]}
-                value={statusFilter}
-                onChange={(e) => {
-                  const value = typeof e === "string" ? e : e.target.value;
-                  setCurrentPage(1);
-                  setStatusFilter(value as any);
-                }}
-                className="transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Users table */}
-          <DataTable
-            loading={usersLoading}
-            data={users}
-            onRowClick={() => {}}
-            onRowDoubleClick={() => {}}
-            columns={columns}
-            visibleColumns={visibleColumns}
-            sortConfig={{}}
-            onSort={() => {}}
-            getSortIcon={() => null}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(p: number) => setCurrentPage(p)}
-            itemsPerPage={itemsPerPage}
-            onItemsPerPageChange={(val: any) => {
-              const next = typeof val === "number" ? val : Number(val?.target?.value);
-              setCurrentPage(1);
-              setItemsPerPage(next);
+          <AdminTabs
+            activeTab={activeTab}
+            onTabChange={(t) => {
+              setActiveTab(t);
+              if (t === "users") setCurrentPage(1);
+              if (t === "institutions") setInstitutionsPage(1);
             }}
-            itemsPerPageOptions={[10, 20, 50]}
-            totalResults={totalUsers}
           />
+
+          {activeTab === "users" ? (
+            <>
+              <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  Manage users, roles, and activation status.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/signup?role=admin")}
+                  className="w-full md:w-auto px-4 py-3.5 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition-colors"
+                >
+                  Add admin
+                </button>
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col w-full gap-3 md:flex-row md:items-center">
+                  <input
+                    value={search}
+                    onChange={(e) => {
+                      setCurrentPage(1);
+                      setSearch(e.target.value);
+                    }}
+                    placeholder="Search users (name, username, email)..."
+                    className={inputClass + " md:w-[420px]"}
+                  />
+
+                  <Dropdown
+                    options={[
+                      { value: "", label: "All roles" },
+                      { value: "student", label: "Student" },
+                      { value: "educator", label: "Educator" },
+                      { value: "creator", label: "Creator" },
+                      { value: "admin", label: "Admin" },
+                    ]}
+                    value={roleFilter}
+                    onChange={(e) => {
+                      const value = typeof e === "string" ? e : e.target.value;
+                      setCurrentPage(1);
+                      setRoleFilter(value as any);
+                    }}
+                    className="transition-colors"
+                  />
+
+                  <Dropdown
+                    options={[
+                      { value: "", label: "All statuses" },
+                      { value: "true", label: "Active" },
+                      { value: "false", label: "Inactive" },
+                    ]}
+                    value={statusFilter}
+                    onChange={(e) => {
+                      const value = typeof e === "string" ? e : e.target.value;
+                      setCurrentPage(1);
+                      setStatusFilter(value as any);
+                    }}
+                    className="transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Users table */}
+              <DataTable
+                loading={usersLoading}
+                data={users}
+                onRowClick={() => {}}
+                onRowDoubleClick={() => {}}
+                columns={columns}
+                visibleColumns={visibleColumns}
+                sortConfig={{}}
+                onSort={() => {}}
+                getSortIcon={() => null}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(p: number) => setCurrentPage(p)}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={(val: any) => {
+                  const next = typeof val === "number" ? val : Number(val?.target?.value);
+                  setCurrentPage(1);
+                  setItemsPerPage(next);
+                }}
+                itemsPerPageOptions={[10, 20, 50]}
+                totalResults={totalUsers}
+              />
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
+                <input
+                  value={institutionsSearch}
+                  onChange={(e) => {
+                    setInstitutionsPage(1);
+                    setInstitutionsSearch(e.target.value);
+                  }}
+                  placeholder="Search institutions (name, motto)..."
+                  className={inputClass + " md:w-[420px]"}
+                />
+                <button
+                  type="button"
+                  onClick={() => router.push("/admin/institutions/new")}
+                  className="w-full md:w-auto px-4 py-3.5 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition-colors"
+                >
+                  Create institution
+                </button>
+              </div>
+
+              <DataTable
+                loading={institutionsLoading}
+                data={institutions}
+                onRowClick={() => {}}
+                onRowDoubleClick={() => {}}
+                columns={institutionColumns}
+                visibleColumns={institutionVisibleColumns}
+                sortConfig={{}}
+                onSort={() => {}}
+                getSortIcon={() => null}
+                currentPage={institutionsPage}
+                totalPages={institutionsTotalPages}
+                onPageChange={(p: number) => setInstitutionsPage(p)}
+                itemsPerPage={institutionsItemsPerPage}
+                onItemsPerPageChange={(val: any) => {
+                  const next = typeof val === "number" ? val : Number(val?.target?.value);
+                  setInstitutionsPage(1);
+                  setInstitutionsItemsPerPage(next);
+                }}
+                itemsPerPageOptions={[10, 20, 50]}
+                totalResults={institutionsTotal}
+              />
+            </>
+          )}
         </div>
       </main>
 

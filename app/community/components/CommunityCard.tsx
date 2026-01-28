@@ -1,13 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Users, Brain, Atom, Leaf, Dna, Users2, Database, Computer, FlaskConical, Beaker } from "lucide-react";
+import {
+  Users,
+  Brain,
+  Atom,
+  Leaf,
+  Dna,
+  Users2,
+  Database,
+  Computer,
+  FlaskConical,
+  Beaker,
+  MoreVertical,
+  Edit2,
+  Trash2,
+} from "lucide-react";
 import { Community } from "@/lib/api/communities";
 import { useAuth } from "@/contexts/AuthContext";
 import { communityApi } from "@/lib/api/communities";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import ModalDialog from "@/components/ModalDialog";
+import ButtonDropdown from "@/components/ButtonDropdown";
 
 interface CommunityCardProps {
   community: Community;
@@ -54,10 +69,12 @@ const randomColors = [
 
 export default function CommunityCard({ community, onUpdate }: CommunityCardProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   const category = community.category || "Research";
   const IconComponent = categoryIcons[category] || FlaskConical;
@@ -68,6 +85,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
   
   const isMember = community.isMember || community.userRole === "owner" || community.userRole === "admin" || community.userRole === "member";
   const isOwner = community.userRole === "owner";
+  const isGlobalAdmin = (user?.role || "") === "admin";
 
   const formatMemberCount = (count: number) => {
     if (count >= 1000) {
@@ -77,7 +95,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
   };
 
   const handleClick = async () => {
-    if (isMember || isOwner) {
+    if (isMember || isOwner || isGlobalAdmin) {
       router.push(`/community/${community.id}`);
     } else {
       // Join community
@@ -90,7 +108,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
   };
 
   return (
-    <>
+    <div className="contents">
       <div className="overflow-hidden transition-all bg-white border group dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-xl">
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
@@ -102,11 +120,37 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
                 </span>
               )}
             </div>
-            <span
-              className={`${colorConfig.bg} ${colorConfig.text} text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded`}
-            >
-              {category}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`${colorConfig.bg} ${colorConfig.text} text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded`}
+              >
+                {category}
+              </span>
+
+              {isGlobalAdmin && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ButtonDropdown
+                    buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" />}
+                    buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                    options={[
+                      {
+                        label: "Edit community",
+                        value: "edit",
+                        icon: Edit2,
+                        onClick: () => router.push(`/community/${community.id}?edit=1`),
+                      },
+                      {
+                        label: "Delete community",
+                        value: "delete",
+                        icon: Trash2,
+                        danger: true,
+                        onClick: () => setDeleteOpen(true),
+                      },
+                    ]}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <h3
             className={`text-slate-900 dark:text-white text-xl font-bold mb-2 ${colorConfig.hover} transition-colors`}
@@ -136,60 +180,106 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
         </div>
       </div>
 
-      <ModalDialog
-        isOpen={joinOpen}
-        onClose={() => {
-          setJoinOpen(false);
-          setJoinCode("");
-        }}
-        title="Join Community"
-        width="md"
-      >
-      <div className="space-y-4">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Enter the community code to join.
-        </p>
-        <input
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
-          placeholder="Community code"
-          className="w-full py-3 px-4 border rounded-xl bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
-        />
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setJoinOpen(false);
-              setJoinCode("");
-            }}
-            className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={async () => {
-              try {
-                setLoading(true);
-                await communityApi.joinCommunityWithCode(community.id, joinCode);
-                toast.success("Successfully joined community");
-                setJoinOpen(false);
-                setJoinCode("");
-                onUpdate?.();
-              } catch (error: any) {
-                toast.error(error.response?.data?.message || "Failed to join community");
-              } finally {
-                setLoading(false);
-              }
-            }}
-            className="px-4 py-2 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
-          >
-            Join
-          </button>
-        </div>
-      </div>
-      </ModalDialog>
-    </>
+      {joinOpen && (
+        <ModalDialog
+          isOpen={joinOpen}
+          onClose={() => {
+            setJoinOpen(false);
+            setJoinCode("");
+          }}
+          title="Join Community"
+          width="md"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Enter the community code to join.
+            </p>
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Community code"
+              className="w-full py-3 px-4 border rounded-xl bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setJoinOpen(false);
+                  setJoinCode("");
+                }}
+                className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await communityApi.joinCommunityWithCode(community.id, joinCode);
+                    toast.success("Successfully joined community");
+                    setJoinOpen(false);
+                    setJoinCode("");
+                    onUpdate?.();
+                  } catch (error: any) {
+                    toast.error(error.response?.data?.message || "Failed to join community");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="px-4 py-2 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </ModalDialog>
+      )}
+
+      {deleteOpen && (
+        <ModalDialog
+          isOpen={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          title="Delete community"
+          width="md"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              This will permanently delete <span className="font-bold">{community.name}</span> and all its content.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(false)}
+                className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async () => {
+                  try {
+                    setDeleting(true);
+                    await communityApi.deleteCommunity(community.id);
+                    toast.success("Community deleted");
+                    setDeleteOpen(false);
+                    onUpdate?.();
+                  } catch (e: any) {
+                    toast.error(e?.response?.data?.message || "Failed to delete community");
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                className="px-4 py-2 font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </ModalDialog>
+      )}
+    </div>
   );
 }

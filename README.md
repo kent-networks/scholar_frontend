@@ -1,3 +1,27 @@
+Error: Incorrect arguments to mysqld_stmt_execute
+    at PromisePool.execute (D:\scholar\backend\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.findMany (D:\scholar\backend\domains\user\repository.js:173:28)       
+    at Object.getUsers (D:\scholar\backend\domains\user\service.js:101:16)
+    at getUsers (D:\scholar\backend\domains\user\controller.js:122:34)
+    at Layer.handleRequest (D:\scholar\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\scholar\backend\node_modules\router\lib\route.js:157:13)
+    at requireAdmin (D:\scholar\backend\shared\middleware\auth.middleware.js:56:3)  
+    at Layer.handleRequest (D:\scholar\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\scholar\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (D:\scholar\backend\shared\middleware\auth.middleware.js:24:5)  
+ GET /scholar-api/users?limit=10&offset=0 - 500 - 19ms
+[2026-01-28T09:21:32.267Z] Error Response: {
+  method: 'GET',
+  path: '/scholar-api/users?limit=10&offset=0',
+  statusCode: 500,
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+  body: undefined,
+  query: [Object: null prototype] { limit:
+ '10', offset: '0' },
+  params: {}
+}
+
 # Scholar Frontend
 
 A modern Next.js TypeScript application for the Scholar academic ecosystem platform.

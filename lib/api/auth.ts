@@ -21,6 +21,8 @@ export interface User {
   bio?: string;
   profilePhotoPath?: string;
   institution?: string;
+  institutionId?: number | null;
+  isInstitutionAdmin?: boolean;
   isVerified: boolean;
   isActive: boolean;
   createdAt: string;

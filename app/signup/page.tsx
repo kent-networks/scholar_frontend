@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AuthLayout from "@/components/AuthLayout";
 import { Mail, Lock, Eye, EyeOff, User, GraduationCap, BookOpen, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import toast from "react-hot-toast";
+import { adminCreateApi } from "@/lib/api/admin-create";
 
 type UserType = "student" | "educator" | "creator" | null;
 
 export default function SignupPage() {
   const router = useRouter();
-  const { register, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
+  const { register, isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [userType, setUserType] = useState<UserType>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,12 +23,27 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const isAdminCreateMode = searchParams.get("role") === "admin";
+
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isAdminCreateMode) {
       router.push("/");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isAdminCreateMode, router]);
+
+  // Guard admin-create mode (must be logged-in global admin)
+  useEffect(() => {
+    if (!isAdminCreateMode) return;
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if ((user?.role || "") !== "admin") {
+      router.push("/signup");
+    }
+  }, [isAdminCreateMode, authLoading, isAuthenticated, user?.role, router]);
 
   const userTypes = [
     {
@@ -50,6 +68,25 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAdminCreateMode) {
+      setError("");
+      setIsLoading(true);
+      try {
+        const created = await adminCreateApi.createAdminUser({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        });
+        toast.success(`Admin created (@${created.username})`);
+        router.push("/admin");
+      } catch (err: any) {
+        setError(err?.response?.data?.message || err.message || "Failed to create admin user.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     if (!userType) return;
     setError("");
     setIsLoading(true);
@@ -70,49 +107,54 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Join Scholar as a Student, Educator, or Creator"
+      title={isAdminCreateMode ? "Create an admin user" : "Create your account"}
+      subtitle={
+        isAdminCreateMode
+          ? "System-level admin creation (admins only)"
+          : "Join Scholar as a Student, Educator, or Creator"
+      }
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* User Type Selection */}
-        <div>
-          <label className="block mb-3 text-sm font-bold text-slate-900 dark:text-white">
-            I want to join as
-          </label>
-          <div className="grid grid-cols-1 gap-3">
-            {userTypes.map((type) => {
-              const Icon = type.icon;
-              return (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => setUserType(type.id)}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    userType === type.id
-                      ? "border-primary bg-primary/10"
-                      : "border-slate-300 dark:border-slate-700 hover:border-primary/50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${
-                        userType === type.id
-                          ? "bg-primary text-white"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
+        {!isAdminCreateMode && (
+          <div>
+            <label className="block mb-3 text-sm font-bold text-slate-900 dark:text-white">
+              I want to join as
+            </label>
+            <div className="grid grid-cols-1 gap-3">
+              {userTypes.map((type) => {
+                const Icon = type.icon;
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setUserType(type.id)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      userType === type.id
+                        ? "border-primary bg-primary/10"
+                        : "border-slate-300 dark:border-slate-700 hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          userType === type.id
+                            ? "bg-primary text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-white">{type.label}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{type.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white">{type.label}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{type.description}</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <label className="block mb-2 text-sm font-bold text-slate-900 dark:text-white">
@@ -125,7 +167,7 @@ export default function SignupPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full py-3 pl-10 pr-4 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 pl-10 pr-4 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60"
               placeholder="John Doe"
             />
           </div>
@@ -142,7 +184,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full py-3 pl-10 pr-4 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 pl-10 pr-4 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60"
               placeholder="you@example.com"
             />
           </div>
@@ -159,7 +201,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full py-3 pl-10 pr-12 bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 pl-10 pr-12 py-3.5 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60"
               placeholder="Create a password"
             />
             <button
@@ -198,18 +240,20 @@ export default function SignupPage() {
 
         <button
           type="submit"
-          disabled={isLoading || !userType}
+          disabled={isLoading || (!isAdminCreateMode && !userType)}
           className="w-full px-6 py-3 font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? "Creating account..." : "Create account"}
+          {isLoading ? "Please wait..." : isAdminCreateMode ? "Create admin user" : "Create account"}
         </button>
 
-        <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-          Already have an account?{" "}
-          <Link href="/login" className="font-bold text-primary hover:text-primary-dark">
-            Sign in
-          </Link>
-        </p>
+        {!isAdminCreateMode && (
+          <p className="text-sm text-center text-slate-600 dark:text-slate-400">
+            Already have an account?{" "}
+            <Link href="/login" className="font-bold text-primary hover:text-primary-dark">
+              Sign in
+            </Link>
+          </p>
+        )}
       </form>
     </AuthLayout>
   );

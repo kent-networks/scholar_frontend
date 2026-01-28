@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import ButtonDropdown from "@/components/ButtonDropdown";
 export default function CommunityDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,15 @@ export default function CommunityDetailPage() {
   const isOwner = community?.ownerId === user?.id || community?.userRole === "owner";
   const isMember = community?.isMember || isOwner;
   const isGlobalAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    // Allow deep-linking into edit modal from community cards (admin/owner only)
+    if (!community) return;
+    if (searchParams.get("edit") !== "1") return;
+    if (!(isOwner || isGlobalAdmin)) return;
+    setEditModalOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [community, searchParams, isOwner, isGlobalAdmin]);
 
   const handleUpdate = async () => {
     try {
