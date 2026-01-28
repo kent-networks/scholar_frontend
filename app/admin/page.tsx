@@ -36,7 +36,6 @@ export default function AdminPage() {
   const [roleFilter, setRoleFilter] = useState<AdminUsersQuery["role"]>("");
   const [statusFilter, setStatusFilter] = useState<AdminUsersQuery["isActive"]>("");
 
-  const [selectedRows, setSelectedRows] = useState<Array<number | string>>([]);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -91,7 +90,6 @@ export default function AdminPage() {
         if (cancelled) return;
         setUsers(res.data);
         setTotalUsers(res.pagination.total);
-        setSelectedRows([]);
       } catch (e: any) {
         if (!cancelled) {
           toast.error(e?.response?.data?.message || "Failed to load users");
@@ -215,14 +213,6 @@ export default function AdminPage() {
     []
   );
 
-  const onSelectAll = (checked: boolean) => {
-    setSelectedRows(checked ? users.map((u) => u.id) : []);
-  };
-
-  const onSelectRow = (id: number | string, checked: boolean) => {
-    setSelectedRows((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
-  };
-
   return (
     <div className="flex h-[100svh] md:h-screen overflow-hidden bg-background-light dark:bg-background-dark">
       <div className="hidden md:block">
@@ -337,9 +327,6 @@ export default function AdminPage() {
           <DataTable
             loading={usersLoading}
             data={users}
-            selectedRows={selectedRows}
-            onSelectAll={onSelectAll}
-            onSelectRow={onSelectRow}
             onRowClick={() => {}}
             onRowDoubleClick={() => {}}
             columns={columns}

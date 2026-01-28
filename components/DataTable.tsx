@@ -18,9 +18,6 @@ export interface DataTableColumn {
 export interface DataTableProps {
   loading?: boolean;
   data?: any[];
-  selectedRows?: Array<number | string>;
-  onSelectAll?: (checked: boolean) => void;
-  onSelectRow?: (id: number | string, checked: boolean) => void;
   onRowClick?: (id: number | string) => void;
   onRowDoubleClick?: (id: number | string) => void;
   columns?: Array<DataTableColumn>;
@@ -41,9 +38,6 @@ export interface DataTableProps {
 export default function DataTable({
   loading = false,
   data = [],
-  selectedRows = [],
-  onSelectAll = () => {},
-  onSelectRow = () => {},
   onRowClick = () => {},
   onRowDoubleClick = () => {},
   columns = [],
@@ -68,18 +62,6 @@ export default function DataTable({
         <table className="w-full min-w-max">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {/* Checkbox column header */}
-              <th className="px-4 py-3 text-left w-12">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.length === data.length && data.length > 0}
-                    onChange={(e) => onSelectAll(e.target.checked)}
-                    className="w-4 h-4 transition-all duration-300"
-                  />
-                </div>
-              </th>
-
               {/* Regular columns */}
               {columns
                 .filter((col) => visibleColumns.includes(col.key))
@@ -103,7 +85,7 @@ export default function DataTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center">
+                <td colSpan={visibleColumns.length} className="px-4 py-8 text-center">
                   <div className="flex items-center justify-center h-32">
                     <div className="flex flex-col items-center gap-2 bg-white bg-opacity-75 p-4 rounded-lg">
                       <div className="w-12 h-12 border-[1.5px]  border-[#560fd1] border-y-0 rounded-full animate-spin" />
@@ -113,7 +95,7 @@ export default function DataTable({
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center">
+                <td colSpan={visibleColumns.length} className="px-4 py-8 text-center">
                   {emptyState || (
                     <div className="text-center py-8">
                       <div className="flex w-full justify-center text-4xl mb-3 text-[#560fd1]">
@@ -138,27 +120,10 @@ export default function DataTable({
               data.map((row) => (
                 <tr
                   key={row.id}
-                  className={`transition-colors duration-300 cursor-pointer ${
-                    selectedRows.includes(row.id)
-                      ? "bg-[#560fd10d] hover:bg-[#560fd125]"
-                      : "hover:bg-gray-50"
-                  }`}
+                  className="transition-colors duration-300 cursor-pointer hover:bg-gray-50"
                   onClick={() => onRowClick(row.id)}
                   onDoubleClick={() => onRowDoubleClick(row.id)}
                 >
-                  {/* Checkbox column cell */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(row.id)}
-                        onChange={(e) => onSelectRow(row.id, e.target.checked)}
-                        className="w-4 h-4 text-[#560fd1] bg-gray-100 border-gray-300 rounded focus:ring-[#560fd1] focus:ring-2 transition-all duration-300"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </td>
-
                   {/* Regular columns */}
                   {columns
                     .filter((col) => visibleColumns.includes(col.key))

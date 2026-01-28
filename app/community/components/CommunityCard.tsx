@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { communityApi } from "@/lib/api/communities";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import ModalDialog from "@/components/ModalDialog";
 
 interface CommunityCardProps {
   community: Community;
@@ -55,6 +56,8 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
   
   const category = community.category || "Research";
   const IconComponent = categoryIcons[category] || FlaskConical;
@@ -82,60 +85,111 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
         router.push("/login");
         return;
       }
-      
-      try {
-        setLoading(true);
-        await communityApi.joinCommunity(community.id);
-        toast.success("Successfully joined community");
-        onUpdate?.();
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to join community");
-      } finally {
-        setLoading(false);
-      }
+      setJoinOpen(true);
     }
   };
 
   return (
-    <div className="overflow-hidden transition-all bg-white border group dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-xl">
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`${colorConfig.bg} p-3 rounded-lg ${colorConfig.text} relative`}>
-            <IconComponent className="w-8 h-8" />
-            {isMember && community.notificationCount && community.notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
-                {community.notificationCount > 99 ? "99+" : community.notificationCount}
-              </span>
-            )}
+    <>
+      <div className="overflow-hidden transition-all bg-white border group dark:bg-slate-900 rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-xl">
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className={`${colorConfig.bg} p-3 rounded-lg ${colorConfig.text} relative`}>
+              <IconComponent className="w-8 h-8" />
+              {isMember && community.notificationCount && community.notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                  {community.notificationCount > 99 ? "99+" : community.notificationCount}
+                </span>
+              )}
+            </div>
+            <span
+              className={`${colorConfig.bg} ${colorConfig.text} text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded`}
+            >
+              {category}
+            </span>
           </div>
-          <span className={`${colorConfig.bg} ${colorConfig.text} text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded`}>
-            {category}
-          </span>
-        </div>
-        <h3 className={`text-slate-900 dark:text-white text-xl font-bold mb-2 ${colorConfig.hover} transition-colors`}>
-          {community.name}
-        </h3>
-        <p className="mb-6 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
-          {community.description || "No description available"}
-        </p>
-        <div className="flex items-center mb-6 text-xs font-medium text-slate-400 dark:text-slate-500">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{formatMemberCount(community.memberCount)} Members</span>
+          <h3
+            className={`text-slate-900 dark:text-white text-xl font-bold mb-2 ${colorConfig.hover} transition-colors`}
+          >
+            {community.name}
+          </h3>
+          <p className="mb-6 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+            {community.description || "No description available"}
+          </p>
+          <div className="flex items-center mb-6 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span>{formatMemberCount(community.memberCount)} Members</span>
+            </div>
           </div>
+          <button
+            onClick={handleClick}
+            disabled={loading}
+            className={`w-full h-11 ${
+              isMember || isOwner
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+                : "bg-primary text-white hover:bg-primary/90"
+            } font-bold rounded-2xl transition-colors disabled:opacity-50`}
+          >
+            {loading ? "Joining..." : isMember || isOwner ? "Open Community" : "Join Community"}
+          </button>
         </div>
-        <button
-          onClick={handleClick}
-          disabled={loading}
-          className={`w-full h-11 ${
-            isMember || isOwner
-              ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              : "bg-primary text-white hover:bg-primary/90"
-          } font-bold rounded-2xl transition-colors disabled:opacity-50`}
-        >
-          {loading ? "Joining..." : isMember || isOwner ? "Open Community" : "Join Community"}
-        </button>
       </div>
-    </div>
+
+      <ModalDialog
+        isOpen={joinOpen}
+        onClose={() => {
+          setJoinOpen(false);
+          setJoinCode("");
+        }}
+        title="Join Community"
+        width="md"
+      >
+      <div className="space-y-4">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Enter the community code to join.
+        </p>
+        <input
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value)}
+          placeholder="Community code"
+          className="w-full py-3 px-4 border rounded-xl bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+        />
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setJoinOpen(false);
+              setJoinCode("");
+            }}
+            className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await communityApi.joinCommunityWithCode(community.id, joinCode);
+                toast.success("Successfully joined community");
+                setJoinOpen(false);
+                setJoinCode("");
+                onUpdate?.();
+              } catch (error: any) {
+                toast.error(error.response?.data?.message || "Failed to join community");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="px-4 py-2 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
+          >
+            Join
+          </button>
+        </div>
+      </div>
+      </ModalDialog>
+    </>
   );
 }

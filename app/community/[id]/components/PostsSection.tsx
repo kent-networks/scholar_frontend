@@ -243,7 +243,10 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                  {post.userName?.charAt(0)?.toUpperCase() || '?'}
+                  {String(post.userName ?? "")
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase() || "?"}
                 </div>
               )}
               <div>
@@ -302,7 +305,10 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {comment.userName?.charAt(0)?.toUpperCase() || "?"}
+                  {String(comment.userName ?? "")
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase() || "?"}
                 </div>
               )}
               <div className="flex-1">
@@ -364,7 +370,10 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {comment.userName?.charAt(0)?.toUpperCase() || "?"}
+                {String(comment.userName ?? "")
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase() || "?"}
               </div>
             )}
             <div className="flex-1">

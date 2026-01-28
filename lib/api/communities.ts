@@ -23,6 +23,7 @@ export interface CreateCommunityData {
   privacy?: "public" | "private";
   restrictInvitations?: boolean;
   moderateContent?: boolean;
+  joinCode?: string;
 }
 
 export interface CommunityMember {
@@ -83,7 +84,12 @@ export const communityApi = {
   },
 
   joinCommunity: async (communityId: number) => {
-    const response = await api.post(`/communities/${communityId}/join`);
+    const response = await api.post(`/communities/${communityId}/join`, {});
+    return response.data;
+  },
+
+  joinCommunityWithCode: async (communityId: number, code: string) => {
+    const response = await api.post(`/communities/${communityId}/join`, { code });
     return response.data;
   },
 

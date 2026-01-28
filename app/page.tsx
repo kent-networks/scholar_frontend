@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
@@ -17,34 +17,57 @@ import {
   Users,
   Video,
 } from "lucide-react";
-import { statsApi, Stats, TrendingVideo } from "@/lib/api/stats";
+import { statsApi, Stats, TrendingVideo, FeaturedCategory } from "@/lib/api/stats";
 import AnimatedCounter from "@/components/AnimatedCounter";
 
-const featuredCategories = [
-  { name: "Research Lab", href: "/research-lab", icon: FlaskConical, count: 450 },
-  { name: "Scoop", href: "/scoop", icon: Video, count: 120 },
-  { name: "Scholink", href: "/scholink", icon: Link2, count: 89 },
-  { name: "Community", href: "/community", icon: Users, count: 2340 },
+type FeaturedCategoryWithIcon = FeaturedCategory & {
+  icon: any;
+};
+
+const defaultFeaturedCategories: FeaturedCategoryWithIcon[] = [
+  { name: "Research Lab", href: "/research-lab", icon: FlaskConical, count: 0 },
+  { name: "Scoop", href: "/scoop", icon: Video, count: 0 },
+  { name: "Scholink", href: "/scholink", icon: Link2, count: 0 },
+  { name: "Community", href: "/community", icon: Users, count: 0 },
 ];
+
+function attachCategoryIcons(categories: FeaturedCategory[]): FeaturedCategoryWithIcon[] {
+  const iconByHref: Record<string, any> = {
+    "/research-lab": FlaskConical,
+    "/scoop": Video,
+    "/scholink": Link2,
+    "/community": Users,
+  };
+
+  return categories.map((c) => ({
+    ...c,
+    icon: iconByHref[c.href] || Users,
+  }));
+}
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isLoading: authLoading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
   const [stats, setStats] = useState<Stats | null>(null);
   const [trendingVideos, setTrendingVideos] = useState<TrendingVideo[]>([]);
+  const [featuredCategories, setFeaturedCategories] = useState<FeaturedCategoryWithIcon[]>(
+    defaultFeaturedCategories
+  );
   const [loading, setLoading] = useState(true);
   const heroRef = useRef<HTMLDivElement>(null);
-
   // Default landing route (logged in or not) should be Research Lab.
   useEffect(() => {
     if (!authLoading) {
+      // Allow visiting the landing page explicitly
+      if (pathname !== "/") return;
       // Allow visiting the landing page explicitly via `/?landing=1`
       if (searchParams.get("landing") === "1") return;
-      router.replace("/research-lab");
+      router.push("/research-lab");
     }
-  }, [authLoading, router, searchParams]);
+  }, [authLoading, router, searchParams, pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,12 +84,14 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsData, videosData] = await Promise.all([
+        const [statsData, videosData, categoriesData] = await Promise.all([
           statsApi.getStats(),
           statsApi.getTrendingVideos(6),
+          statsApi.getFeaturedCategories(),
         ]);
         setStats(statsData);
         setTrendingVideos(videosData);
+        setFeaturedCategories(attachCategoryIcons(categoriesData));
       } catch (error) {
         console.error("Error fetching home data:", error);
       } finally {
@@ -351,7 +376,13 @@ export default function Home() {
                             {category.name}
                           </h3>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {category.count} items
+                            {loading ? (
+                              "..."
+                            ) : (
+                              <>
+                                <AnimatedCounter value={category.count || 0} prefix="+" /> items
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
