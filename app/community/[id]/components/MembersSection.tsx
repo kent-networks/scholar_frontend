@@ -16,6 +16,7 @@ interface MembersSectionProps {
 export default function MembersSection({ communityId, isOwner }: MembersSectionProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const isGlobalAdmin = user?.role === "admin";
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -156,7 +157,7 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
                       Inbox
                     </button>
                   )}
-                  {isOwner && member.userId !== user?.id && member.role !== "owner" && (
+                  {(isOwner || isGlobalAdmin) && member.userId !== user?.id && member.role !== "owner" && (
                     <button
                       onClick={() => setRemoveMemberConfirm({ memberId: member.userId, open: true })}
                       className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"

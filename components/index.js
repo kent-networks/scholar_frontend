@@ -7,6 +7,7 @@ export { default as ConfirmActionModal } from "./ConfirmActionModal";
 export { default as CustomDatepicker } from "./CustomDatepicker";
 export { default as DataTable } from "./DataTable";
 export { default as Dropdown } from "./Dropdown";
+export { default as DataTable } from "./DataTable";
 export { default as FilterPanel } from "./FilterPanel";
 export { default as ModalDialog } from "./ModalDialog";
 export { default as NoDataYet } from "./NoDataYet";

@@ -42,6 +42,7 @@ interface PostsSectionProps {
 export default function PostsSection({ communityId, isMember, isOwner }: PostsSectionProps) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
+  const isGlobalAdmin = user?.role === "admin";
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -312,7 +313,7 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {formatTime(comment.createdAt)}
                   </span>
-                  {(comment.userId === user?.id || isOwner) && (
+                  {(comment.userId === user?.id || isOwner || isGlobalAdmin) && (
                     <button
                       onClick={() =>
                         setDeleteCommentConfirm({
@@ -374,7 +375,7 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {formatTime(comment.createdAt)}
                 </span>
-                {(comment.userId === user?.id || isOwner) && (
+                {(comment.userId === user?.id || isOwner || isGlobalAdmin) && (
                   <button
                     onClick={() =>
                       setDeleteCommentConfirm({

@@ -7,9 +7,38 @@ import {
   ChevronsRight,
   SearchX,
 } from "lucide-react";
-import { toTitleCase } from "../utils/stringUtils";
 
-const DataTable = ({
+export interface DataTableColumn {
+  key: string;
+  label: string;
+  render?: (row: any) => React.ReactNode;
+  width?: string;
+}
+
+export interface DataTableProps {
+  loading?: boolean;
+  data?: any[];
+  selectedRows?: Array<number | string>;
+  onSelectAll?: (checked: boolean) => void;
+  onSelectRow?: (id: number | string, checked: boolean) => void;
+  onRowClick?: (id: number | string) => void;
+  onRowDoubleClick?: (id: number | string) => void;
+  columns?: Array<DataTableColumn>;
+  visibleColumns?: string[];
+  sortConfig?: Record<string, any>;
+  onSort?: (key: string) => void;
+  getSortIcon?: (key: string) => React.ReactNode;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  itemsPerPage?: number;
+  onItemsPerPageChange?: (value: number) => void;
+  itemsPerPageOptions?: number[];
+  totalResults?: number;
+  emptyState?: React.ReactNode;
+}
+
+export default function DataTable({
   loading = false,
   data = [],
   selectedRows = [],
@@ -17,7 +46,7 @@ const DataTable = ({
   onSelectRow = () => {},
   onRowClick = () => {},
   onRowDoubleClick = () => {},
-  columns = [], // [{ key, label, render?: (row) => ReactNode, width?: string }]
+  columns = [],
   visibleColumns = [],
   sortConfig = {},
   onSort = () => {},
@@ -30,7 +59,7 @@ const DataTable = ({
   itemsPerPageOptions = [10, 20, 50],
   totalResults = 0,
   emptyState = null,
-}) => {
+}: DataTableProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* Horizontal scrolling container */}
@@ -42,16 +71,9 @@ const DataTable = ({
               {/* Checkbox column header */}
               <th className="px-4 py-3 text-left w-12">
                 <div className="flex items-center">
-                  {/* {loading ? (
-                    <div className="w-4 h-4 border-2 border-[#560fd1] border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-
-                  )} */}
                   <input
                     type="checkbox"
-                    checked={
-                      selectedRows.length === data.length && data.length > 0
-                    }
+                    checked={selectedRows.length === data.length && data.length > 0}
                     onChange={(e) => onSelectAll(e.target.checked)}
                     className="w-4 h-4 transition-all duration-300"
                   />
@@ -81,23 +103,17 @@ const DataTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td
-                  colSpan={visibleColumns.length + 1}
-                  className="px-4 py-8 text-center"
-                >
+                <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center">
                   <div className="flex items-center justify-center h-32">
                     <div className="flex flex-col items-center gap-2 bg-white bg-opacity-75 p-4 rounded-lg">
-                      <div className="w-12 h-12 border-[1.5px]  border-[#560fd1] border-y-0 rounded-full animate-spin"></div>
+                      <div className="w-12 h-12 border-[1.5px]  border-[#560fd1] border-y-0 rounded-full animate-spin" />
                     </div>
                   </div>
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td
-                  colSpan={visibleColumns.length + 1}
-                  className="px-4 py-8 text-center"
-                >
+                <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center">
                   {emptyState || (
                     <div className="text-center py-8">
                       <div className="flex w-full justify-center text-4xl mb-3 text-[#560fd1]">
@@ -112,12 +128,8 @@ const DataTable = ({
                           </span>
                         </div>
                       </div>
-                      <h3 className="text-sm font-semibold text-[#172b4d] mb-1">
-                        No data found
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        Try adjusting your search or filter criteria
-                      </p>
+                      <h3 className="text-sm font-semibold text-[#172b4d] mb-1">No data found</h3>
+                      <p className="text-xs text-gray-500">Try adjusting your search or filter criteria</p>
                     </div>
                   )}
                 </td>
@@ -153,9 +165,7 @@ const DataTable = ({
                     .map((col) => (
                       <td
                         key={col.key}
-                        className={`px-4 py-3 whitespace-nowrap ${
-                          col.width || "min-w-[100px]"
-                        }`}
+                        className={`px-4 py-3 whitespace-nowrap ${col.width || "min-w-[100px]"}`}
                         style={{ width: col.width || "auto" }}
                       >
                         {col.render ? col.render(row) : row[col.key]}
@@ -175,32 +185,31 @@ const DataTable = ({
           <Dropdown
             options={itemsPerPageOptions.map((v) => ({ label: v, value: v }))}
             value={itemsPerPage}
-            onChange={onItemsPerPageChange}
+            onChange={(e: any) => {
+              const value = typeof e === "number" ? e : Number(e?.target?.value ?? e);
+              onItemsPerPageChange(value);
+            }}
             width="80px"
             className="w-[80px]"
           />
         </div>
         <div className="text-xs text-[#172b4d] mb-2 md:mb-0 flex justify-center">
-          Showing {data.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}{" "}
-          to {Math.min(currentPage * itemsPerPage, totalResults)} of&nbsp;
+          Showing {data.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
+          {Math.min(currentPage * itemsPerPage, totalResults)} of&nbsp;
           <span className="font-bold"> {totalResults}</span>&nbsp; results
         </div>
         <div className="flex justify-center md:justify-end items-center gap-2 col-span-2 sm:col-span-1">
           <button
             onClick={() => onPageChange(1)}
             disabled={currentPage === 1}
-            className="p-1 border border-[#560fd1] rounded-lg bg-white 
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 
-            text-[#560fd1]"
+            className="p-1 border border-[#560fd1] rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-[#560fd1]"
           >
             <ChevronsLeft size={16} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="p-1 border border-[#560fd1] rounded-lg bg-white 
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 
-            text-[#560fd1]"
+            className="p-1 border border-[#560fd1] rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-[#560fd1]"
           >
             <ChevronLeft size={16} strokeWidth={1.5} />
           </button>
@@ -234,18 +243,14 @@ const DataTable = ({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="p-1 border border-[#560fd1] rounded-lg bg-white 
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 
-            text-[#560fd1]"
+            className="p-1 border border-[#560fd1] rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-[#560fd1]"
           >
             <ChevronRight size={16} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage === totalPages}
-            className="p-1 border border-[#560fd1] rounded-lg bg-white 
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 
-            text-[#560fd1]"
+            className="p-1 border border-[#560fd1] rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-[#560fd1]"
           >
             <ChevronsRight size={16} strokeWidth={1.5} />
           </button>
@@ -253,6 +258,5 @@ const DataTable = ({
       </div>
     </div>
   );
-};
+}
 
-export default DataTable;

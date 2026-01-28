@@ -52,7 +52,7 @@ export default function VideoCard({
   const { isAuthenticated } = useAuth();
   const playerRef = useRef<any>(null);
   const imageScrollRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -70,10 +70,13 @@ export default function VideoCard({
   const isImageCollection = video.isImageCollection && video.imageUrls && video.imageUrls.length > 0;
   const images = video.imageUrls || [];
   const hasVideo = !!video.videoUrl && !isImageCollection;
+  const shouldPlay = hasVideo && isActive && isNearActive && !userPaused;
 
   // Reset view logged when video changes
   useEffect(() => {
     viewLoggedRef.current = false;
+    setUserPaused(false);
+    setIsLoading(true);
   }, [video.id]);
 
   // Log view when video/image becomes active (only once, only if authenticated)
@@ -86,42 +89,22 @@ export default function VideoCard({
     }
   }, [isActive, isAuthenticated, video.id]);
 
-  // Auto-play / pause logic with debounce to prevent play/pause conflicts
+  // When leaving the active/near-active window, reset pause state so next time it can autoplay.
   useEffect(() => {
     if (!hasVideo) return;
-
-    // Clear any pending play operations
-    if (playTimeoutRef.current) {
-      clearTimeout(playTimeoutRef.current);
-      playTimeoutRef.current = null;
-    }
-
-    if (isActive && isNearActive) {
-      // Small delay to ensure previous pause completes and prevent play/pause race condition
-      isTransitioningRef.current = true;
-      playTimeoutRef.current = setTimeout(() => {
-        if (isActive && isNearActive) {
-          setIsPlaying(true);
-        }
-        isTransitioningRef.current = false;
-      }, 150);
+    if (!isActive || !isNearActive) {
+      setUserPaused(false);
+      setIsLoading(true);
     } else {
-      // Pause immediately when not active
-      setIsPlaying(false);
-      isTransitioningRef.current = false;
-      setIsLoading(true); // Reset loading when paused
+      setIsLoading(true);
     }
-
-    return () => {
-      if (playTimeoutRef.current) {
-        clearTimeout(playTimeoutRef.current);
-      }
-    };
   }, [isActive, isNearActive, hasVideo]);
 
   const togglePlay = () => {
     if (!hasVideo) return;
-    setIsPlaying((prev) => !prev);
+    // Only allow manual play/pause for the active item to avoid thrash.
+    if (!isActive) return;
+    setUserPaused((prev) => !prev);
   };
 
   // Image carousel scroll handling
@@ -274,7 +257,7 @@ export default function VideoCard({
                 {...({
                   ref: playerRef,
                   url: video.videoUrl,
-                  playing: isPlaying,
+                  playing: shouldPlay,
                   loop: true,
                   muted: true,
                   playsinline: true,
@@ -291,22 +274,22 @@ export default function VideoCard({
                     },
                   },
                   onReady: () => {
-                    // Don't set loading to false here - wait for actual playback
+                    // Avoid a stuck loading spinner if playback is interrupted.
+                    if (isActive && isNearActive) setIsLoading(false);
                   },
                   onStart: () => {
                     // Video actually started playing
                     setIsLoading(false);
-                    setIsPlaying(true);
                     isTransitioningRef.current = false;
                   },
                   onPlay: () => {
                     // Video is playing
                     setIsLoading(false);
-                    setIsPlaying(true);
                     isTransitioningRef.current = false;
                   },
                   onPause: () => {
-                    setIsPlaying(false);
+                    // If it paused while active, keep spinner off (prevents pause->play thrash spinner).
+                    if (isActive) setIsLoading(false);
                   },
                   onError: (e: any) => {
                     console.error("ReactPlayer error:", e);
@@ -315,7 +298,7 @@ export default function VideoCard({
                   },
                   onProgress: () => {
                     // Video is progressing, so it's playing
-                    if (isLoading && isPlaying) {
+                    if (isLoading && shouldPlay) {
                       setIsLoading(false);
                     }
                   },
@@ -334,7 +317,7 @@ export default function VideoCard({
             {hasVideo && showControls && !isLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
                 <div className="flex items-center justify-center w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm">
-                  {isPlaying ? (
+                  {!userPaused && shouldPlay ? (
                     <Pause className="w-10 h-10 text-white" />
                   ) : (
                     <PlayCircle className="w-10 h-10 text-white" />

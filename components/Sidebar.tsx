@@ -19,6 +19,7 @@ import {
   LogOut,
   UserRound,
   Home,
+  Shield,
 } from 'lucide-react'
 
 interface NavItem {
@@ -120,6 +121,18 @@ export function MobileBottomNav() {
           }
           buttonClassName=""
           options={[
+            ...(user?.role === 'admin'
+              ? [
+                  {
+                    label: 'Admin Panel',
+                    value: 'admin',
+                    icon: Shield,
+                    onClick: () => {
+                      router.push('/admin')
+                    },
+                  },
+                ]
+              : []),
             {
               label: 'My Account',
               value: 'profile',
@@ -158,6 +171,7 @@ export default function Sidebar() {
   const { isAuthenticated, user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const isGlobalAdmin = user?.role === 'admin'
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -289,6 +303,43 @@ export default function Sidebar() {
 
               return <Fragment key={item.href}>{wrapTooltip(content, item.name)}</Fragment>
             })}
+
+            {/* Admin Panel (global admin) */}
+            {isAuthenticated && isGlobalAdmin && (
+              <Fragment key="admin-panel-link">
+                {wrapTooltip(
+                  collapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/admin')}
+                      className={`
+                        flex items-center justify-center size-11 rounded-lg transition-all duration-200
+                        ${pathname === '/admin'
+                          ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                          : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                      `}
+                      aria-label="Admin Panel"
+                    >
+                      <Shield className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <Link
+                      href="/admin"
+                      className={`
+                        flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
+                        ${pathname === '/admin'
+                          ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                          : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                      `}
+                    >
+                      <Shield className="flex-shrink-0 w-5 h-5" />
+                      <span className="text-sm font-medium">Admin Panel</span>
+                    </Link>
+                  ),
+                  'Admin Panel'
+                )}
+              </Fragment>
+            )}
           </nav>
 
           {/* Invisible spacer when collapsed → keeps user section at bottom */}
@@ -329,6 +380,18 @@ export default function Sidebar() {
               }
               buttonClassName="w-full hover:bg-white/5 rounded-lg p-2 transition-colors"
               options={[
+                ...(isGlobalAdmin
+                  ? [
+                      {
+                        label: 'Admin Panel',
+                        value: 'admin',
+                        icon: Shield,
+                        onClick: () => {
+                          router.push('/admin')
+                        },
+                      },
+                    ]
+                  : []),
                 {
                   label: 'My Account',
                   value: 'profile',

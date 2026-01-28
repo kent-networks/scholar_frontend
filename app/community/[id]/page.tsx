@@ -49,6 +49,7 @@ export default function CommunityDetailPage() {
 
   const isOwner = community?.ownerId === user?.id || community?.userRole === "owner";
   const isMember = community?.isMember || isOwner;
+  const isGlobalAdmin = user?.role === "admin";
 
   const handleUpdate = async () => {
     try {
@@ -181,7 +182,7 @@ export default function CommunityDetailPage() {
                   <p className="text-sm font-bold">Members</p>
                 </button>
               </div>
-              {(isOwner || isMember) && (
+              {(isOwner || isMember || isGlobalAdmin) && (
                 <ButtonDropdown
                   buttonContent={
                     <>
@@ -191,7 +192,7 @@ export default function CommunityDetailPage() {
                   }
                   buttonClassName="flex items-center gap-2 px-4 py-2 transition-colors rounded-lg bg-white hover:bg-slate-200 text-slate-900"
                   options={
-                    isOwner
+                    (isOwner || isGlobalAdmin)
                       ? [
                           {
                             label: "Edit Community",

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { authApi, User } from "@/lib/api/auth";
+import { authApi, RegisterData, User } from "@/lib/api/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -58,10 +58,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string;
     password: string;
     name: string;
-    role: "student" | "educator" | "creator";
+    role: "student" | "educator" | "creator" | "admin";
   }) {
     try {
-      const response = await authApi.register(data);
+      // Frontend API type currently doesn't include "admin" as a register role.
+      // If "admin" is passed, fall back to "student" to avoid breaking registration flow.
+      let safeData: RegisterData;
+      if (data.role === "admin") {
+        safeData = { ...data, role: "student" };
+      } else {
+        safeData = data as RegisterData;
+      }
+      const response = await authApi.register(safeData);
       if (response.success) {
         setUser(response.data.user);
         router.push("/research-lab");

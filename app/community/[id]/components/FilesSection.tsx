@@ -31,6 +31,7 @@ interface FilesSectionProps {
 export default function FilesSection({ communityId, isMember }: FilesSectionProps) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
+  const isGlobalAdmin = user?.role === "admin";
   const [allFiles, setAllFiles] = useState<CommunityFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -308,7 +309,7 @@ export default function FilesSection({ communityId, isMember }: FilesSectionProp
                       <Download className="w-4 h-4" />
                       <span className="hidden sm:inline">Download</span>
                     </a>
-                    {isMember && (
+                    {(isMember || isGlobalAdmin) && (
                       <Tooltip content="Delete file">
                         <button
                           onClick={(e) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
@@ -29,19 +29,22 @@ const featuredCategories = [
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const { isLoading: authLoading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
   const [stats, setStats] = useState<Stats | null>(null);
   const [trendingVideos, setTrendingVideos] = useState<TrendingVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Redirect authenticated users to research-lab
+  // Default landing route (logged in or not) should be Research Lab.
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      router.push("/research-lab");
+    if (!authLoading) {
+      // Allow visiting the landing page explicitly via `/?landing=1`
+      if (searchParams.get("landing") === "1") return;
+      router.replace("/research-lab");
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [authLoading, router, searchParams]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,7 +95,7 @@ export default function Home() {
       opacity: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
+        ease: [0.16, 1, 0.3, 1] as const,
       },
     },
   };
@@ -115,10 +118,8 @@ export default function Home() {
       y: 0,
       filter: "blur(0px)",
       transition: {
-        type: "spring",
-        stiffness: 110,
-        damping: 16,
         duration: 0.2,
+        ease: [0.16, 1, 0.3, 1] as const,
       },
     },
   };
