@@ -183,7 +183,7 @@ export default function CreateCommunityModal({
                   placeholder="Leave blank to auto-generate"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Members will need this code to join the community.
+                  Members will need this code to join. Institution-linked communities can have unlimited members.
                 </p>
               </div>
             )}

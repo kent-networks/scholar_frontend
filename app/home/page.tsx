@@ -448,7 +448,7 @@ export default function HomeLandingPage() {
                   trendingVideos.map((item) => (
                     <Link
                       key={item.id}
-                      href={`/scoop?video=${item.id}`}
+                      href={`/?video=${item.id}`}
                       className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
                     >
                       <div className="relative h-48 overflow-hidden">

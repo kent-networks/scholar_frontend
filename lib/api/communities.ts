@@ -15,6 +15,9 @@ export interface Community {
   createdAt?: string;
   notificationCount?: number;
   institutionName?: string | null;
+  institutionId?: number | null;
+  joinCode?: string | null;
+  requireJoinCode?: boolean;
 }
 
 export interface CreateCommunityData {

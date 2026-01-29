@@ -46,15 +46,15 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
   Agriculture: Wheat,
   "Environmental Studies": Leaf,
 
-  "ICT / Computer Studies": Computer,
-  "Robotics & Innovation": Cpu,
+  "ICT": Computer,
+  "Robotics": Cpu,
 
   Geography: Globe,
   History: Landmark,
   Economics: LineChart,
   Entrepreneurship: Briefcase,
 
-  "English Language & Literature": BookOpen,
+  "English": BookOpen,
   "Local Languages": Languages,
 
   "Health Education": HeartPulse,
@@ -75,15 +75,15 @@ const categoryColors: Record<
   Agriculture: { bg: "bg-lime-500/10", text: "text-lime-600", hover: "group-hover:text-lime-500" },
   "Environmental Studies": { bg: "bg-teal-500/10", text: "text-teal-600", hover: "group-hover:text-teal-500" },
 
-  "ICT / Computer Studies": { bg: "bg-sky-500/10", text: "text-sky-600", hover: "group-hover:text-sky-500" },
-  "Robotics & Innovation": { bg: "bg-indigo-500/10", text: "text-indigo-600", hover: "group-hover:text-indigo-500" },
+  "ICT": { bg: "bg-sky-500/10", text: "text-sky-600", hover: "group-hover:text-sky-500" },
+  "Robotics": { bg: "bg-indigo-500/10", text: "text-indigo-600", hover: "group-hover:text-indigo-500" },
 
   Geography: { bg: "bg-cyan-500/10", text: "text-cyan-600", hover: "group-hover:text-cyan-500" },
   History: { bg: "bg-amber-500/10", text: "text-amber-600", hover: "group-hover:text-amber-500" },
   Economics: { bg: "bg-rose-500/10", text: "text-rose-600", hover: "group-hover:text-rose-500" },
   Entrepreneurship: { bg: "bg-orange-500/10", text: "text-orange-600", hover: "group-hover:text-orange-500" },
 
-  "English Language & Literature": { bg: "bg-slate-500/10", text: "text-slate-600", hover: "group-hover:text-slate-500" },
+  "English": { bg: "bg-slate-500/10", text: "text-slate-600", hover: "group-hover:text-slate-500" },
   "Local Languages": { bg: "bg-fuchsia-500/10", text: "text-fuchsia-600", hover: "group-hover:text-fuchsia-500" },
 
   "Health Education": { bg: "bg-red-500/10", text: "text-red-600", hover: "group-hover:text-red-500" },
@@ -153,11 +153,13 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
           <div className="flex items-start justify-between mb-4">
             <div className={`${colorConfig.bg} p-3 rounded-lg ${colorConfig.text} relative`}>
               <IconComponent className="w-8 h-8" />
-              {isMember && community.notificationCount && community.notificationCount > 0 && (
+              {isMember && (community.notificationCount ?? 0) > 0 && (
                 <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
-                  {community.notificationCount > 99 ? "99+" : community.notificationCount}
+                  {(community.notificationCount ?? 0) > 99 ? '99+' : community.notificationCount}
                 </span>
               )}
+
+
             </div>
             <div className="flex items-center gap-2">
               <span

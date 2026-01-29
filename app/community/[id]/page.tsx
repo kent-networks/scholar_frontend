@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import ModalDialog from "@/components/ModalDialog";
+import Dropdown from "@/components/Dropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Trash2, Edit2, Users, MoreVertical, LogOut } from "lucide-react";
 import { communityApi, Community } from "@/lib/api/communities";
@@ -12,6 +13,29 @@ import PostsSection from "./components/PostsSection";
 import FilesSection from "./components/FilesSection";
 import MembersSection from "./components/MembersSection";
 import ButtonDropdown from "@/components/ButtonDropdown";
+
+const researchFieldOptions = [
+  { value: "", label: "Select a field" },
+  { value: "Biology", label: "Biology" },
+  { value: "Chemistry", label: "Chemistry" },
+  { value: "Physics", label: "Physics" },
+  { value: "Agriculture", label: "Agriculture" },
+  { value: "Environmental Studies", label: "Environmental Studies" },
+  { value: "ICT", label: "ICT / Computer Studies" },
+  { value: "Robotics", label: "Robotics & Innovation" },
+  { value: "Mathematics", label: "Mathematics" },
+  { value: "Geography", label: "Geography" },
+  { value: "History", label: "History" },
+  { value: "Economics", label: "Economics" },
+  { value: "Entrepreneurship", label: "Entrepreneurship" },
+  { value: "Religious Education", label: "Religious Education" },
+  { value: "English", label: "English Language & Literature" },
+  { value: "Local Languages", label: "Local Languages (Luganda, Runyankole, etc.)" },
+  { value: "Health Education", label: "Health Education" },
+  { value: "Social Studies", label: "Social Studies & Civics" },
+  { value: "Innovation", label: "Innovation & Research Projects" },
+  { value: "Other", label: "Other" },
+];
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -24,7 +48,13 @@ export default function CommunityDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    researchField: "",
+    otherField: "",
+    joinCode: "",
+  });
 
   const communityId = parseInt(params.id as string);
 
@@ -34,7 +64,15 @@ export default function CommunityDetailPage() {
         setLoading(true);
         const data = await communityApi.getCommunityById(communityId);
         setCommunity(data);
-        setEditForm({ name: data.name, description: data.description || "" });
+        const category = data.category || "";
+        const isInOptions = researchFieldOptions.some((o) => o.value && o.value === category);
+        setEditForm({
+          name: data.name,
+          description: data.description || "",
+          researchField: isInOptions ? category : (category ? "Other" : ""),
+          otherField: isInOptions ? "" : category,
+          joinCode: data.joinCode || "",
+        });
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Failed to load community");
         router.push("/community");
@@ -63,7 +101,15 @@ export default function CommunityDetailPage() {
 
   const handleUpdate = async () => {
     try {
-      await communityApi.updateCommunity(communityId, editForm);
+      const payload: { name: string; description?: string; researchField?: string; joinCode?: string } = {
+        name: editForm.name,
+        description: editForm.description || undefined,
+        researchField: editForm.researchField === "Other" ? editForm.otherField : (editForm.researchField || undefined),
+      };
+      if (community?.institutionId != null) {
+        payload.joinCode = editForm.joinCode.trim() || undefined;
+      }
+      await communityApi.updateCommunity(communityId, payload);
       toast.success("Community updated successfully");
       setEditModalOpen(false);
       const updated = await communityApi.getCommunityById(communityId);
@@ -287,6 +333,47 @@ export default function CommunityDetailPage() {
               placeholder="Community description"
             />
           </div>
+          <div>
+            <label className="block mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+              Research Field
+            </label>
+            <Dropdown
+              options={researchFieldOptions}
+              value={editForm.researchField || ""}
+              onChange={(e) => {
+                const value = typeof e === "string" ? e : (e.target?.value ?? "");
+                setEditForm((prev) => ({ ...prev, researchField: value, otherField: value === "Other" ? prev.otherField : "" }));
+              }}
+              placeholder="Select a field"
+              className="h-12"
+            />
+            {editForm.researchField === "Other" && (
+              <input
+                type="text"
+                value={editForm.otherField}
+                onChange={(e) => setEditForm({ ...editForm, otherField: e.target.value })}
+                placeholder="Enter research field..."
+                className="w-full h-12 mt-2 px-4 text-base font-normal leading-normal transition-all bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            )}
+          </div>
+          {community?.institutionId != null && (
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+                Join code
+              </label>
+              <input
+                type="text"
+                value={editForm.joinCode}
+                onChange={(e) => setEditForm({ ...editForm, joinCode: e.target.value })}
+                className="w-full h-12 px-4 text-base font-normal leading-normal transition-all bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="Code required to join (leave blank to keep current)"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Members need this code to join. Updating it will not remove existing members.
+              </p>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setEditModalOpen(false)}

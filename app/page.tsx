@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "@/app/scoop/components/VideoCard";
 import CommentsSidePanel from "@/components/CommentsSidePanel";
@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 
 export default function RootPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
   const [viewMode, setViewMode] = useState<"cards" | "viewer">("cards");
   const pendingOpenIndexRef = useRef<number | null>(null);
@@ -94,6 +95,20 @@ export default function RootPage() {
   useEffect(() => {
     fetchVideos(true);
   }, [searchQuery]);
+
+  // Open specific video from ?video=id (e.g. from home Trending Research)
+  const videoIdParam = searchParams.get("video");
+  useEffect(() => {
+    if (!videoIdParam || loading || videos.length === 0) return;
+    const id = parseInt(videoIdParam, 10);
+    if (Number.isNaN(id)) return;
+    const index = videos.findIndex((v) => v.id === id);
+    if (index >= 0) {
+      setCurrentIndex(index);
+      pendingOpenIndexRef.current = index;
+      setViewMode("viewer");
+    }
+  }, [videoIdParam, loading, videos]);
 
   // Load more on scroll
   useEffect(() => {
