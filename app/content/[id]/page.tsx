@@ -140,7 +140,7 @@ export default function ContentDetailPage() {
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">SCHOLAR</h2>
             <div className="space-y-2">
               <Link
-                href="/research-lab"
+                href="/"
                 className="block text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
                 Research-Lab

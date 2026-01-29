@@ -111,7 +111,7 @@ export default function SignupPage() {
       subtitle={
         isAdminCreateMode
           ? "System-level admin creation (admins only)"
-          : "Join Scholar as a Student, Educator, or Creator"
+          : "Join Bwati as a Student, Educator, or Creator"
       }
     >
       <form onSubmit={handleSubmit} className="space-y-6">

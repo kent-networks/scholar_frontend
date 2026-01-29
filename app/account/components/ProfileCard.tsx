@@ -149,7 +149,7 @@ export default function ProfileCard({
                 className="p-2 text-white transition-colors rounded-full bg-primary hover:bg-primary-dark disabled:opacity-50"
                 title="Upload photo"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-4 h-4" strokeWidth={1.5}/>
               </button>
               {profilePhoto && (
                 <>
@@ -158,11 +158,11 @@ export default function ProfileCard({
                       onClick={() => setDeletePhotoConfirm(true)}
                       className="hidden p-2 text-white transition-colors bg-red-500 rounded-full md:block hover:bg-red-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" strokeWidth={1.5}/>
                     </button>
                   </Tooltip>
                   <ButtonDropdown
-                    buttonContent={<MoreVertical className="w-5 h-5 text-white" />}
+                    buttonContent={<MoreVertical className="w-5 h-5 text-white" strokeWidth={1.5}/>}
                     buttonClassName="md:hidden p-2 text-white transition-colors bg-black/50 rounded-full hover:bg-black/70"
                     options={[
                       {

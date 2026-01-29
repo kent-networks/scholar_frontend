@@ -23,7 +23,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/research-lab");
+      router.push("/");
     }
   }, [isAuthenticated, router]);
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to your Scholar account"
+      subtitle="Sign in to your Bwati account"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -293,7 +293,7 @@ function ForgotPasswordModal({
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 required
                 maxLength={6}
-                className="w-full px-4 py-3 text-center text-2xl font-bold tracking-widest bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full px-4 py-3 text-2xl font-bold tracking-widest text-center bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 placeholder="000000"
               />
             </div>

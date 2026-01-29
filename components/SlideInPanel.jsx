@@ -41,13 +41,13 @@ const SlideInPanel = ({ isOpen, onClose, children }) => {
         `}
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
           <h2 className="text-base font-semibold text-[#292929]">Panel Title</h2>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-red-500 transition"
+            className="text-gray-600 transition hover:text-red-500"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" strokeWidth={1.5}/>
           </button>
         </div>
 

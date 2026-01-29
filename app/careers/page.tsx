@@ -58,7 +58,7 @@ export default function CareersPage() {
           className="mb-24"
         >
           <h2 className="mb-10 text-3xl font-bold text-center text-slate-900 dark:text-white">
-            Why Scholar?
+            Why Bwati?
           </h2>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">

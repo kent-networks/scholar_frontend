@@ -71,7 +71,7 @@ export default function Toggle({
         )}
 
         {isDone && checked && (
-          <Check className="w-4 h-4 text-white" strokeWidth={3} />
+          <Check className="w-4 h-4 text-white" strokeWidth={1.5} />
         )}
       </div>
     </div>

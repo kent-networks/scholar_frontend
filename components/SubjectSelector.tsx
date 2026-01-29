@@ -96,24 +96,25 @@ export default function SubjectSelector({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full px-4 py-3 pr-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors disabled:opacity-50"
+          className="w-full px-4 py-3 pr-10 transition-colors bg-white border rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50"
         />
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+          className="absolute p-1 transition-colors -translate-y-1/2 rounded right-2 top-1/2 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
         >
           <ChevronDown
             className={`w-5 h-5 text-slate-500 dark:text-slate-400 transition-transform ${
               isOpen ? "rotate-180" : ""
             }`}
+            strokeWidth={1.5}
           />
         </button>
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 overflow-y-auto bg-white border rounded-lg shadow-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 max-h-60">
           {filteredSubjects.length > 0 ? (
             <ul className="py-1">
               {filteredSubjects.map((subject) => (
@@ -121,7 +122,7 @@ export default function SubjectSelector({
                   <button
                     type="button"
                     onClick={() => handleSelect(subject)}
-                    className="w-full px-4 py-2 text-left text-sm text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    className="w-full px-4 py-2 text-sm text-left transition-colors text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {subject}
                   </button>

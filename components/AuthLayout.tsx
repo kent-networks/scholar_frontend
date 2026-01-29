@@ -45,7 +45,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/80" />
         <div className="relative flex items-center justify-center h-full p-12 text-white Z-10">
           <div className="max-w-md text-center">
-            <h2 className="mb-4 text-4xl font-bold">Welcome to Scholar</h2>
+            <h2 className="mb-4 text-4xl font-bold">Welcome to Bwati</h2>
             <p className="text-xl text-blue-100">
               Join thousands of students, educators, and creators building the future of education
             </p>

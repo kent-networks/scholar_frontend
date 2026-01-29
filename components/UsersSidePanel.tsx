@@ -94,7 +94,7 @@ export default function UsersSidePanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-50"
+            className="fixed inset-0 z-50 bg-black/50"
             onClick={handleClose}
           />
 
@@ -115,21 +115,21 @@ export default function UsersSidePanel({
               </h2>
               <button
                 onClick={handleClose}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-2 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
               >
-                <X className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <X className="w-5 h-5 text-slate-600 dark:text-slate-400" strokeWidth={1.5}/>
               </button>
             </div>
 
             {/* Users List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 p-4 space-y-3 overflow-y-auto">
               {loading ? (
-                <div className="text-center py-12">
-                  <div className="w-8 h-8 border-4 rounded-full border-primary/30 border-t-primary animate-spin mx-auto" />
+                <div className="py-12 text-center">
+                  <div className="w-8 h-8 mx-auto border-4 rounded-full border-primary/30 border-t-primary animate-spin" />
                 </div>
               ) : users.length === 0 ? (
-                <div className="text-center py-12">
-                  <User className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+                <div className="py-12 text-center">
+                  <User className="w-12 h-12 mx-auto mb-3 text-slate-400" strokeWidth={1.5}/>
                   <p className="text-slate-500 dark:text-slate-400">
                     No {type === "followers" ? "followers" : "following"} yet.
                   </p>
@@ -139,24 +139,24 @@ export default function UsersSidePanel({
                   <div
                     key={user.id}
                     onClick={() => handleUserClick(user.username)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 p-3 transition-colors rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {user.photo ? (
                       <img
                         src={user.photo}
                         alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        className="flex-shrink-0 object-cover w-10 h-10 rounded-full"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 font-bold text-white rounded-full bg-primary">
                         {user.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-bold truncate text-slate-900 dark:text-white">
                         {user.name}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <p className="text-xs truncate text-slate-500 dark:text-slate-400">
                         @{user.username}
                       </p>
                     </div>

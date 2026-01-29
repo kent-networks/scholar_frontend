@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "./components/VideoCard";
 import CommentsSidePanel from "@/components/CommentsSidePanel";
@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 
 export default function ScoopPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -96,6 +97,18 @@ export default function ScoopPage() {
   useEffect(() => {
     fetchVideos(true);
   }, [searchQuery]);
+
+  // Open specific video from ?video=id (e.g. from landing trending cards)
+  const videoIdParam = searchParams.get("video");
+  useEffect(() => {
+    if (!videoIdParam || loading || videos.length === 0) return;
+    const id = parseInt(videoIdParam, 10);
+    if (Number.isNaN(id)) return;
+    const index = videos.findIndex((v) => v.id === id);
+    if (index >= 0) {
+      setCurrentIndex(index);
+    }
+  }, [videoIdParam, loading, videos]);
 
   // Load more on scroll
   useEffect(() => {

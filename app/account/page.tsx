@@ -194,7 +194,7 @@ export default function AccountPage() {
             }`}
           >
             <div className="flex items-center gap-1 sm:flex-row sm:gap-2">
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5" strokeWidth={1.5}/>
               <span className="inline text-sm font-medium">
                 {label}
               </span>
@@ -218,7 +218,7 @@ export default function AccountPage() {
               : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
           }`}
               >
-                <Grid3x3 className="w-4 h-4" />
+                <Grid3x3 className="w-5 h-5" strokeWidth={1.5}/>
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -228,7 +228,7 @@ export default function AccountPage() {
                     : "text-slate-400 hover:bg-slate-100 "
                 }`}
               >
-                <List className="w-4 h-4" />
+                <List className="w-5 h-5" strokeWidth={1.5}/>
               </button>
           </div>
           </div>

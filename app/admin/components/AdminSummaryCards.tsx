@@ -33,7 +33,7 @@ export default function AdminSummaryCards({
   ];
 
   return (
-    <div className="mb-8 overflow-hidden border rounded-xl border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark shadow-sm">
+    <div className="mb-8 overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark">
       <button
         type="button"
         onClick={() => setIsExpanded((e) => !e)}
@@ -64,11 +64,11 @@ export default function AdminSummaryCards({
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.2 }}
-                    className="relative flex flex-col gap-4 p-6 transition-colors border rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                    className="relative flex flex-col gap-4 p-6 transition-colors bg-white border rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="flex items-start justify-between">
                       <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-5 h-5" strokeWidth={1.5}/>
                       </div>
                     </div>
                     <div>

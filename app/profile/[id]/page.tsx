@@ -186,7 +186,7 @@ export default function ProfilePage() {
     if (video.videoType === "scoop") {
       router.push("/scoop");
     } else {
-      router.push("/research-lab");
+      router.push("/");
     }
   };
 

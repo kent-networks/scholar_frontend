@@ -190,7 +190,7 @@ export default function ResearchLabUploadPage() {
       selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
       
       setTimeout(() => {
-        router.push("/research-lab");
+        router.push("/");
       }, 500);
     } catch (error: any) {
       setUploadProgress(0);

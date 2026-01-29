@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.login({ email, password });
       if (response.success) {
         setUser(response.data.user);
-        router.push("/research-lab");
+        router.push("/");
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Login failed");
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.register(safeData);
       if (response.success) {
         setUser(response.data.user);
-        router.push("/research-lab");
+        router.push("/");
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Registration failed");

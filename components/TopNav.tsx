@@ -33,7 +33,7 @@ export default function TopNav() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <GraduationCap className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold text-slate-900 dark:text-white">Scholar</span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">Bwati</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -97,7 +97,7 @@ export default function TopNav() {
                   href="/signup"
                   className="px-4 py-4 text-sm font-bold text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
                 >
-                  Join Scholar
+                  Join Bwati
                 </Link>
               </>
             )}
@@ -110,9 +110,9 @@ export default function TopNav() {
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6" strokeWidth={1.5}/>
             ) : (
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6" strokeWidth={1.5}/>
             )}
           </button>
         </div>
@@ -174,7 +174,7 @@ export default function TopNav() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="block w-full px-4 py-3 text-sm font-bold text-center text-white transition-colors rounded-lg bg-primary hover:bg-primary-dark"
                     >
-                      Join Scholar
+                      Join Bwati
                     </Link>
                   </>
                 )}

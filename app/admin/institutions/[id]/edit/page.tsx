@@ -44,7 +44,7 @@ export default function EditInstitutionPage() {
       return;
     }
     if ((user?.role || "") !== "admin") {
-      router.push("/research-lab");
+      router.push("/");
       return;
     }
   }, [authLoading, isAuthenticated, user?.role, router]);
@@ -145,7 +145,7 @@ export default function EditInstitutionPage() {
         <div className="hidden md:block">
           <Sidebar />
         </div>
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex items-center justify-center flex-1">
           <div className="text-slate-500 dark:text-slate-400">Loading...</div>
         </main>
       </div>
@@ -168,7 +168,7 @@ export default function EditInstitutionPage() {
             onClick={() => router.push("/admin?tab=institutions")}
             className="flex items-center gap-2 mb-6 transition-colors text-slate-600 dark:text-slate-400 hover:text-primary"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" strokeWidth={1.5}/>
             Back to Institutions
           </button>
 
@@ -181,7 +181,7 @@ export default function EditInstitutionPage() {
 
           <div className="space-y-8">
             <div className="p-5 border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Details</h2>
+              <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Details</h2>
               <div className="grid grid-cols-1 gap-3">
                 <input
                   value={name}
@@ -209,7 +209,7 @@ export default function EditInstitutionPage() {
             </div>
 
             <div className="p-5 border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Assigned users</h2>
+              <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Assigned users</h2>
               {assignedUsers.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">No users assigned.</p>
               ) : (
@@ -217,29 +217,29 @@ export default function EditInstitutionPage() {
                   {assignedUsers.map((u) => (
                     <li
                       key={u.id}
-                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800/50"
+                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/50"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center min-w-0 gap-3">
                         {u.profilePhotoPath ? (
                           <img
                             src={u.profilePhotoPath}
                             alt={u.name}
-                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                            className="flex-shrink-0 object-cover rounded-full w-9 h-9"
                           />
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                          <div className="flex items-center justify-center flex-shrink-0 text-sm font-bold rounded-full w-9 h-9 bg-primary/10 text-primary">
                             {(u.name || u.username || "?").charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="font-medium text-slate-900 dark:text-white truncate">{u.name}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{u.username}</div>
+                          <div className="font-medium truncate text-slate-900 dark:text-white">{u.name}</div>
+                          <div className="text-xs truncate text-slate-500 dark:text-slate-400">@{u.username}</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleUnassign(u)}
-                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-600 transition-colors"
+                        className="p-2 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-600"
                         aria-label="Unassign"
                       >
                         <X className="w-4 h-4" />
@@ -249,7 +249,7 @@ export default function EditInstitutionPage() {
                 </ul>
               )}
 
-              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="pt-4 mt-6 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-3">
                   <UserPlus className="w-5 h-5 text-primary" />
                   <span className="text-sm font-bold text-slate-900 dark:text-white">Add user</span>
@@ -263,7 +263,7 @@ export default function EditInstitutionPage() {
                   placeholder="Search users by name / username / email..."
                   className={inputClass + " mb-3"}
                 />
-                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-h-48 overflow-auto">
+                <div className="overflow-auto bg-white border rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 max-h-48">
                   {userResultsLoading ? (
                     <div className="p-3 text-sm text-slate-500 dark:text-slate-400">Searching...</div>
                   ) : userResults.filter((u) => !assignedIds.has(u.id)).length === 0 ? (
@@ -289,18 +289,18 @@ export default function EditInstitutionPage() {
                               <img
                                 src={u.profilePhotoPath}
                                 alt={u.name}
-                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                className="flex-shrink-0 object-cover w-8 h-8 rounded-full"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                              <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-bold rounded-full bg-primary/10 text-primary">
                                 {(u.name || u.username || "?").charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium text-slate-900 dark:text-white truncate">{u.name}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{u.username}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate text-slate-900 dark:text-white">{u.name}</div>
+                              <div className="text-xs truncate text-slate-500 dark:text-slate-400">@{u.username}</div>
                             </div>
-                            {selected ? <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" /> : null}
+                            {selected ? <CheckCircle2 className="flex-shrink-0 w-5 h-5 text-primary" /> : null}
                           </button>
                         );
                       })
@@ -310,7 +310,7 @@ export default function EditInstitutionPage() {
                   type="button"
                   disabled={!selectedUserToAssign || assigning}
                   onClick={handleAssign}
-                  className="mt-3 px-4 py-2 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
+                  className="px-4 py-2 mt-3 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
                 >
                   {assigning ? "Assigning..." : "Assign selected user"}
                 </button>

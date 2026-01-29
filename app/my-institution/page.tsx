@@ -26,7 +26,7 @@ export default function MyInstitutionPage() {
       return;
     }
     if (user?.institutionId == null) {
-      router.push("/research-lab");
+      router.push("/");
       return;
     }
   }, [authLoading, isAuthenticated, user?.institutionId, router]);
@@ -39,7 +39,7 @@ export default function MyInstitutionPage() {
         const data = await institutionsApi.getMyInstitution();
         if (cancelled) return;
         if (!data) {
-          router.push("/research-lab");
+          router.push("/");
           return;
         }
         setInstitution(data);
@@ -48,7 +48,7 @@ export default function MyInstitutionPage() {
       } catch (e: any) {
         if (!cancelled) {
           if (e?.response?.status === 404) {
-            router.push("/research-lab");
+            router.push("/");
             return;
           }
           toast.error(e?.response?.data?.message || "Failed to load institution");

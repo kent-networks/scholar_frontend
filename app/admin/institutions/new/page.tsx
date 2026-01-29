@@ -39,7 +39,7 @@ export default function CreateInstitutionPage() {
       return;
     }
     if ((user?.role || "") !== "admin") {
-      router.push("/research-lab");
+      router.push("/");
     }
   }, [authLoading, isAuthenticated, user?.role, router]);
 

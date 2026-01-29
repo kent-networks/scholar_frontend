@@ -70,9 +70,9 @@ const FilterPanel = ({ filters = [], onSaveFilter, onSearchChange, onReset, init
 
       {/* Filters */}
       {filters.map((group, i) => (
-        <div key={i} className="rounded-lg border border-gray-100 bg-white">
+        <div key={i} className="bg-white border border-gray-100 rounded-lg">
           <button
-            className="w-full flex items-center justify-between text-left p-3 rounded-sm hover:bg-gray-50 transition"
+            className="flex items-center justify-between w-full p-3 text-left transition rounded-sm hover:bg-gray-50"
             onClick={() => toggleGroup(i)}
           >
             <span>{group.group}</span>
@@ -80,7 +80,7 @@ const FilterPanel = ({ filters = [], onSaveFilter, onSearchChange, onReset, init
               animate={{ rotate: openGroups[i] ? 180 : 0 }}
               transition={{ duration: 0.25 }}
             >
-              <ChevronDown size={18} strokeWidth={1.8} />
+              <ChevronDown size={18} strokeWidth={1.5} />
             </motion.div>
           </button>
 
@@ -120,7 +120,7 @@ const FilterPanel = ({ filters = [], onSaveFilter, onSearchChange, onReset, init
                     <div className="space-y-4">
                       {group.children.map((child, j) => (
                         <div key={j}>
-                          <div className="text-xs font-medium text-gray-600 mb-2">
+                          <div className="mb-2 text-xs font-medium text-gray-600">
                             {child.group}
                           </div>
                           <div className="flex flex-wrap gap-3">
@@ -153,7 +153,7 @@ const FilterPanel = ({ filters = [], onSaveFilter, onSearchChange, onReset, init
       ))}
 
       {/* Save Filter */}
-      <div className="pt-2 flex justify-end">
+      <div className="flex justify-end pt-2">
         <button
           className="bg-[#560fd1] text-white py-2 px-4 rounded-md text-sm hover:bg-[#440db2] transition"
           onClick={handleSave}

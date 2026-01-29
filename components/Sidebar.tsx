@@ -13,7 +13,7 @@ import {
   Video,
   Users,
   Link2,
-  UserCircle2,
+  LucideIcon,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -26,12 +26,13 @@ import {
 interface NavItem {
   name: string
   href: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: LucideIcon
   requiresAuth?: boolean
 }
 
+
 const NAV_ITEMS: NavItem[] = [
-  { name: 'Research Lab', href: '/research-lab', icon: FlaskConical },
+  { name: 'Research Lab', href: '/', icon: FlaskConical },
   { name: 'Scoop', href: '/scoop', icon: Video },
   { name: 'Community', href: '/community', icon: Users },
   { name: 'Scholink', href: '/scholink', icon: Link2 },
@@ -61,31 +62,25 @@ export function MobileBottomNav() {
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
-  // Home nav item for non-authenticated users
-  const homeNavItem: NavItem = { name: 'Home', href: '/', icon: Home }
+  // Home nav item (landing page) – small devices only
+  const homeNavItem: NavItem = { name: 'Home', href: '/home', icon: Home }
 
   return (
     <nav className="flex items-center justify-around px-2 py-2">
-      {/* Show Home first if not authenticated */}
-      {!isAuthenticated && (
-        <Link
-          href={homeNavItem.href}
-          className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
-            pathname === homeNavItem.href ? 'text-primary bg-primary/10' : 'text-slate-700'
-          }`}
-        >
-          <Home className="w-6 h-6" />
-          <span className="text-[10px] font-medium leading-tight text-center">{homeNavItem.name}</span>
-        </Link>
-      )}
+      {/* Home (landing page) – mobile only */}
+      <Link
+        href={homeNavItem.href}
+        className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors min-w-[64px] ${
+          pathname === '/home' ? 'text-primary bg-primary/10' : 'text-slate-700'
+        }`}
+      >
+        <Home className="w-6 h-6" strokeWidth={1.5}/>
+        <span className="text-[10px] font-medium leading-tight text-center">{homeNavItem.name}</span>
+      </Link>
       {NAV_ITEMS.map((item) => {
         if (item.requiresAuth && !isAuthenticated) return null
-        // Scholink: only for global admins or users assigned to an institution
-        if (item.href === '/scholink' && isAuthenticated && user) {
-          const isAdmin = user.role === 'admin'
-          const hasInstitution = user.institutionId != null
-          if (!isAdmin && !hasInstitution) return null
-        }
+        // Scholink: only for users with institution (admins get it in profile dropdown on small devices)
+        if (item.href === '/scholink' && (!isAuthenticated || user?.role === 'admin' || user?.institutionId == null)) return null
         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
         const Icon = item.icon
         return (
@@ -96,7 +91,7 @@ export function MobileBottomNav() {
               isActive ? 'text-primary bg-primary/10' : 'text-slate-700'
             }`}
           >
-            <Icon className="w-6 h-6" />
+            <Icon className="w-6 h-6" strokeWidth={1.5}/>
             <span className="text-[10px] font-medium leading-tight text-center">{item.name}</span>
           </Link>
         )
@@ -136,6 +131,14 @@ export function MobileBottomNav() {
                     icon: Shield,
                     onClick: () => {
                       router.push('/admin')
+                    },
+                  },
+                  {
+                    label: 'Scholink',
+                    value: 'scholink',
+                    icon: Link2,
+                    onClick: () => {
+                      router.push('/scholink')
                     },
                   },
                 ]
@@ -213,14 +216,14 @@ export default function Sidebar() {
 
   useEffect(() => {
     try {
-      const stored = window.localStorage.getItem('scholar.sidebarCollapsed')
+      const stored = window.localStorage.getItem('bwati.sidebarCollapsed')
       if (stored === '1') setCollapsed(true)
     } catch {}
   }, [])
 
   useEffect(() => {
     try {
-      window.localStorage.setItem('scholar.sidebarCollapsed', collapsed ? '1' : '0')
+      window.localStorage.setItem('bwati.sidebarCollapsed', collapsed ? '1' : '0')
     } catch {}
   }, [collapsed])
 
@@ -239,15 +242,15 @@ export default function Sidebar() {
         {/* Header */}
         <div className={`flex-shrink-0 px-4 border-b border-white/10 ${collapsed ? 'py-3' : 'py-5'}`}>
           <div className={`flex items-center gap-2 ${collapsed ? 'flex-col justify-center gap-1' : 'justify-between'}`}>
-            <Link href="/" className={`flex items-center min-w-0 gap-2 ${collapsed ? 'flex-col' : ''}`}>
-              <GraduationCap className="flex-shrink-0 h-7 w-7 text-primary" />
+            <Link href="/home" className={`flex items-center min-w-0 gap-2 ${collapsed ? 'flex-col' : ''}`}>
+              <GraduationCap className="flex-shrink-0 h-7 w-7 text-primary" strokeWidth={1.5}/>
               <div
                 className={`transition-all duration-300 overflow-hidden ${
                   collapsed ? 'w-0 opacity-0 h-0' : 'w-auto opacity-100'
                 }`}
               >
                 <h1 className="text-xl font-bold leading-tight tracking-tight text-white whitespace-nowrap">
-                  Scholar
+                  Bwati
                 </h1>
                 <p className="text-slate-300/80 text-xs font-normal mt-0.5 whitespace-nowrap">
                   Academic Ecosystem
@@ -264,9 +267,9 @@ export default function Sidebar() {
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? (
-                <PanelLeftOpen className="w-5 h-5 text-slate-200" />
+                <PanelLeftOpen className="w-5 h-5 text-slate-200" strokeWidth={1.5} />
               ) : (
-                <PanelLeftClose className="w-5 h-5 text-slate-200" />
+                <PanelLeftClose className="w-5 h-5 text-slate-200" strokeWidth={1.5} />
               )}
             </button>
           </div>
@@ -285,13 +288,8 @@ export default function Sidebar() {
           >
             {items.map((item) => {
               if (item.requiresAuth && !isAuthenticated) return null
-              // Scholink: only for global admins or users assigned to an institution
-              if (item.href === '/scholink' && isAuthenticated && user) {
-                const isAdmin = user.role === 'admin'
-                const hasInstitution = user.institutionId != null
-                if (!isAdmin && !hasInstitution) return null
-              }
-
+              // Scholink: only for admins or users assigned to an institution
+              if (item.href === '/scholink' && (!isAuthenticated || (user?.role !== 'admin' && user?.institutionId == null))) return null
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
               const Icon = item.icon
 
@@ -308,7 +306,8 @@ export default function Sidebar() {
                   `}
                   aria-label={item.name}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5" strokeWidth={1.5}/>
+                  
                 </button>
               ) : (
                 <Link
@@ -345,7 +344,7 @@ export default function Sidebar() {
                       `}
                       aria-label="Admin Panel"
                     >
-                      <Shield className="w-5 h-5" />
+                      <Shield className="w-5 h-5" strokeWidth={1.5} />
                     </button>
                   ) : (
                     <Link
@@ -357,7 +356,7 @@ export default function Sidebar() {
                           : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
                       `}
                     >
-                      <Shield className="flex-shrink-0 w-5 h-5" />
+                      <Shield className="flex-shrink-0 w-5 h-5" strokeWidth={1.5} />
                       <span className="text-sm font-medium">Admin Panel</span>
                     </Link>
                   ),
@@ -382,7 +381,7 @@ export default function Sidebar() {
                       `}
                       aria-label="My Institution"
                     >
-                      <Building2 className="w-5 h-5" />
+                      <Building2 className="w-5 h-5" strokeWidth={1.5} />
                     </button>
                   ) : (
                     <Link
@@ -394,7 +393,7 @@ export default function Sidebar() {
                           : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
                       `}
                     >
-                      <Building2 className="flex-shrink-0 w-5 h-5" />
+                      <Building2 className="flex-shrink-0 w-5 h-5" strokeWidth={1.5} />
                       <span className="text-sm font-medium">My Institution</span>
                     </Link>
                   ),

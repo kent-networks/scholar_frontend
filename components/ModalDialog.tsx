@@ -172,7 +172,7 @@ function Header({
         </div>
       )}
       <button onClick={onClose} aria-label="Close">
-        <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+        <X className="w-5 h-5 text-slate-400 hover:text-slate-600" strokeWidth={1.5}/>
       </button>
     </div>
   );
@@ -193,7 +193,7 @@ function BottomHeader({
           {title}
         </div>
         <button onClick={onClose} aria-label="Close">
-          <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+          <X className="w-5 h-5 text-slate-400 hover:text-slate-600" strokeWidth={1.5}/>
         </button>
       </div>
     </div>

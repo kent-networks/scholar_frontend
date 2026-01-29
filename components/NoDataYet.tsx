@@ -19,17 +19,17 @@ const NoDataYet: React.FC<NoDataYetProps> = ({
   const getIcon = () => {
     switch (icon) {
       case "search":
-        return <SearchX className="w-12 h-12 text-gray-400" />;
+        return <SearchX className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
       case "assets":
-        return <Package className="w-12 h-12 text-gray-400" />;
+        return <Package className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
       case "users":
-        return <Users className="w-12 h-12 text-gray-400" />;
+        return <Users className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
       case "locations":
-        return <MapPin className="w-12 h-12 text-gray-400" />;
+        return <MapPin className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
       case "categories":
-        return <FolderOpen className="w-12 h-12 text-gray-400" />;
+        return <FolderOpen className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
       default:
-        return <SearchX className="w-12 h-12 text-gray-400" />;
+        return <SearchX className="w-12 h-12 text-gray-400" strokeWidth={1.5}/>;
     }
   };
 
@@ -37,21 +37,21 @@ const NoDataYet: React.FC<NoDataYetProps> = ({
     <div
       className={`flex flex-col items-center justify-center py-12 px-4 ${className} `}
     >
-      <div className="flex flex-col items-center space-y-4 text-center bg-white rounded-2xl p-4">
+      <div className="flex flex-col items-center p-4 space-y-4 text-center bg-white rounded-2xl">
         {/* Icon */}
-        <div className="flex items-center justify-center p-6 rounded-full bg-gray-100">
+        <div className="flex items-center justify-center p-6 bg-gray-100 rounded-full">
           {getIcon()}
         </div>
 
         {/* Title */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-sm text-gray-500 max-w-md">{message}</p>
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">{title}</h3>
+          <p className="max-w-md text-sm text-gray-500">{message}</p>
         </div>
 
         {/* Optional search suggestion */}
         {showSearch && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="p-3 mt-4 border border-blue-200 rounded-lg bg-blue-50">
             <p className="text-sm text-blue-700">
               💡 Try searching with different keywords or clearing your filters
             </p>

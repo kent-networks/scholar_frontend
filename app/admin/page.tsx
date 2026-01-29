@@ -79,7 +79,7 @@ export default function AdminPage() {
       return;
     }
     if ((user?.role || "") !== "admin") {
-      router.push("/research-lab");
+      router.push("/");
     }
   }, [authLoading, isAuthenticated, user?.role, router]);
 
@@ -170,12 +170,12 @@ export default function AdminPage() {
         width: "min-w-[200px]",
         render: (row: AdminUser) => (
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary font-bold">
+            <div className="flex items-center justify-center font-bold rounded-full w-9 h-9 bg-primary/10 text-primary">
               {(row.name || row.username || "?").charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <div className="font-semibold text-slate-900 truncate">{row.name}</div>
-              <div className="text-xs text-slate-500 truncate">@{row.username}</div>
+              <div className="font-semibold truncate text-slate-900">{row.name}</div>
+              <div className="text-xs truncate text-slate-500">@{row.username}</div>
             </div>
           </div>
         ),
@@ -229,7 +229,7 @@ export default function AdminPage() {
         render: (row: AdminUser) => (
           <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
             <ButtonDropdown
-              buttonContent={<MoreVertical className="w-5 h-5 text-slate-600" />}
+              buttonContent={<MoreVertical className="w-5 h-5 text-slate-600" strokeWidth={1.5}/>}
               buttonClassName="p-2 rounded-lg hover:bg-slate-100"
               options={[
                 {
@@ -277,9 +277,9 @@ export default function AdminPage() {
         width: "min-w-[220px]",
         render: (row: Institution) => (
           <div className="min-w-0">
-            <div className="font-semibold text-slate-900 dark:text-white truncate">{row.name}</div>
+            <div className="font-semibold truncate text-slate-900 dark:text-white">{row.name}</div>
             {row.motto ? (
-              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{row.motto}</div>
+              <div className="text-xs truncate text-slate-500 dark:text-slate-400">{row.motto}</div>
             ) : null}
           </div>
         ),
@@ -309,14 +309,14 @@ export default function AdminPage() {
                     <img
                       src={u.profilePhotoPath}
                       alt={u.name}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700"
+                      className="flex-shrink-0 object-cover w-8 h-8 border rounded-full border-slate-200 dark:border-slate-700"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-bold rounded-full bg-primary/10 text-primary">
                       {(u.name || u.username || "?").charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                  <span className="text-sm font-medium truncate text-slate-900 dark:text-white">
                     {u.name}
                   </span>
                 </button>
@@ -342,7 +342,7 @@ export default function AdminPage() {
         render: (row: Institution) => (
           <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
             <ButtonDropdown
-              buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" />}
+              buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" strokeWidth={1.5}/>}
               buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               options={[
                 {
@@ -382,7 +382,7 @@ export default function AdminPage() {
       </div>
 
       <main className="flex-1 pb-20 overflow-y-auto md:pb-0">
-        <div className="max-w-7xl p-4 mx-auto md:p-8">
+        <div className="p-4 mx-auto max-w-7xl md:p-8">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Admin Panel</h1>
@@ -582,7 +582,7 @@ export default function AdminPage() {
                       setDeletingInstitution(false);
                     }
                   }}
-                  className="px-4 py-2 font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                  className="px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
                   {deletingInstitution ? "Deleting..." : "Delete"}
                 </button>

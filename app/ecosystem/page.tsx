@@ -10,7 +10,7 @@ const features = [
     icon: FlaskConical,
     title: "Research Lab",
     description: "Discover and share groundbreaking research",
-    href: "/research-lab",
+    href: "/",
     color: "from-blue-500 to-blue-600",
   },
   {
@@ -44,7 +44,7 @@ export default function EcosystemPage() {
       <main className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h1 className="pb-1 text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl xl:text-7xl bg-clip-text bg-gradient-to-r from-slate-900 via-primary to-slate-900 dark:from-white dark:via-primary dark:to-white">
-            Scholar Ecosystem
+            Bwati Ecosystem
           </h1>
           <p className="max-w-2xl mx-auto text-xl text-slate-600 dark:text-slate-400">
             A comprehensive platform connecting students, educators, and creators in one unified academic ecosystem
@@ -61,14 +61,14 @@ export default function EcosystemPage() {
                 className="p-6 transition-all bg-white border group dark:bg-slate-800 rounded-xl border-slate-200 dark:border-slate-700 hover:shadow-lg"
               >
                 <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
-                  <Icon className="w-6 h-6 text-white" />
+                  <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
                 </div>
                 <h3 className="mb-2 text-xl font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
                   {feature.title}
                 </h3>
                 <p className="mb-4 text-slate-600 dark:text-slate-400">{feature.description}</p>
                 <div className="flex items-center font-bold text-primary">
-                  Explore <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                  Explore <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
                 </div>
               </Link>
             );
@@ -80,13 +80,13 @@ export default function EcosystemPage() {
             Ready to get started?
           </h2>
           <p className="mb-6 text-slate-600 dark:text-slate-400">
-            Join thousands of users already on Scholar
+            Join thousands of users already on Bwati
           </p>
           <Link
             href="/signup"
             className="inline-block px-8 py-4 text-white transition-colors rounded-2xl bg-primary hover:bg-primary-dark"
           >
-            Join Scholar
+            Join Bwati
           </Link>
         </div>
       </main>

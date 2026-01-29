@@ -55,7 +55,7 @@ export default function AboutPage() {
           className="mb-20 text-center lg:mb-28"
         >
           <h1 className="pb-1 text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl xl:text-7xl bg-clip-text bg-gradient-to-r from-slate-900 via-primary to-slate-900 dark:from-white dark:via-primary dark:to-white">
-            About Scholar
+            About Bwati
           </h1>
           <p className="max-w-3xl mx-auto mt-5 text-xl font-light sm:text-2xl text-slate-600 dark:text-slate-300">
             Building the next generation academic ecosystem — open, collaborative, and fearless.
@@ -77,7 +77,7 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="text-lg leading-relaxed prose text-slate-700 dark:text-slate-200 dark:prose-invert max-w-none">
-                Scholar exists to empower researchers, educators, and students to connect, collaborate, and create — without friction. 
+                Bwati exists to empower researchers, educators, and students to connect, collaborate, and create — without friction. 
                 We build tools that make high-quality research discoverable, discussion seamless, and global teamwork effortless.
               </p>
             </div>
