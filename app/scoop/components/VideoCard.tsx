@@ -54,7 +54,7 @@ export default function VideoCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageScrollRef = useRef<HTMLDivElement>(null);
   const [userPaused, setUserPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -338,7 +338,7 @@ export default function VideoCard({
                   }
                   setIsMuted(nextMuted);
                 }}
-                className="absolute z-20 flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full bottom-4 left-4 bg-black/50 backdrop-blur-sm hover:bg-black/60"
+                className="absolute z-20 flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full bottom-[200px] left-4 bg-black/50 backdrop-blur-sm hover:bg-black/60"
                 aria-label={isMuted ? "Unmute" : "Mute"}
               >
                 {isMuted ? (
