@@ -16,13 +16,41 @@ interface CreateCommunityModalProps {
 
 const researchFieldOptions = [
   { value: "", label: "Select a field" },
-  { value: "Computer Science", label: "Computer Science" },
+
+  // Sciences
+  { value: "Biology", label: "Biology" },
+  { value: "Chemistry", label: "Chemistry" },
   { value: "Physics", label: "Physics" },
-  { value: "Biotechnology", label: "Biotechnology" },
-  { value: "Social Sciences", label: "Social Sciences" },
-  { value: "Environmental Science", label: "Environmental Science" },
+  { value: "Agriculture", label: "Agriculture" },
+  { value: "Environmental Studies", label: "Environmental Studies" },
+
+  // Technology & ICT
+  { value: "ICT", label: "ICT / Computer Studies" },
+  { value: "Robotics", label: "Robotics & Innovation" },
+
+  // Mathematics
+  { value: "Mathematics", label: "Mathematics" },
+
+  // Humanities
+  { value: "Geography", label: "Geography" },
+  { value: "History", label: "History" },
+  { value: "Economics", label: "Economics" },
+  { value: "Entrepreneurship", label: "Entrepreneurship" },
+  { value: "Religious Education", label: "Religious Education" },
+
+  // Languages
+  { value: "English", label: "English Language & Literature" },
+  { value: "Local Languages", label: "Local Languages (Luganda, Runyankole, etc.)" },
+
+  // Health & Society
+  { value: "Health Education", label: "Health Education" },
+  { value: "Social Studies", label: "Social Studies & Civics" },
+
+  // General
+  { value: "Innovation", label: "Innovation & Research Projects" },
   { value: "Other", label: "Other" },
 ];
+
 
 export default function CreateCommunityModal({
   isOpen,

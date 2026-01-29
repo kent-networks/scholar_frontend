@@ -16,12 +16,38 @@ interface SearchAndFiltersProps {
 
 const researchFieldOptions = [
   { value: "", label: "All Fields" },
-  { value: "Neuroscience", label: "Neuroscience" },
-  { value: "Quantum Physics", label: "Quantum Physics" },
-  { value: "Environmental", label: "Environmental" },
-  { value: "Genomics", label: "Genomics" },
-  { value: "Social Sciences", label: "Social Sciences" },
-  { value: "Data Science", label: "Data Science" },
+  // Sciences
+  { value: "Biology", label: "Biology" },
+  { value: "Chemistry", label: "Chemistry" },
+  { value: "Physics", label: "Physics" },
+  { value: "Agriculture", label: "Agriculture" },
+  { value: "Environmental Studies", label: "Environmental Studies" },
+
+  // Technology & ICT
+  { value: "ICT", label: "ICT / Computer Studies" },
+  { value: "Robotics", label: "Robotics & Innovation" },
+
+  // Mathematics
+  { value: "Mathematics", label: "Mathematics" },
+
+  // Humanities
+  { value: "Geography", label: "Geography" },
+  { value: "History", label: "History" },
+  { value: "Economics", label: "Economics" },
+  { value: "Entrepreneurship", label: "Entrepreneurship" },
+  { value: "Religious Education", label: "Religious Education" },
+
+  // Languages
+  { value: "English", label: "English Language & Literature" },
+  { value: "Local Languages", label: "Local Languages (Luganda, Runyankole, etc.)" },
+
+  // Health & Society
+  { value: "Health Education", label: "Health Education" },
+  { value: "Social Studies", label: "Social Studies & Civics" },
+
+  // General
+  { value: "Innovation", label: "Innovation & Research Projects" },
+  { value: "Other", label: "Other" },
 ];
 
 const typeOptions = [
@@ -55,10 +81,7 @@ export default function SearchAndFilters({
                 <Search className="w-5 h-5 mr-1" />
               </div>
               <input
-className="w-full px-4 text-base bg-transparent outline-none rounded-r-xl
-text-slate-900  placeholder:text-slate-400  border-1 border-slate-100
-focus:outline-none focus:ring-1 focus:border-primary focus:shadow-sm
-transition-all duration-200"
+className="w-full px-4 text-base transition-all duration-200 bg-transparent outline-none rounded-r-xl text-slate-900 placeholder:text-slate-400 border-1 border-slate-100 focus:outline-none focus:ring-1 focus:border-primary focus:shadow-sm"
 
                 placeholder="Search for research topics, groups, or keywords..."
                 value={searchQuery}

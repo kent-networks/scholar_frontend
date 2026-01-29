@@ -301,30 +301,37 @@ export default function ResearchLabUploadPage() {
                 <Dropdown
                   options={[
                     { value: "", label: "None" },
-                    { value: "Mathematics", label: "Mathematics" },
-                    { value: "Physics", label: "Physics" },
-                    { value: "Chemistry", label: "Chemistry" },
+                        // Sciences
                     { value: "Biology", label: "Biology" },
-                    { value: "Computer Science", label: "Computer Science" },
-                    { value: "Engineering", label: "Engineering" },
-                    { value: "Medicine", label: "Medicine" },
-                    { value: "Psychology", label: "Psychology" },
-                    { value: "Economics", label: "Economics" },
-                    { value: "History", label: "History" },
-                    { value: "Literature", label: "Literature" },
-                    { value: "Philosophy", label: "Philosophy" },
-                    { value: "Art", label: "Art" },
-                    { value: "Music", label: "Music" },
-                    { value: "Geography", label: "Geography" },
-                    { value: "Astronomy", label: "Astronomy" },
-                    { value: "Environmental Science", label: "Environmental Science" },
-                    { value: "Political Science", label: "Political Science" },
-                    { value: "Sociology", label: "Sociology" },
-                    { value: "Business", label: "Business" },
-                    { value: "Education", label: "Education" },
-                    { value: "Law", label: "Law" },
-                    { value: "Architecture", label: "Architecture" },
+                    { value: "Chemistry", label: "Chemistry" },
+                    { value: "Physics", label: "Physics" },
                     { value: "Agriculture", label: "Agriculture" },
+                    { value: "Environmental Studies", label: "Environmental Studies" },
+
+                    // Technology & ICT
+                    { value: "ICT", label: "ICT / Computer Studies" },
+                    { value: "Robotics", label: "Robotics & Innovation" },
+
+                    // Mathematics
+                    { value: "Mathematics", label: "Mathematics" },
+
+                    // Humanities
+                    { value: "Geography", label: "Geography" },
+                    { value: "History", label: "History" },
+                    { value: "Economics", label: "Economics" },
+                    { value: "Entrepreneurship", label: "Entrepreneurship" },
+                    { value: "Religious Education", label: "Religious Education" },
+
+                    // Languages
+                    { value: "English", label: "English Language & Literature" },
+                    { value: "Local Languages", label: "Local Languages (Luganda, Runyankole, etc.)" },
+
+                    // Health & Society
+                    { value: "Health Education", label: "Health Education" },
+                    { value: "Social Studies", label: "Social Studies & Civics" },
+
+                    // General
+                    { value: "Innovation", label: "Innovation & Research Projects" },
                     { value: "Other", label: "Other" },
                   ]}
                   value={subject}

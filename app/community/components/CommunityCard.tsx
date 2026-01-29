@@ -2,19 +2,28 @@
 
 import { useRouter } from "next/navigation";
 import {
-  Users,
-  Brain,
   Atom,
-  Leaf,
-  Dna,
-  Users2,
-  Database,
-  Computer,
-  FlaskConical,
   Beaker,
+  Leaf,
+  Computer,
+  Calculator,
+  Globe,
+  Landmark,
+  LineChart,
+  Briefcase,
+  BookOpen,
+  Languages,
+  HeartPulse,
   MoreVertical,
+  Cpu,
+  Wheat,
+  Lightbulb,
+  Book,
+  Users2,
   Edit2,
   Trash2,
+  Users,
+  FlaskConical
 } from "lucide-react";
 import { Community } from "@/lib/api/communities";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,30 +39,60 @@ interface CommunityCardProps {
 }
 
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Neuroscience: Brain,
-  "Quantum Physics": Atom,
-  Environmental: Leaf,
-  Genomics: Dna,
-  "Social Sciences": Users2,
-  "Data Science": Database,
-  "Computer Science": Computer,
+  Biology: Beaker,
+  Chemistry: Beaker,
   Physics: Atom,
-  Biotechnology: Beaker,
-  "Environmental Science": Leaf,
+  Mathematics: Calculator,
+  Agriculture: Wheat,
+  "Environmental Studies": Leaf,
+
+  "ICT / Computer Studies": Computer,
+  "Robotics & Innovation": Cpu,
+
+  Geography: Globe,
+  History: Landmark,
+  Economics: LineChart,
+  Entrepreneurship: Briefcase,
+
+  "English Language & Literature": BookOpen,
+  "Local Languages": Languages,
+
+  "Health Education": HeartPulse,
+  "Social Studies & Civics": Users2,
+
+  "Religious Education": Book,
+  "Innovation & Research Projects": Lightbulb,
 };
 
-const categoryColors: Record<string, { bg: string; text: string; hover: string }> = {
-  Neuroscience: { bg: "bg-primary/10", text: "text-primary", hover: "group-hover:text-primary" },
-  "Quantum Physics": { bg: "bg-amber-500/10", text: "text-amber-500", hover: "group-hover:text-amber-500" },
-  Environmental: { bg: "bg-emerald-500/10", text: "text-emerald-500", hover: "group-hover:text-emerald-500" },
-  Genomics: { bg: "bg-indigo-500/10", text: "text-indigo-500", hover: "group-hover:text-indigo-500" },
-  "Social Sciences": { bg: "bg-rose-500/10", text: "text-rose-600", hover: "group-hover:text-rose-500" },
-  "Data Science": { bg: "bg-violet-500/10", text: "text-violet-600", hover: "group-hover:text-violet-500" },
-  "Computer Science": { bg: "bg-blue-500/10", text: "text-blue-600", hover: "group-hover:text-blue-500" },
+const categoryColors: Record<
+  string,
+  { bg: string; text: string; hover: string }
+> = {
+  Biology: { bg: "bg-green-500/10", text: "text-green-600", hover: "group-hover:text-green-500" },
+  Chemistry: { bg: "bg-emerald-500/10", text: "text-emerald-600", hover: "group-hover:text-emerald-500" },
   Physics: { bg: "bg-purple-500/10", text: "text-purple-600", hover: "group-hover:text-purple-500" },
-  Biotechnology: { bg: "bg-indigo-500/10", text: "text-indigo-600", hover: "group-hover:text-indigo-500" },
-  "Environmental Science": { bg: "bg-emerald-500/10", text: "text-emerald-600", hover: "group-hover:text-emerald-500" },
+  Mathematics: { bg: "bg-blue-500/10", text: "text-blue-600", hover: "group-hover:text-blue-500" },
+  Agriculture: { bg: "bg-lime-500/10", text: "text-lime-600", hover: "group-hover:text-lime-500" },
+  "Environmental Studies": { bg: "bg-teal-500/10", text: "text-teal-600", hover: "group-hover:text-teal-500" },
+
+  "ICT / Computer Studies": { bg: "bg-sky-500/10", text: "text-sky-600", hover: "group-hover:text-sky-500" },
+  "Robotics & Innovation": { bg: "bg-indigo-500/10", text: "text-indigo-600", hover: "group-hover:text-indigo-500" },
+
+  Geography: { bg: "bg-cyan-500/10", text: "text-cyan-600", hover: "group-hover:text-cyan-500" },
+  History: { bg: "bg-amber-500/10", text: "text-amber-600", hover: "group-hover:text-amber-500" },
+  Economics: { bg: "bg-rose-500/10", text: "text-rose-600", hover: "group-hover:text-rose-500" },
+  Entrepreneurship: { bg: "bg-orange-500/10", text: "text-orange-600", hover: "group-hover:text-orange-500" },
+
+  "English Language & Literature": { bg: "bg-slate-500/10", text: "text-slate-600", hover: "group-hover:text-slate-500" },
+  "Local Languages": { bg: "bg-fuchsia-500/10", text: "text-fuchsia-600", hover: "group-hover:text-fuchsia-500" },
+
+  "Health Education": { bg: "bg-red-500/10", text: "text-red-600", hover: "group-hover:text-red-500" },
+  "Social Studies & Civics": { bg: "bg-pink-500/10", text: "text-pink-600", hover: "group-hover:text-pink-500" },
+
+  "Religious Education": { bg: "bg-yellow-500/10", text: "text-yellow-600", hover: "group-hover:text-yellow-500" },
+  "Innovation & Research Projects": { bg: "bg-violet-500/10", text: "text-violet-600", hover: "group-hover:text-violet-500" },
 };
+
 
 // Random color array for categories not in predefined list
 const randomColors = [
@@ -130,7 +169,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
               {isGlobalAdmin && (
                 <div onClick={(e) => e.stopPropagation()}>
                   <ButtonDropdown
-                    buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" />}
+                    buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" strokeWidth={1.5}/>}
                     buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                     options={[
                       {
@@ -203,7 +242,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="Community code"
-              className="w-full py-3 px-4 border rounded-xl bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+              className="w-full px-4 py-3 bg-white border rounded-xl dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
             />
             <div className="flex justify-end gap-3">
               <button
@@ -277,7 +316,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
                     setDeleting(false);
                   }
                 }}
-                className="px-4 py-2 font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>
