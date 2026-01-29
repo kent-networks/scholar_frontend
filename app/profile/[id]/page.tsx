@@ -82,17 +82,24 @@ export default function ProfilePage() {
       try {
         setVideosLoading(true);
         let fetchedVideos: VideoType[] = [];
+        const limit = 12;
 
         switch (activeTab) {
-          case "videos":
-            fetchedVideos = await videoApi.getUserVideos(profile.userId);
+          case "videos": {
+            const result = await videoApi.getUserVideos(profile.userId, { limit });
+            fetchedVideos = result.data;
             break;
-          case "liked":
-            fetchedVideos = await videoApi.getUserLikedVideos(profile.userId);
+          }
+          case "liked": {
+            const result = await videoApi.getUserLikedVideos(profile.userId, { limit });
+            fetchedVideos = result.data;
             break;
-          case "saved":
-            fetchedVideos = await videoApi.getUserSavedVideos(profile.userId);
+          }
+          case "saved": {
+            const result = await videoApi.getUserSavedVideos(profile.userId, { limit });
+            fetchedVideos = result.data;
             break;
+          }
         }
 
         setVideos(fetchedVideos);
@@ -313,14 +320,14 @@ export default function ProfilePage() {
                         <Inbox className="w-4 h-4" />
                         Inbox
                         {unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                          <span className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full -top-1 -right-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
                       </Link>
                       <Link
                         href="/account"
-                        className="flex items-center gap-2 px-4 py-2 font-bold transition-colors bg-white border rounded-lg dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                        className="flex items-center gap-2 px-4 py-2 text-white transition-colors border rounded-lg bg-primary border-primary hover:bg-primary/90"
                       >
                         <Settings className="w-4 h-4" />
                         Edit Profile
@@ -334,14 +341,14 @@ export default function ProfilePage() {
               <div className="flex gap-6">
                 <button
                   onClick={() => setUsersPanel({ open: true, type: "followers" })}
-                  className="text-left hover:opacity-70 transition-opacity"
+                  className="text-left transition-opacity hover:opacity-70"
                 >
                   <span className="font-bold text-slate-900 dark:text-white">{profile.followers.toLocaleString()}</span>
                   <span className="ml-1 text-slate-600 dark:text-slate-400">Followers</span>
                 </button>
                 <button
                   onClick={() => setUsersPanel({ open: true, type: "following" })}
-                  className="text-left hover:opacity-70 transition-opacity"
+                  className="text-left transition-opacity hover:opacity-70"
                 >
                   <span className="font-bold text-slate-900 dark:text-white">{profile.following}</span>
                   <span className="ml-1 text-slate-600 dark:text-slate-400">Following</span>
@@ -475,20 +482,20 @@ export default function ProfilePage() {
                   {profile.isOwnProfile && (
                     <>
                       <Tooltip content="Delete video">
-                        <div className="absolute top-2 right-2 hidden md:block z-10">
+                        <div className="absolute z-10 hidden top-2 right-2 md:block">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
                               setDeleteConfirm({ videoId: video.id, open: true });
                             }}
-                            className="p-2 text-white transition-opacity opacity-0 bg-red-500 rounded-full hover:bg-red-600 group-hover:opacity-100"
+                            className="p-2 text-white transition-opacity bg-red-500 rounded-full opacity-0 hover:bg-red-600 group-hover:opacity-100"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </Tooltip>
-                      <div className="absolute top-2 right-2 md:hidden z-10">
+                      <div className="absolute z-10 top-2 right-2 md:hidden">
                         <ButtonDropdown
                           buttonContent={<MoreVertical className="w-5 h-5 text-white" />}
                           buttonClassName="p-2 text-white transition-opacity opacity-0 bg-black/50 rounded-full hover:bg-black/70 group-hover:opacity-100"
@@ -517,7 +524,7 @@ export default function ProfilePage() {
                 >
                   <button
                     onClick={() => handleVideoClick(video)}
-                    className="flex gap-4 flex-1 text-left"
+                    className="flex flex-1 gap-4 text-left"
                   >
                     <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
                       <img
@@ -555,7 +562,7 @@ export default function ProfilePage() {
                           e.preventDefault();
                           setDeleteConfirm({ videoId: video.id, open: true });
                         }}
-                        className="p-2 text-red-500 transition-opacity opacity-0 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 group-hover:opacity-100"
+                        className="p-2 text-red-500 transition-opacity rounded-lg opacity-0 hover:bg-red-50 dark:hover:bg-red-500/10 group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

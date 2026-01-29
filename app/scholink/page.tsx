@@ -9,6 +9,7 @@ import { competitionsApi, Competition } from "@/lib/api/competitions";
 import { useAuth } from "@/contexts/AuthContext";
 import ModalDialog from "@/components/ModalDialog";
 import ButtonDropdown from "@/components/ButtonDropdown";
+import CustomDatePicker from "@/components/CustomDatepicker";
 
 export default function ScholinkPage() {
   const { user } = useAuth();
@@ -27,7 +28,11 @@ export default function ScholinkPage() {
   const [description, setDescription] = useState("");
   const [institution, setInstitution] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [deadlineDate, setDeadlineDate] = useState<Date | null>(null);
   const [isPaid, setIsPaid] = useState(false);
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all disabled:opacity-60";
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +114,7 @@ export default function ScholinkPage() {
                       setDescription("");
                       setInstitution("");
                       setDeadline("");
+                      setDeadlineDate(null);
                       setIsPaid(false);
                       setCreateOpen(true);
                     }}
@@ -181,6 +187,9 @@ export default function ScholinkPage() {
                                   setDescription(competition.description || "");
                                   setInstitution(competition.institution || "");
                                   setDeadline(competition.deadline || "");
+                                  setDeadlineDate(
+                                    competition.deadline ? new Date(competition.deadline) : null
+                                  );
                                   setIsPaid(!!competition.isPaid);
                                   setCreateOpen(true);
                                 },
@@ -228,6 +237,7 @@ export default function ScholinkPage() {
           setDescription("");
           setInstitution("");
           setDeadline("");
+          setDeadlineDate(null);
           setIsPaid(false);
         }}
         title={mode === "edit" ? "Edit competition" : "Create competition"}
@@ -238,26 +248,35 @@ export default function ScholinkPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            className={inputClass}
           />
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            className={inputClass}
           />
           <input
             value={institution}
             onChange={(e) => setInstitution(e.target.value)}
             placeholder="Institution (optional)"
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            className={inputClass}
           />
-          <input
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-            placeholder="Deadline (YYYY-MM-DD, optional)"
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-          />
+          <div>
+            <label className="block mb-1.5 text-sm font-semibold text-slate-900 dark:text-white">
+              Deadline (optional)
+            </label>
+            <CustomDatePicker
+              value={deadlineDate}
+              onChange={(d: Date | null) => {
+                setDeadlineDate(d);
+                setDeadline(d ? d.toISOString().slice(0, 10) : "");
+              }}
+              placeholder="Select deadline"
+              disableBefore={undefined}
+              disableAfter={undefined}
+            />
+          </div>
 
           <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             <input
@@ -281,6 +300,7 @@ export default function ScholinkPage() {
                 setDescription("");
                 setInstitution("");
                 setDeadline("");
+                setDeadlineDate(null);
                 setIsPaid(false);
               }}
               className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -293,12 +313,15 @@ export default function ScholinkPage() {
               onClick={async () => {
                 try {
                   setCreating(true);
+                  const deadlineStr = deadlineDate
+                    ? deadlineDate.toISOString().slice(0, 10)
+                    : deadline.trim() || undefined;
                   if (mode === "edit" && editingId) {
                     await competitionsApi.update(editingId, {
                       title: title.trim(),
                       description: description.trim() || undefined,
                       institution: institution.trim() || undefined,
-                      deadline: deadline.trim() || undefined,
+                      deadline: deadlineStr,
                       isPaid,
                     });
                     toast.success("Competition updated");
@@ -307,7 +330,7 @@ export default function ScholinkPage() {
                       title: title.trim(),
                       description: description.trim() || undefined,
                       institution: institution.trim() || undefined,
-                      deadline: deadline.trim() || undefined,
+                      deadline: deadlineStr,
                       isPaid,
                     });
                     toast.success("Competition created");
@@ -320,6 +343,7 @@ export default function ScholinkPage() {
                   setDescription("");
                   setInstitution("");
                   setDeadline("");
+                  setDeadlineDate(null);
                   setIsPaid(false);
                   await refresh();
                 } catch (e: any) {

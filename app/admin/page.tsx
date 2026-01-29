@@ -17,10 +17,14 @@ import {
   Shield,
   FolderOpen,
   Video,
+  Edit2,
+  Trash2,
 } from "lucide-react";
+import ModalDialog from "@/components/ModalDialog";
 import { adminApi, AdminSummary } from "../../lib/api/admin";
 import { userAdminApi, AdminUser, AdminUsersQuery } from "../../lib/api/users-admin";
 import AdminTabs from "./components/AdminTabs";
+import AdminSummaryCards from "./components/AdminSummaryCards";
 import { institutionsApi, Institution } from "@/lib/api/institutions";
 
 export default function AdminPage() {
@@ -62,6 +66,11 @@ export default function AdminPage() {
   const [institutionsTotal, setInstitutionsTotal] = useState(0);
   const institutionsOffset = (institutionsPage - 1) * institutionsItemsPerPage;
   const institutionsTotalPages = Math.max(1, Math.ceil(institutionsTotal / institutionsItemsPerPage));
+
+  const [deleteInstitutionOpen, setDeleteInstitutionOpen] = useState(false);
+  const [institutionToDelete, setInstitutionToDelete] = useState<Institution | null>(null);
+  const [deletingInstitution, setDeletingInstitution] = useState(false);
+  const [refreshInstitutionsKey, setRefreshInstitutionsKey] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -151,7 +160,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, user?.role, institutionsSearch, institutionsItemsPerPage, institutionsOffset]);
+  }, [isAuthenticated, user?.role, institutionsSearch, institutionsItemsPerPage, institutionsOffset, refreshInstitutionsKey]);
 
   const columns = useMemo(
     () => [
@@ -276,30 +285,95 @@ export default function AdminPage() {
         ),
       },
       {
-        key: "assignedUsersCount",
+        key: "assignedUsers",
         label: "Assigned users",
-        width: "min-w-[160px]",
-        render: (row: Institution) => (
-          <span className="text-slate-700 dark:text-slate-300">
-            {typeof row.assignedUsersCount === "number" ? row.assignedUsersCount : 0}
-          </span>
-        ),
+        width: "min-w-[200px]",
+        render: (row: Institution) => {
+          const list = row.assignedUsers ?? [];
+          if (list.length === 0) {
+            return <span className="text-slate-500 dark:text-slate-400">—</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-2">
+              {list.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/profile/${u.username}`);
+                  }}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left min-w-0"
+                >
+                  {u.profilePhotoPath ? (
+                    <img
+                      src={u.profilePhotoPath}
+                      alt={u.name}
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      {(u.name || u.username || "?").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                    {u.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          );
+        },
       },
       {
         key: "createdAt",
         label: "Created",
-        width: "min-w-[160px]",
+        width: "min-w-[120px]",
         render: (row: Institution) => (
           <span className="text-slate-700 dark:text-slate-300">
             {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—"}
           </span>
         ),
       },
+      {
+        key: "actions",
+        label: "",
+        width: "w-[72px]",
+        render: (row: Institution) => (
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <ButtonDropdown
+              buttonContent={<MoreVertical className="w-5 h-5 text-slate-600 dark:text-slate-300" />}
+              buttonClassName="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              options={[
+                {
+                  label: "Edit",
+                  value: "edit",
+                  icon: Edit2,
+                  onClick: () => router.push(`/admin/institutions/${row.id}/edit`),
+                },
+                {
+                  label: "Delete",
+                  value: "delete",
+                  icon: Trash2,
+                  danger: true,
+                  onClick: () => {
+                    setInstitutionToDelete(row);
+                    setDeleteInstitutionOpen(true);
+                  },
+                },
+              ]}
+            />
+          </div>
+        ),
+      },
     ],
-    []
+    [router]
   );
 
-  const institutionVisibleColumns = useMemo(() => ["name", "assignedUsersCount", "createdAt"], []);
+  const institutionVisibleColumns = useMemo(
+    () => ["name", "assignedUsers", "createdAt", "actions"],
+    []
+  );
 
   return (
     <div className="flex h-[100svh] md:h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -318,51 +392,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Summary cards */}
-          <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: "Total users",
-                value: summary?.totalUsers ?? 0,
-                icon: Users,
-              },
-              {
-                title: "Active users",
-                value: summary?.activeUsers ?? 0,
-                icon: CheckCircle2,
-              },
-              {
-                title: "Communities",
-                value: summary?.totalCommunities ?? 0,
-                icon: FolderOpen,
-              },
-              {
-                title: "Uploads",
-                value: summary?.totalVideos ?? 0,
-                icon: Video,
-              },
-            ].map((card) => {
-              const Icon = card.icon;
-              return (
-                <div
-                  key={card.title}
-                  className="relative flex flex-col gap-4 p-6 transition-colors border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{card.title}</p>
-                    <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                      {summaryLoading ? "..." : card.value}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <AdminSummaryCards summary={summary} loading={summaryLoading} />
 
           <AdminTabs
             activeTab={activeTab}
@@ -504,6 +534,61 @@ export default function AdminPage() {
               />
             </>
           )}
+
+          {/* Delete institution modal */}
+          <ModalDialog
+            isOpen={deleteInstitutionOpen}
+            onClose={() => {
+              setDeleteInstitutionOpen(false);
+              setInstitutionToDelete(null);
+            }}
+            title="Delete institution"
+            width="md"
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Are you sure you want to delete{" "}
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {institutionToDelete?.name ?? "this institution"}
+                </span>
+                ? Assigned users will be unlinked.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteInstitutionOpen(false);
+                    setInstitutionToDelete(null);
+                  }}
+                  className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deletingInstitution || !institutionToDelete}
+                  onClick={async () => {
+                    if (!institutionToDelete) return;
+                    try {
+                      setDeletingInstitution(true);
+                      await institutionsApi.delete(institutionToDelete.id);
+                      toast.success("Institution deleted");
+                      setDeleteInstitutionOpen(false);
+                      setInstitutionToDelete(null);
+                      setRefreshInstitutionsKey((k) => k + 1);
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.message || "Failed to delete institution");
+                    } finally {
+                      setDeletingInstitution(false);
+                    }
+                  }}
+                  className="px-4 py-2 font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deletingInstitution ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </ModalDialog>
         </div>
       </main>
 

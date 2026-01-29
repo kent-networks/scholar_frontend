@@ -29,6 +29,10 @@ export const userApi = {
     await api.put("/users/bio", { bio });
   },
 
+  updateProfile: async (data: { name?: string; email?: string }): Promise<void> => {
+    await api.put("/users/profile", data);
+  },
+
   deleteProfilePhoto: async (): Promise<void> => {
     await api.delete("/users/profile-photo");
   },

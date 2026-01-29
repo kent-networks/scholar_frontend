@@ -20,9 +20,13 @@ export default function AccountPage() {
   const [bio, setBio] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0, likes: 0 });
   const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
+
+  const PAGE_SIZE = 12;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -53,25 +57,29 @@ export default function AccountPage() {
     }
   }, [isAuthenticated, user]);
 
-  // Fetch videos based on active tab
+  // Fetch first page of videos when tab or user changes
   useEffect(() => {
     const fetchVideos = async () => {
       if (!user?.id) return;
       try {
         setLoading(true);
-        let fetchedVideos: VideoType[] = [];
+        setNextCursor(null);
+        let result: { data: VideoType[]; nextCursor: number | null };
         switch (activeTab) {
           case "uploads":
-            fetchedVideos = await videoApi.getUserVideos(user.id);
+            result = await videoApi.getUserVideos(user.id, { limit: PAGE_SIZE });
             break;
           case "liked":
-            fetchedVideos = await videoApi.getUserLikedVideos(user.id);
+            result = await videoApi.getUserLikedVideos(user.id, { limit: PAGE_SIZE });
             break;
           case "saved":
-            fetchedVideos = await videoApi.getUserSavedVideos(user.id);
+            result = await videoApi.getUserSavedVideos(user.id, { limit: PAGE_SIZE });
             break;
+          default:
+            result = { data: [], nextCursor: null };
         }
-        setVideos(fetchedVideos);
+        setVideos(result.data);
+        setNextCursor(result.nextCursor);
       } catch (error: any) {
         if (error.response?.status === 403) {
           toast.error("You don't have permission to view this content");
@@ -90,6 +98,33 @@ export default function AccountPage() {
       fetchVideos();
     }
   }, [activeTab, isAuthenticated, user?.id]);
+
+  const loadMoreVideos = async () => {
+    if (!user?.id || nextCursor == null || loadingMore) return;
+    try {
+      setLoadingMore(true);
+      let result: { data: VideoType[]; nextCursor: number | null };
+      switch (activeTab) {
+        case "uploads":
+          result = await videoApi.getUserVideos(user.id, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        case "liked":
+          result = await videoApi.getUserLikedVideos(user.id, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        case "saved":
+          result = await videoApi.getUserSavedVideos(user.id, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        default:
+          result = { data: [], nextCursor: null };
+      }
+      setVideos((prev) => [...prev, ...result.data]);
+      setNextCursor(result.nextCursor);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load more");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
 
   const handleDeleteVideo = async () => {
@@ -120,7 +155,7 @@ export default function AccountPage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 pb-20 overflow-y-auto bg-white md:pb-0 dark:bg-slate-900">
+      <main className="flex-1 pb-20 overflow-y-auto bg-[#eef2f7] md:pb-0 dark:bg-slate-900">
         <div className="max-w-6xl p-4 mx-auto md:p-8">
           {/* Header */}
           <div className="mb-8">
@@ -139,79 +174,70 @@ export default function AccountPage() {
           />
 
           {/* Tabs */}
-          <div className="mb-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-8">
-                <button
-                  onClick={() => setActiveTab("uploads")}
-                  className={`pb-4 px-1 transition-colors border-b-2 ${
-                    activeTab === "uploads"
-                      ? "text-primary border-primary"
-                      : "text-slate-500 dark:text-slate-400 border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4" />
-                    My Uploads ({activeTab === "uploads" ? videos.length : 0})
-                  </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab("liked")}
-                  className={`pb-4 px-1 transition-colors border-b-2 ${
-                    activeTab === "liked"
-                      ? "text-primary border-primary"
-                      : "text-slate-500 dark:text-slate-400 border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4" />
-                    Liked ({activeTab === "liked" ? videos.length : 0})
-                  </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab("saved")}
-                  className={`pb-4 px-1 transition-colors border-b-2 ${
-                    activeTab === "saved"
-                      ? "text-primary border-primary"
-                      : "text-slate-500 dark:text-slate-400 border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Bookmark className="w-4 h-4" />
-                    Saved ({activeTab === "saved" ? videos.length : 0})
-                  </div>
-                </button>
-              </div>
+          <div className="sticky top-0 z-20 bg-white border-b rounded-xl dark:bg-black border-slate-200 dark:border-slate-800">
+    <div className="flex items-center justify-between px-2 sm:px-4">
 
-              {/* View Mode Toggle */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-primary text-white"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                  }`}
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "list"
-                      ? "bg-primary text-white"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
+    {/* Tabs */}
+    <div className="flex justify-start flex-1 gap-8">
+        {[
+          { key: "uploads", icon: Video, label: "Uploads" },
+          { key: "liked", icon: Heart, label: "Liked" },
+          { key: "saved", icon: Bookmark, label: "Saved" },
+        ].map(({ key, icon: Icon, label }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key as any)}
+            className={`relative py-3 transition-colors ${
+              activeTab === key
+                ? "text-primary "
+                : "text-slate-400"
+            }`}
+          >
+            <div className="flex items-center gap-1 sm:flex-row sm:gap-2">
+              <Icon className="w-5 h-5" />
+              <span className="inline text-sm font-medium">
+                {label}
+              </span>
             </div>
+
+            {/* Active indicator */}
+            {activeTab === key && (
+              <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-primary rounded-full" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* View mode (hidden on very small screens) */}
+      <div className="flex justify-end gap-1">
+        <button
+          onClick={() => setViewMode("grid")}
+          className={`p-2 rounded-full transition ${
+            viewMode === "grid"
+              ? "bg-primary text-white"
+              : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-full transition ${
+                  viewMode === "list"
+                    ? "bg-primary text-white"
+                    : "text-slate-400 hover:bg-slate-100 "
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
           </div>
+          </div>
+        </div>
+
 
           {/* Content Grid/List */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12 mt-2">
               <div className="w-8 h-8 border-4 rounded-full border-primary/30 border-t-primary animate-spin" />
             </div>
           ) : videos.length === 0 ? (
@@ -221,7 +247,7 @@ export default function AccountPage() {
               </p>
             </div>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 p-2 mt-2 mb-8 bg-white md:grid-cols-3 lg:grid-cols-4 rounded-xl">
               {videos.map((video) => (
                 <VideoCard
                   key={video.id}
@@ -233,7 +259,7 @@ export default function AccountPage() {
               ))}
             </div>
           ) : (
-            <div className="mb-8 space-y-4">
+            <div className="mt-2 mb-8 space-y-4">
               {videos.map((video) => (
                 <VideoCard
                   key={video.id}
@@ -243,6 +269,18 @@ export default function AccountPage() {
                   onDelete={activeTab === "uploads" ? (id) => setDeleteConfirm({ videoId: id, open: true }) : undefined}
                 />
               ))}
+            </div>
+          )}
+          {!loading && videos.length > 0 && nextCursor != null && (
+            <div className="flex justify-center py-6">
+              <button
+                type="button"
+                onClick={loadMoreVideos}
+                disabled={loadingMore}
+                className="px-6 py-2.5 font-bold rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
             </div>
           )}
         </div>

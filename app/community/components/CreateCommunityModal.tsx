@@ -5,6 +5,7 @@ import { X, Network, Globe, Lock } from "lucide-react";
 import ModalDialog from "@/components/ModalDialog";
 import Dropdown from "@/components/Dropdown";
 import { communityApi, CreateCommunityData } from "@/lib/api/communities";
+import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 
 interface CreateCommunityModalProps {
@@ -28,6 +29,9 @@ export default function CreateCommunityModal({
   onClose,
   onSuccess,
 }: CreateCommunityModalProps) {
+  const { user } = useAuth();
+  const hasInstitution = user?.institutionId != null;
+
   const [formData, setFormData] = useState<CreateCommunityData>({
     name: "",
     description: "",
@@ -39,6 +43,7 @@ export default function CreateCommunityModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const [otherField, setOtherField] = useState("");
+  const [joinCode, setJoinCode] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -55,10 +60,13 @@ export default function CreateCommunityModal({
     setIsSubmitting(true);
 
     try {
-      const submitData = {
+      const submitData: CreateCommunityData & { joinCode?: string } = {
         ...formData,
         researchField: formData.researchField === "Other" ? otherField : formData.researchField,
       };
+      if (hasInstitution && joinCode.trim()) {
+        submitData.joinCode = joinCode.trim();
+      }
       await communityApi.createCommunity(submitData);
       toast.success("Community created successfully!");
       onSuccess();
@@ -73,6 +81,7 @@ export default function CreateCommunityModal({
       });
       setOtherField("");
       setCharCount(0);
+      setJoinCode("");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create community");
     } finally {
@@ -131,6 +140,25 @@ export default function CreateCommunityModal({
                 placeholder="e.g. Quantum Computing Research Group"
               />
             </div>
+
+            {/* Join code (institution users only) */}
+            {hasInstitution && (
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Join code (optional)
+                </label>
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  className="flex w-full h-12 px-4 text-base font-normal leading-normal transition-all duration-200 bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                  placeholder="Leave blank to auto-generate"
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Members will need this code to join the community.
+                </p>
+              </div>
+            )}
 
             {/* Research Field Dropdown */}
             <div className="flex flex-col gap-2">

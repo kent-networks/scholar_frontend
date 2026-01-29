@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -15,21 +17,37 @@ import {
   setMonth,
 } from "date-fns";
 
-const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disableBefore, disableAfter }) => {
+interface CustomDatePickerProps {
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+  placeholder?: string;
+  disableBefore?: Date;
+  disableAfter?: Date;
+}
+
+export default function CustomDatePicker({
+  value,
+  onChange,
+  placeholder = "Select Date",
+  disableBefore,
+  disableAfter,
+}: CustomDatePickerProps) {
   const [show, setShow] = useState(false);
   const [animateOut, setAnimateOut] = useState(false);
   const [calendarDate, setCalendarDate] = useState(value || new Date());
-  const [view, setView] = useState("day");
+  const [view, setView] = useState<"day" | "month" | "year">("day");
   const [position, setPosition] = useState("bottom");
   const [menuStyle, setMenuStyle] = useState({ top: 0, left: 0, width: 0 });
-  const ref = useRef(null);
-  const menuRef = useRef(null);
-  const [isMd, setIsMd] = useState(window.innerWidth >= 768);
+  const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMd, setIsMd] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true
+  );
 
-  // Position the calendar absolutely using portal
   useEffect(() => {
     if (show && ref.current) {
       const updatePosition = () => {
+        if (!ref.current) return;
         const rect = ref.current.getBoundingClientRect();
         const menuWidth = rect.width;
         const menuHeight = menuRef.current?.offsetHeight || 300;
@@ -39,16 +57,11 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
         let left = rect.left + window.scrollX;
         let pos = "bottom";
         if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-          // open upwards
           top = rect.top + window.scrollY - menuHeight;
           pos = "top";
         }
         setPosition(pos);
-        setMenuStyle({
-          top,
-          left,
-          width: menuWidth,
-        });
+        setMenuStyle({ top, left, width: menuWidth });
       };
       updatePosition();
       window.addEventListener("scroll", updatePosition, true);
@@ -60,7 +73,6 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
     }
   }, [show]);
 
-  // Responsive width handler
   useEffect(() => {
     const handleResize = () => setIsMd(window.innerWidth >= 768);
     window.addEventListener("resize", handleResize);
@@ -68,27 +80,25 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         ref.current &&
-        !ref.current.contains(e.target) &&
-        (!menuRef.current || !menuRef.current.contains(e.target))
-      )
+        !ref.current.contains(e.target as Node) &&
+        (!menuRef.current || !menuRef.current.contains(e.target as Node))
+      ) {
         closeCalendar();
+      }
     };
-    if (typeof window !== 'undefined') {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDateClick = (day) => {
+  const handleDateClick = (day: number) => {
     const selected = new Date(
       calendarDate.getFullYear(),
       calendarDate.getMonth(),
       day
     );
-    // Check if the selected date is disabled
     if (
       (disableBefore && selected < disableBefore) ||
       (disableAfter && selected > disableAfter)
@@ -99,18 +109,18 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
     closeCalendar();
   };
 
-  const changeMonth = (offset) => {
+  const changeMonth = (offset: number) => {
     setCalendarDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)
     );
   };
 
-  const selectYear = (year) => {
+  const selectYear = (year: number) => {
     setCalendarDate(setYear(calendarDate, year));
     setView("month");
   };
 
-  const selectMonth = (monthIndex) => {
+  const selectMonth = (monthIndex: number) => {
     setCalendarDate(setMonth(calendarDate, monthIndex));
     setView("day");
   };
@@ -151,50 +161,32 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
         <button
           type="button"
           onClick={toggleCalendar}
-          className="w-full flex justify-between items-center pl-3 pr-4 py-2 border border-gray-200 rounded-lg text-nowrap focus:ring-1 focus:ring-[#560fd1] focus:border-transparent transition-all duration-300 outline-none text-left"
+          className="w-full flex justify-between items-center pl-3 pr-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-nowrap focus:ring-1 focus:ring-primary focus:border-transparent transition-all duration-300 outline-none text-left bg-white dark:bg-slate-900"
         >
-          <span className={value ? "text-gray-800" : "text-gray-500"}>
+          <span className={value ? "text-gray-800 dark:text-white" : "text-gray-500 dark:text-slate-400"}>
             {value ? format(value, "MMMM d, yyyy") : placeholder}
           </span>
-          <CalendarIcon className="w-5 h-5 text-[#560fd1]" strokeWidth={1.5} />
+          <CalendarIcon className="w-5 h-5 text-primary" strokeWidth={1.5} />
         </button>
       </div>
-      {show && typeof window !== 'undefined' && document.body &&
+      {show &&
+        typeof window !== "undefined" &&
+        document.body &&
         createPortal(
           <>
             <style>{`
-            .calendar-slide-in-bottom {
-              animation: slideInBottom 0.3s forwards;
-            }
-            .calendar-slide-out-bottom {
-              animation: slideOutBottom 0.3s forwards;
-            }
-            .calendar-slide-in-top {
-              animation: slideInTop 0.3s forwards;
-            }
-            .calendar-slide-out-top {
-              animation: slideOutTop 0.3s forwards;
-            }
-            @keyframes slideInBottom {
-              0% { opacity: 0; transform: translateY(-10px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes slideOutBottom {
-              0% { opacity: 1; transform: translateY(0); }
-              100% { opacity: 0; transform: translateY(-10px); }
-            }
-            @keyframes slideInTop {
-              0% { opacity: 0; transform: translateY(10px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes slideOutTop {
-              0% { opacity: 1; transform: translateY(0); }
-              100% { opacity: 0; transform: translateY(10px); }
-            }
+            .calendar-slide-in-bottom { animation: slideInBottom 0.3s forwards; }
+            .calendar-slide-out-bottom { animation: slideOutBottom 0.3s forwards; }
+            .calendar-slide-in-top { animation: slideInTop 0.3s forwards; }
+            .calendar-slide-out-top { animation: slideOutTop 0.3s forwards; }
+            @keyframes slideInBottom { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
+            @keyframes slideOutBottom { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
+            @keyframes slideInTop { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+            @keyframes slideOutTop { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(10px); } }
           `}</style>
             <div
               ref={menuRef}
-              className={`fixed z-50 w-auto md:w-72 bg-white rounded-lg shadow-lg p-4
+              className={`fixed z-[110] w-auto md:w-72 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 border border-slate-200 dark:border-slate-700
               ${
                 animateOut
                   ? position === "top"
@@ -212,13 +204,13 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                 marginBottom: position === "top" ? "8px" : undefined,
               }}
             >
-              <div className="flex justify-between items-center mb-2 text-[#560fd1] font-semibold">
+              <div className="flex justify-between items-center mb-2 text-primary font-semibold">
                 {view === "day" && (
                   <>
                     <button
                       type="button"
                       onClick={() => changeMonth(-1)}
-                      className="p-2 rounded-full hover:bg-[#560fd125] transition duration-300"
+                      className="p-2 rounded-full hover:bg-primary/10 transition duration-300"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -232,7 +224,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                     <button
                       type="button"
                       onClick={() => changeMonth(1)}
-                      className="p-2 rounded-full hover:bg-[#560fd125] transition duration-300"
+                      className="p-2 rounded-full hover:bg-primary/10 transition duration-300"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -240,7 +232,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                 )}
                 {view === "month" && (
                   <>
-                    <div></div>
+                    <div />
                     <button
                       onClick={() => setView("year")}
                       className="transition duration-300"
@@ -248,7 +240,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                     >
                       {getYear(calendarDate)}
                     </button>
-                    <div></div>
+                    <div />
                   </>
                 )}
                 {view === "year" && (
@@ -260,14 +252,12 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
 
               {view === "day" && (
                 <>
-                  <div className="grid grid-cols-7 gap-1 text-sm text-gray-500 mb-1 font-medium">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                      (d) => (
-                        <div key={d} className="text-center">
-                          {d}
-                        </div>
-                      )
-                    )}
+                  <div className="grid grid-cols-7 gap-1 text-sm text-gray-500 dark:text-slate-400 mb-1 font-medium">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                      <div key={d} className="text-center">
+                        {d}
+                      </div>
+                    ))}
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-sm">
                     {Array(firstDayOfMonth)
@@ -296,12 +286,12 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                           disabled={isDisabled}
                           className={`text-center py-1 rounded-full transition duration-300 ${
                             isDisabled
-                              ? "text-gray-300 cursor-not-allowed"
+                              ? "text-gray-300 dark:text-slate-600 cursor-not-allowed"
                               : isSelected
-                              ? "bg-[#560fd1] text-white font-semibold"
+                              ? "bg-primary text-white font-semibold"
                               : isNow
-                              ? "border border-[#560fd1] text-[#560fd1]"
-                              : "hover:bg-gray-100"
+                              ? "border border-primary text-primary"
+                              : "hover:bg-gray-100 dark:hover:bg-slate-700"
                           }`}
                           type="button"
                         >
@@ -315,29 +305,18 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
 
               {view === "month" && (
                 <div className="grid grid-cols-3 gap-2 text-sm text-center">
-                  {[
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ].map((m, i) => (
-                    <button
-                      key={m}
-                      onClick={() => selectMonth(i)}
-                      className="py-2 rounded-lg hover:bg-gray-100 text-gray-700 transition duration-300"
-                      type="button"
-                    >
-                      {m}
-                    </button>
-                  ))}
+                  {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(
+                    (m, i) => (
+                      <button
+                        key={m}
+                        onClick={() => selectMonth(i)}
+                        className="py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition duration-300"
+                        type="button"
+                      >
+                        {m}
+                      </button>
+                    )
+                  )}
                 </div>
               )}
 
@@ -347,7 +326,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                     <button
                       key={yr}
                       onClick={() => selectYear(yr)}
-                      className="py-2 rounded-lg hover:bg-gray-100 text-gray-700 transition duration-300"
+                      className="py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition duration-300"
                       type="button"
                     >
                       {yr}
@@ -358,9 +337,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
 
               {view === "day" && (
                 <div
-                  className={`mt-2 flex ${
-                    value ? "justify-between" : "justify-end"
-                  } items-center`}
+                  className={`mt-2 flex ${value ? "justify-between" : "justify-end"} items-center`}
                 >
                   {value && (
                     <button
@@ -368,8 +345,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                         onChange(null);
                         closeCalendar();
                       }}
-                      className="text-sm text-[#560fd1] underline
-                    hover:bg-[#560fd10d] transition duration-300 bg-white rounded-lg p-2"
+                      className="text-sm text-primary underline hover:bg-primary/10 transition duration-300 bg-transparent rounded-lg p-2"
                       type="button"
                     >
                       Clear
@@ -387,7 +363,7 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
                         closeCalendar();
                       }
                     }}
-                    className="text-sm text-[#560fd1] hover:bg-[#560fd125] transition duration-300 bg-[#560fd10d] rounded-lg p-2"
+                    className="text-sm text-primary hover:bg-primary/10 transition duration-300 bg-primary/5 rounded-lg p-2"
                     type="button"
                     disabled={
                       (disableBefore && new Date() < disableBefore) ||
@@ -404,6 +380,4 @@ const CustomDatePicker = ({ value, onChange, placeholder = "Select Date", disabl
         )}
     </div>
   );
-};
-
-export default CustomDatePicker;
+}

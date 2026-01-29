@@ -20,6 +20,7 @@ import {
   UserRound,
   Home,
   Shield,
+  Building2,
 } from 'lucide-react'
 
 interface NavItem {
@@ -79,6 +80,12 @@ export function MobileBottomNav() {
       )}
       {NAV_ITEMS.map((item) => {
         if (item.requiresAuth && !isAuthenticated) return null
+        // Scholink: only for global admins or users assigned to an institution
+        if (item.href === '/scholink' && isAuthenticated && user) {
+          const isAdmin = user.role === 'admin'
+          const hasInstitution = user.institutionId != null
+          if (!isAdmin && !hasInstitution) return null
+        }
         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
         const Icon = item.icon
         return (
@@ -129,6 +136,18 @@ export function MobileBottomNav() {
                     icon: Shield,
                     onClick: () => {
                       router.push('/admin')
+                    },
+                  },
+                ]
+              : []),
+            ...(user?.institutionId != null
+              ? [
+                  {
+                    label: 'My Institution',
+                    value: 'my-institution',
+                    icon: Building2,
+                    onClick: () => {
+                      router.push('/my-institution')
                     },
                   },
                 ]
@@ -266,6 +285,12 @@ export default function Sidebar() {
           >
             {items.map((item) => {
               if (item.requiresAuth && !isAuthenticated) return null
+              // Scholink: only for global admins or users assigned to an institution
+              if (item.href === '/scholink' && isAuthenticated && user) {
+                const isAdmin = user.role === 'admin'
+                const hasInstitution = user.institutionId != null
+                if (!isAdmin && !hasInstitution) return null
+              }
 
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
               const Icon = item.icon
@@ -340,6 +365,43 @@ export default function Sidebar() {
                 )}
               </Fragment>
             )}
+
+            {/* My Institution (users assigned to an institution) */}
+            {isAuthenticated && user?.institutionId != null && (
+              <Fragment key="my-institution-link">
+                {wrapTooltip(
+                  collapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/my-institution')}
+                      className={`
+                        flex items-center justify-center size-11 rounded-lg transition-all duration-200
+                        ${pathname === '/my-institution'
+                          ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                          : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                      `}
+                      aria-label="My Institution"
+                    >
+                      <Building2 className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <Link
+                      href="/my-institution"
+                      className={`
+                        flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
+                        ${pathname === '/my-institution'
+                          ? 'bg-white/10 text-white border-l-2 border-slate-200'
+                          : 'text-slate-200 hover:bg-white/10 active:bg-white/15'}
+                      `}
+                    >
+                      <Building2 className="flex-shrink-0 w-5 h-5" />
+                      <span className="text-sm font-medium">My Institution</span>
+                    </Link>
+                  ),
+                  'My Institution'
+                )}
+              </Fragment>
+            )}
           </nav>
 
           {/* Invisible spacer when collapsed → keeps user section at bottom */}
@@ -388,6 +450,18 @@ export default function Sidebar() {
                         icon: Shield,
                         onClick: () => {
                           router.push('/admin')
+                        },
+                      },
+                    ]
+                  : []),
+                ...(user?.institutionId != null
+                  ? [
+                      {
+                        label: 'My Institution',
+                        value: 'my-institution',
+                        icon: Building2,
+                        onClick: () => {
+                          router.push('/my-institution')
                         },
                       },
                     ]

@@ -31,8 +31,8 @@ export default function ScoopPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const limit = 10;
   
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin' || user?.role === 'educator' || user?.role === 'creator';
+  // Upload button visible for global admins only
+  const isGlobalAdmin = user?.role === "admin";
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -300,7 +300,7 @@ export default function ScoopPage() {
               </button>
             </div>
 
-            {isAuthenticated && isAdmin && (
+            {isAuthenticated && isGlobalAdmin && (
               <button
                 className="p-2 text-white rounded-full bg-white/10"
                 onClick={() => router.push("/scoop/upload")}

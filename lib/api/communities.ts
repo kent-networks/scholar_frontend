@@ -14,6 +14,7 @@ export interface Community {
   lastActive?: string;
   createdAt?: string;
   notificationCount?: number;
+  institutionName?: string | null;
 }
 
 export interface CreateCommunityData {

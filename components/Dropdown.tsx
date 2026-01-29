@@ -206,7 +206,7 @@ export default function Dropdown({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: openUpwards ? 10 : -10 }}
               transition={{ type: "spring", stiffness: 180, damping: 20 }}
-              className={`fixed z-50 bg-surface-light rounded-2xl shadow-lg overflow-hidden border border-border-light ${
+              className={`fixed z-[110] bg-surface-light rounded-2xl shadow-lg overflow-hidden border border-border-light ${
                 openUpwards ? "mb-2" : "mt-2"
               }`}
               style={{

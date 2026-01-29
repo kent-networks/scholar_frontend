@@ -43,19 +43,46 @@ export const videoApi = {
     return response.data.data;
   },
 
-  getUserVideos: async (userId: number): Promise<Video[]> => {
-    const response = await api.get(`/videos/user/${userId}`);
-    return response.data.data;
+  getUserVideos: async (
+    userId: number,
+    opts?: { limit?: number; cursor?: number | null }
+  ): Promise<{ data: Video[]; nextCursor: number | null }> => {
+    const params: { limit?: number; cursor?: number } = {};
+    if (opts?.limit != null) params.limit = opts.limit;
+    if (opts?.cursor != null) params.cursor = opts.cursor;
+    const response = await api.get(`/videos/user/${userId}`, { params });
+    return {
+      data: response.data.data ?? [],
+      nextCursor: response.data.nextCursor ?? null,
+    };
   },
 
-  getUserLikedVideos: async (userId: number): Promise<Video[]> => {
-    const response = await api.get(`/videos/user/${userId}/liked`);
-    return response.data.data;
+  getUserLikedVideos: async (
+    userId: number,
+    opts?: { limit?: number; cursor?: number | null }
+  ): Promise<{ data: Video[]; nextCursor: number | null }> => {
+    const params: { limit?: number; cursor?: number } = {};
+    if (opts?.limit != null) params.limit = opts.limit;
+    if (opts?.cursor != null) params.cursor = opts.cursor;
+    const response = await api.get(`/videos/user/${userId}/liked`, { params });
+    return {
+      data: response.data.data ?? [],
+      nextCursor: response.data.nextCursor ?? null,
+    };
   },
 
-  getUserSavedVideos: async (userId: number): Promise<Video[]> => {
-    const response = await api.get(`/videos/user/${userId}/saved`);
-    return response.data.data;
+  getUserSavedVideos: async (
+    userId: number,
+    opts?: { limit?: number; cursor?: number | null }
+  ): Promise<{ data: Video[]; nextCursor: number | null }> => {
+    const params: { limit?: number; cursor?: number } = {};
+    if (opts?.limit != null) params.limit = opts.limit;
+    if (opts?.cursor != null) params.cursor = opts.cursor;
+    const response = await api.get(`/videos/user/${userId}/saved`, { params });
+    return {
+      data: response.data.data ?? [],
+      nextCursor: response.data.nextCursor ?? null,
+    };
   },
 
   likeVideo: async (videoId: number) => {

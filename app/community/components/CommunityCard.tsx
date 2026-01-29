@@ -157,9 +157,14 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
           >
             {community.name}
           </h3>
-          <p className="mb-6 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+          <p className="mb-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
             {community.description || "No description available"}
           </p>
+          {community.institutionName ? (
+            <p className="mb-4 text-xs font-medium text-primary dark:text-primary/90">
+              {community.institutionName}
+            </p>
+          ) : null}
           <div className="flex items-center mb-6 text-xs font-medium text-slate-400 dark:text-slate-500">
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
