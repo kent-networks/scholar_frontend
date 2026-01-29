@@ -446,16 +446,23 @@ function CommentItem({
   const replies = comment.replies || [];
   const visibleReplies = repliesExpanded ? replies : replies.slice(0, 2);
 
+  const authorName = comment.author ?? "Unknown";
+  const initial = authorName.trim().charAt(0).toUpperCase() || "?";
+
   return (
     <div className="space-y-3">
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          {comment.author.charAt(0)}
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+          {comment.authorPhoto ? (
+            <img src={comment.authorPhoto} alt={authorName} className="w-full h-full object-cover" />
+          ) : (
+            initial
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-bold text-sm text-slate-900 dark:text-white">
-              {comment.author}
+              {authorName}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {comment.date}
@@ -557,15 +564,22 @@ function CommentItem({
               className="overflow-hidden"
             >
               <div className="space-y-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
-                {visibleReplies.map((reply) => (
-                  <div key={reply.id} className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs flex-shrink-0">
-                      {reply.author.charAt(0)}
+                {visibleReplies.map((reply, replyIndex) => {
+                  const replyName = reply.author ?? "Unknown";
+                  const replyInitial = replyName.trim().charAt(0).toUpperCase() || "?";
+                  return (
+                  <div key={reply.id ?? `reply-${replyIndex}`} className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-xs flex-shrink-0 overflow-hidden">
+                      {reply.authorPhoto ? (
+                        <img src={reply.authorPhoto} alt={replyName} className="w-full h-full object-cover" />
+                      ) : (
+                        replyInitial
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-xs text-slate-900 dark:text-white">
-                          {reply.author}
+                          {replyName}
                         </span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {reply.date}
@@ -589,7 +603,8 @@ function CommentItem({
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           </AnimatePresence>

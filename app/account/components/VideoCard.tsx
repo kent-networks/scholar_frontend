@@ -13,14 +13,29 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, viewMode, activeTab, onDelete }: VideoCardProps) {
+  // Same as Trending Research: one preview source, detect video by extension
+  const previewSource = video.poster || video.thumbnailUrl || video.videoUrl || "";
+  const isVideoPreview =
+    !!previewSource && /\.(mp4|webm|mov)(\?|$)/i.test(previewSource);
+
   if (viewMode === "grid") {
     return (
       <div className="group relative aspect-[9/16] overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800">
-        <img
-          src={video.poster || video.thumbnailUrl || ""}
-          alt={video.title}
-          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-        />
+        {isVideoPreview ? (
+          <video
+            src={previewSource}
+            preload="metadata"
+            muted
+            playsInline
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+          />
+        ) : (
+          <img
+            src={previewSource || ""}
+            alt={video.title}
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+          />
+        )}
         {activeTab === "uploads" && onDelete && (
           <div className="absolute top-2 right-2 z-10">
             <ButtonDropdown
@@ -60,11 +75,21 @@ export default function VideoCard({ video, viewMode, activeTab, onDelete }: Vide
   return (
     <div className="flex gap-4 p-4 transition-colors rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group">
       <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-        <img
-          src={video.poster || video.thumbnailUrl || ""}
-          alt={video.title}
-          className="object-cover w-full h-full"
-        />
+        {isVideoPreview ? (
+          <video
+            src={previewSource}
+            preload="metadata"
+            muted
+            playsInline
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <img
+            src={previewSource || ""}
+            alt={video.title}
+            className="object-cover w-full h-full"
+          />
+        )}
       </div>
       <div className="flex-1">
         <h3 className="mb-2 text-lg font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">

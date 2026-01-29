@@ -20,20 +20,30 @@ export default function ScoopPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [savedVideos, setSavedVideos] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const pendingOpenIndexRef = useRef<number | null>(null);
   const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const limit = 10;
   
-  // Upload button visible for global admins only
   const isGlobalAdmin = user?.role === "admin";
+
+  function dedupeVideosById(list: Video[]): Video[] {
+    const seen = new Set<number>();
+    return list.filter((v) => {
+      if (seen.has(v.id)) return false;
+      seen.add(v.id);
+      return true;
+    });
+  }
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -58,7 +68,8 @@ export default function ScoopPage() {
   // Fetch videos from backend
   const fetchVideos = useCallback(async (reset = false) => {
     try {
-      setLoading(true);
+      if (reset) setLoading(true);
+      else setLoadingMore(true);
       const currentOffset = reset ? 0 : offset;
       const fetchedVideos = await videoApi.getVideos({
         type: "scoop",
@@ -76,8 +87,7 @@ export default function ScoopPage() {
       }
 
       setHasMore(fetchedVideos.length === limit);
-      
-      // Update liked/saved sets from API response
+
       const likedSet = new Set<number>();
       const savedSet = new Set<number>();
       fetchedVideos.forEach((video) => {
@@ -90,6 +100,7 @@ export default function ScoopPage() {
       toast.error(error.response?.data?.message || "Failed to load videos");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [offset, searchQuery]);
 
@@ -107,24 +118,29 @@ export default function ScoopPage() {
     const index = videos.findIndex((v) => v.id === id);
     if (index >= 0) {
       setCurrentIndex(index);
+      pendingOpenIndexRef.current = index;
     }
   }, [videoIdParam, loading, videos]);
 
-  // Load more on scroll
+  // Endless scroll: load more when sentinel enters view
   useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
     const container = containerRef.current;
-    if (!container || !hasMore || loading) return;
+    if (!sentinel || !container || !hasMore || loading || loadingMore) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      if (scrollHeight - scrollTop - clientHeight < 500) {
-        fetchVideos(false);
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [hasMore, loading, fetchVideos]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          fetchVideos(false);
+          break;
+        }
+      },
+      { root: container, rootMargin: "200px", threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, fetchVideos]);
 
   const handleLike = async (videoId: number) => {
     if (!isAuthenticated) {
@@ -225,44 +241,45 @@ export default function ScoopPage() {
   };
 
   // Handle scroll to snap to videos
+  // IntersectionObserver: which card is in view
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || isScrolling) return;
+    if (!container || videos.length === 0) return;
 
-    let scrollTimeout: NodeJS.Timeout;
-    const handleScroll = () => {
-      clearTimeout(scrollTimeout);
-      setIsScrolling(true);
+    const wrappers = container.querySelectorAll("[data-video-index]");
+    if (wrappers.length === 0) return;
 
-      scrollTimeout = setTimeout(() => {
-        setIsScrolling(false);
-        const scrollTop = container.scrollTop;
-        const videoHeight = container.clientHeight || window.innerHeight;
-        const newIndex = Math.round(scrollTop / videoHeight);
-        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < videos.length) {
-          setCurrentIndex(newIndex);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.5) continue;
+          const index = parseInt((entry.target as HTMLElement).dataset.videoIndex ?? "", 10);
+          if (!Number.isNaN(index) && index >= 0 && index < videos.length) {
+            setCurrentIndex(index);
+            break;
+          }
         }
-      }, 100);
-    };
+      },
+      { root: container, threshold: 0.5, rootMargin: "0px" }
+    );
 
-    container.addEventListener("scroll", handleScroll);
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [currentIndex, videos.length, isScrolling]);
+    wrappers.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [videos.length]);
 
-  // Scroll to current video
+  // Scroll to index when opening from ?video=id (runs after videos load and index is set)
   useEffect(() => {
+    const idx = pendingOpenIndexRef.current;
+    if (idx === null || videos.length === 0) return;
+    pendingOpenIndexRef.current = null;
     const container = containerRef.current;
-    if (!container || isScrolling) return;
-
-    const videoHeight = container.clientHeight || window.innerHeight;
-    container.scrollTo({
-      top: currentIndex * videoHeight,
-      behavior: "smooth",
-    });
-  }, [currentIndex, isScrolling]);
+    if (container) {
+      const videoHeight = container.clientHeight || window.innerHeight;
+      requestAnimationFrame(() => {
+        container.scrollTo({ top: idx * videoHeight, behavior: "smooth" });
+      });
+    }
+  }, [videos.length]);
 
   return (
     <div className="flex h-[100svh] md:h-screen overflow-hidden bg-background-light dark:bg-background-dark">
@@ -354,11 +371,15 @@ export default function ScoopPage() {
               }
             }
           `}</style>
-
-          {videos.length > 0 ? (
+          
+          {videos.length > 0 ? (        
             videos.map((video, index) => (
-              <VideoCard
+              <div
                 key={video.id}
+                data-video-index={index}
+                className="flex-shrink-0 w-full h-[100svh] md:h-screen snap-start snap-always"
+              >
+                <VideoCard
                 video={{
                   id: video.id,
                   title: video.title,
@@ -382,25 +403,38 @@ export default function ScoopPage() {
                 onLike={() => handleLike(video.id)}
                 onComment={() => handleComment(video.id)}
                 onShare={async () => {
+                  const shareUrl = `${window.location.origin}/scoop?video=${video.id}`;
                   if (navigator.share) {
                     try {
                       await navigator.share({
                         title: video.title,
                         text: video.description,
-                        url: `${window.location.origin}/scoop`,
+                        url: shareUrl,
                       });
-                    } catch (err) {
-                      // User cancelled or error occurred
+                      toast.success("Link shared!");
+                    } catch (err: any) {
+                      if (err?.name !== "AbortError") {
+                        await navigator.clipboard?.writeText(shareUrl).catch(() => {});
+                        toast.success("Link copied to clipboard!");
+                      }
                     }
                   } else {
-                    await navigator.clipboard.writeText(`${window.location.origin}/scoop`);
+                    await navigator.clipboard.writeText(shareUrl);
                     toast.success("Link copied to clipboard!");
                   }
                 }}
                 onSave={() => handleSave(video.id)}
+                onViewIncremented={(videoId) => {
+                  setVideos((prev) =>
+                    prev.map((v) =>
+                      v.id === videoId ? { ...v, views: (v.views || 0) + 1 } : v
+                    )
+                  );
+                }}
                 liked={likedVideos.has(video.id)}
                 saved={savedVideos.has(video.id)}
               />
+              </div>
             ))
           ) : !loading ? (
             <div className="flex items-center justify-center h-screen">
@@ -411,7 +445,21 @@ export default function ScoopPage() {
               </div>
             </div>
           ) : null}
-          
+
+          {/* Endless scroll sentinel */}
+          {videos.length > 0 && hasMore && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="flex-shrink-0 w-full h-1 min-h-[1px]"
+              aria-hidden
+            />
+          )}
+          {loadingMore && videos.length > 0 && (
+            <div className="flex justify-center py-4">
+              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            </div>
+          )}
+
           {loading && videos.length === 0 && (
             <div className="flex items-center justify-center h-screen">
               <div className="w-12 h-12 border-4 rounded-full border-white/30 border-t-white animate-spin" />

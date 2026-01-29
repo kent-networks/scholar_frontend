@@ -445,18 +445,30 @@ export default function HomeLandingPage() {
                     No trending content available
                   </div>
                 ) : (
-                  trendingVideos.map((item) => (
+                  trendingVideos.map((item) => {
+                    const isVideoPreview = item.image && /\.(mp4|webm|mov)(\?|$)/i.test(item.image);
+                    return (
                     <Link
                       key={item.id}
                       href={`/?video=${item.id}`}
                       className="overflow-hidden transition-all duration-300 border shadow-sm group bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
                     >
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={item.image || "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop"}
-                          alt={item.title}
-                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                        />
+                      <div className="relative h-48 overflow-hidden bg-slate-200 dark:bg-slate-800">
+                        {isVideoPreview ? (
+                          <video
+                            src={item.image}
+                            preload="metadata"
+                            muted
+                            playsInline
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <img
+                            src={item.image || "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop"}
+                            alt={item.title}
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                          />
+                        )}
                         <div className="absolute top-4 left-4">
                           <span className="px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
                             {item.category}
@@ -482,7 +494,8 @@ export default function HomeLandingPage() {
                         </div>
                       </div>
                     </Link>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

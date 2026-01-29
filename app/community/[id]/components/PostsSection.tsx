@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquareText, Heart, Plus, Trash2, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,22 +54,70 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
   const [commenting, setCommenting] = useState(false);
   const [deleteCommentConfirm, setDeleteCommentConfirm] = useState<{ postId: number | null; commentId: number | null; open: boolean }>({ postId: null, commentId: null, open: false });
   const [showCommentsPanel, setShowCommentsPanel] = useState<number | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const POSTS_PAGE_SIZE = 20;
 
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(true);
   }, [communityId]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async (reset = false) => {
     try {
-      setLoading(true);
-      const data = await communityApi.getCommunityPosts(communityId);
-      setPosts(data);
+      if (reset) {
+        setLoading(true);
+        setOffset(0);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
+      const currentOffset = reset ? 0 : offset;
+      const data = await communityApi.getCommunityPosts(communityId, {
+        limit: POSTS_PAGE_SIZE,
+        offset: currentOffset,
+      });
+
+      if (reset) {
+        setPosts(data);
+        setOffset(data.length);
+      } else {
+        setPosts((prev) => [...prev, ...data]);
+        setOffset((prev) => prev + data.length);
+      }
+      setHasMore(data.length === POSTS_PAGE_SIZE);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to load posts");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  };
+  }, [communityId, offset]);
+
+  const loadMorePosts = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    fetchPosts(false);
+  }, [hasMore, loadingMore, fetchPosts]);
+
+  // Endless scroll: load more when sentinel enters view
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore || loading || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadMorePosts();
+          break;
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMorePosts]);
 
   const fetchComments = async (postId: number) => {
     try {
@@ -89,7 +137,7 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
       toast.success("Post created successfully");
       setNewPostContent("");
       setShowCreatePost(false);
-      fetchPosts();
+      fetchPosts(true);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create post");
     } finally {
@@ -123,7 +171,7 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to like post");
-      fetchPosts();
+      fetchPosts(true);
     }
   };
 
@@ -229,7 +277,8 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
       ) : posts.length === 0 ? (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">No posts yet</div>
       ) : (
-        posts.map((post) => (
+        <>
+        {posts.map((post) => (
           <div
             key={post.id}
             className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
@@ -445,7 +494,21 @@ export default function PostsSection({ communityId, isMember, isOwner }: PostsSe
               </div>
             )}
           </div>
-        ))
+        ))}
+          {/* Endless scroll sentinel */}
+          {hasMore && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="w-full h-1 min-h-[1px] pt-6"
+              aria-hidden
+            />
+          )}
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          )}
+        </>
       )}
 
       <ModalDialog

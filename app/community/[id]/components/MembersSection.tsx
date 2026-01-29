@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Inbox, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [removeMemberConfirm, setRemoveMemberConfirm] = useState<{ memberId: number | null; open: boolean }>({ memberId: null, open: false });
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMembers(true);
@@ -86,6 +87,26 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Endless scroll: load more when sentinel enters view (use viewport when no search)
+  useEffect(() => {
+    if (searchQuery) return; // pagination only when not searching
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          fetchMembers(false);
+          break;
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, searchQuery, communityId]);
 
   return (
     <div className="space-y-4">
@@ -169,15 +190,17 @@ export default function MembersSection({ communityId, isOwner }: MembersSectionP
               </div>
             </div>
           ))}
-          {hasMore && (
+          {/* Endless scroll sentinel */}
+          {hasMore && !searchQuery && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="w-full h-1 min-h-[1px] pt-4"
+              aria-hidden
+            />
+          )}
+          {loading && members.length > 0 && (
             <div className="flex justify-center pt-4">
-              <button
-                onClick={() => fetchMembers(false)}
-                disabled={loading}
-                className="px-6 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors disabled:opacity-50"
-              >
-                {loading ? "Loading..." : "Load More"}
-              </button>
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           )}
         </>

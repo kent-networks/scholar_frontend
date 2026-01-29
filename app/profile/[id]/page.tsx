@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { ArrowLeft, MessageCircle, Heart, Bookmark, Video, Grid3x3, List, Settings, Trash2, Inbox, MoreVertical } from "lucide-react";
@@ -25,12 +25,17 @@ export default function ProfilePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
   const [unreadCount, setUnreadCount] = useState(0);
   const [usersPanel, setUsersPanel] = useState<{ open: boolean; type: "followers" | "following" | null }>({ open: false, type: null });
+  const mainRef = useRef<HTMLElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const PAGE_SIZE = 12;
 
   // Fetch profile data
   useEffect(() => {
@@ -74,35 +79,32 @@ export default function ProfilePage() {
     return () => clearInterval(interval);
   }, [isAuthenticated, user?.id]);
 
-  // Fetch videos based on active tab
+  // Fetch first page of videos when tab or profile changes
   useEffect(() => {
     const fetchVideos = async () => {
       if (!profile?.userId) return;
 
       try {
         setVideosLoading(true);
-        let fetchedVideos: VideoType[] = [];
-        const limit = 12;
+        setNextCursor(null);
+        let result: { data: VideoType[]; nextCursor: number | null };
 
         switch (activeTab) {
-          case "videos": {
-            const result = await videoApi.getUserVideos(profile.userId, { limit });
-            fetchedVideos = result.data;
+          case "videos":
+            result = await videoApi.getUserVideos(profile.userId, { limit: PAGE_SIZE });
             break;
-          }
-          case "liked": {
-            const result = await videoApi.getUserLikedVideos(profile.userId, { limit });
-            fetchedVideos = result.data;
+          case "liked":
+            result = await videoApi.getUserLikedVideos(profile.userId, { limit: PAGE_SIZE });
             break;
-          }
-          case "saved": {
-            const result = await videoApi.getUserSavedVideos(profile.userId, { limit });
-            fetchedVideos = result.data;
+          case "saved":
+            result = await videoApi.getUserSavedVideos(profile.userId, { limit: PAGE_SIZE });
             break;
-          }
+          default:
+            result = { data: [], nextCursor: null };
         }
 
-        setVideos(fetchedVideos);
+        setVideos(result.data);
+        setNextCursor(result.nextCursor);
       } catch (error: any) {
         if (error.response?.status === 403) {
           toast.error("You don't have permission to view this content");
@@ -119,6 +121,53 @@ export default function ProfilePage() {
       fetchVideos();
     }
   }, [profile?.userId, activeTab]);
+
+  const loadMoreVideos = useCallback(async () => {
+    if (!profile?.userId || nextCursor == null || loadingMore) return;
+    try {
+      setLoadingMore(true);
+      let result: { data: VideoType[]; nextCursor: number | null };
+      switch (activeTab) {
+        case "videos":
+          result = await videoApi.getUserVideos(profile.userId, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        case "liked":
+          result = await videoApi.getUserLikedVideos(profile.userId, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        case "saved":
+          result = await videoApi.getUserSavedVideos(profile.userId, { limit: PAGE_SIZE, cursor: nextCursor });
+          break;
+        default:
+          result = { data: [], nextCursor: null };
+      }
+      setVideos((prev) => [...prev, ...result.data]);
+      setNextCursor(result.nextCursor);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load more");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [profile?.userId, activeTab, nextCursor, loadingMore]);
+
+  // Endless scroll: load more when sentinel enters view
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    const root = mainRef.current;
+    if (!sentinel || !root || nextCursor == null || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadMoreVideos();
+          break;
+        }
+      },
+      { root, rootMargin: "200px", threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [nextCursor, loadingMore, loadMoreVideos]);
 
   const handleFollow = async () => {
     if (!isAuthenticated) {
@@ -236,7 +285,7 @@ export default function ProfilePage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 pb-20 overflow-y-auto bg-white md:pb-0 dark:bg-slate-900">
+      <main ref={mainRef} className="flex-1 pb-20 overflow-y-auto bg-white md:pb-0 dark:bg-slate-900">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <div className="max-w-4xl px-4 py-4 mx-auto">
@@ -449,7 +498,13 @@ export default function ProfilePage() {
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
-              {videos.map((video) => (
+              {videos.map((video) => {
+                // Same as Trending Research: one preview source, detect video by extension
+                const previewSource =
+                  video.poster || video.thumbnailUrl || video.videoUrl || "";
+                const isVideoPreview =
+                  !!previewSource && /\.(mp4|webm|mov)(\?|$)/i.test(previewSource);
+                return (
                 <div
                   key={video.id}
                   className="group relative aspect-[9/16] overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800"
@@ -458,11 +513,21 @@ export default function ProfilePage() {
                     onClick={() => handleVideoClick(video)}
                     className="w-full h-full text-left"
                   >
-                    <img
-                      src={video.poster || video.thumbnailUrl || ""}
-                      alt={video.title}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                    />
+                    {isVideoPreview ? (
+                      <video
+                        src={previewSource}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <img
+                        src={previewSource || ""}
+                        alt={video.title}
+                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                      />
+                    )}
                     <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/60 to-transparent group-hover:opacity-100">
                       <div className="absolute text-white bottom-2 left-2 right-2">
                         <p className="text-xs font-bold line-clamp-1">{video.title}</p>
@@ -513,11 +578,32 @@ export default function ProfilePage() {
                     </>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
-          ) : (
+          ) : null}
+          {/* Endless scroll sentinel */}
+          {!videosLoading && videos.length > 0 && nextCursor != null && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="w-full h-1 min-h-[1px] py-6"
+              aria-hidden
+            />
+          )}
+          {loadingMore && videos.length > 0 && (
+            <div className="flex justify-center py-4">
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          )}
+          {!videosLoading && videos.length > 0 && viewMode === "list" ? (
             <div className="space-y-4">
-              {videos.map((video) => (
+              {videos.map((video) => {
+                // Same as Trending Research: one preview source, detect video by extension
+                const previewSource =
+                  video.poster || video.thumbnailUrl || video.videoUrl || "";
+                const isVideoPreview =
+                  !!previewSource && /\.(mp4|webm|mov)(\?|$)/i.test(previewSource);
+                return (
                 <div
                   key={video.id}
                   className="flex gap-4 p-4 transition-colors rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 group"
@@ -527,11 +613,21 @@ export default function ProfilePage() {
                     className="flex flex-1 gap-4 text-left"
                   >
                     <div className="relative flex-shrink-0 w-32 h-48 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-                      <img
-                        src={video.poster || video.thumbnailUrl || ""}
-                        alt={video.title}
-                        className="object-cover w-full h-full"
-                      />
+                      {isVideoPreview ? (
+                        <video
+                          src={previewSource}
+                          preload="metadata"
+                          muted
+                          playsInline
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <img
+                          src={previewSource || ""}
+                          alt={video.title}
+                          className="object-cover w-full h-full"
+                        />
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="mb-2 text-lg font-bold transition-colors text-slate-900 dark:text-white group-hover:text-primary">
@@ -569,9 +665,10 @@ export default function ProfilePage() {
                     </Tooltip>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
-          )}
+          ) : null}
         </div>
       </main>
 

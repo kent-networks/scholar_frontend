@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +25,8 @@ export default function AccountPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [profileStats, setProfileStats] = useState({ followers: 0, following: 0, likes: 0 });
   const [deleteConfirm, setDeleteConfirm] = useState<{ videoId: number | null; open: boolean }>({ videoId: null, open: false });
+  const mainRef = useRef<HTMLElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 12;
 
@@ -99,6 +101,26 @@ export default function AccountPage() {
     }
   }, [activeTab, isAuthenticated, user?.id]);
 
+  // Endless scroll: load more when sentinel enters view
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    const root = mainRef.current;
+    if (!sentinel || !root || nextCursor == null || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadMoreVideos();
+          break;
+        }
+      },
+      { root, rootMargin: "200px", threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [nextCursor, loadingMore, activeTab, user?.id]);
+
   const loadMoreVideos = async () => {
     if (!user?.id || nextCursor == null || loadingMore) return;
     try {
@@ -155,7 +177,7 @@ export default function AccountPage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 pb-20 overflow-y-auto bg-[#eef2f7] md:pb-0 dark:bg-slate-900">
+      <main ref={mainRef} className="flex-1 pb-20 overflow-y-auto bg-[#eef2f7] md:pb-0 dark:bg-slate-900">
         <div className="max-w-6xl p-4 mx-auto md:p-8">
           {/* Header */}
           <div className="mb-8">
@@ -271,16 +293,17 @@ export default function AccountPage() {
               ))}
             </div>
           )}
+          {/* Endless scroll sentinel */}
           {!loading && videos.length > 0 && nextCursor != null && (
-            <div className="flex justify-center py-6">
-              <button
-                type="button"
-                onClick={loadMoreVideos}
-                disabled={loadingMore}
-                className="px-6 py-2.5 font-bold rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
-              >
-                {loadingMore ? "Loading..." : "Load more"}
-              </button>
+            <div
+              ref={loadMoreSentinelRef}
+              className="w-full h-1 min-h-[1px] py-6"
+              aria-hidden
+            />
+          )}
+          {loadingMore && videos.length > 0 && (
+            <div className="flex justify-center py-4">
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           )}
         </div>

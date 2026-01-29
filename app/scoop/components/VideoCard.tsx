@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ReactPlayer from "react-player";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Bookmark, PlayCircle, Pause, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, PlayCircle, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight } from "lucide-react";
 import { videoApi } from "@/lib/api/videos";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,6 +30,7 @@ interface VideoCardProps {
   onComment: () => void;
   onShare: () => void;
   onSave: () => void;
+  onViewIncremented?: (videoId: number) => void;
   liked: boolean;
   saved: boolean;
   isActive?: boolean;
@@ -43,6 +43,7 @@ export default function VideoCard({
   onComment,
   onShare,
   onSave,
+  onViewIncremented,
   liked,
   saved,
   isActive = false,
@@ -50,17 +51,16 @@ export default function VideoCard({
 }: VideoCardProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const playerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const imageScrollRef = useRef<HTMLDivElement>(null);
   const [userPaused, setUserPaused] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const lastTapAtRef = useRef<number>(0);
   const suppressClickRef = useRef(false);
-  const playTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isTransitioningRef = useRef(false);
   const viewLoggedRef = useRef(false);
   
   const description = (video as any).description || "";
@@ -71,7 +71,6 @@ export default function VideoCard({
   const images = video.imageUrls || [];
   const hasVideo = !!video.videoUrl && !isImageCollection;
   const shouldPlay = hasVideo && isActive && isNearActive && !userPaused;
-
   // Reset view logged when video changes
   useEffect(() => {
     viewLoggedRef.current = false;
@@ -79,15 +78,29 @@ export default function VideoCard({
     setIsLoading(true);
   }, [video.id]);
 
+  // When scroll away: pause and mute so the video left behind stops and is muted (TikTok-style)
+  useEffect(() => {
+    if (!hasVideo) return;
+    const el = videoRef.current;
+    if (!el) return;
+    if (!shouldPlay) {
+      el.pause();
+      el.muted = true;
+      setIsMuted(true);
+    }
+  }, [shouldPlay, hasVideo]);
+
   // Log view when video/image becomes active (only once, only if authenticated)
   useEffect(() => {
     if (isActive && isAuthenticated && !viewLoggedRef.current) {
       viewLoggedRef.current = true;
-      videoApi.incrementViews(video.id).catch(err => 
-        console.error('Error incrementing views:', err)
-      );
+      videoApi.incrementViews(video.id).then(() => {
+        onViewIncremented?.(video.id);
+      }).catch(err => {
+        console.error('Error incrementing views:', err);
+      });
     }
-  }, [isActive, isAuthenticated, video.id]);
+  }, [isActive, isAuthenticated, video.id, onViewIncremented]);
 
   // When leaving the active/near-active window, reset pause state so next time it can autoplay.
   useEffect(() => {
@@ -102,10 +115,34 @@ export default function VideoCard({
 
   const togglePlay = () => {
     if (!hasVideo) return;
-    // Only allow manual play/pause for the active item to avoid thrash.
     if (!isActive) return;
-    setUserPaused((prev) => !prev);
+    const el = videoRef.current;
+    const nextPaused = !userPaused;
+    setUserPaused(nextPaused);
+    // On first play (user tap), unmute in same gesture so sound works (default: unmuted after tap)
+    if (!nextPaused && el) {
+      el.muted = false;
+      setIsMuted(false);
+    }
   };
+
+  // Sync native video with shouldPlay
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!hasVideo || !el) return;
+    if (shouldPlay) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [shouldPlay, hasVideo]);
+
+  // Sync muted state with video element
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = isMuted;
+  }, [isMuted]);
 
   // Image carousel scroll handling
   const scrollToImage = (index: number) => {
@@ -184,7 +221,7 @@ export default function VideoCard({
             </div>
 
             {images.length > 1 && (
-              <div className="absolute z-30 top-20 right-8">
+              <div className="absolute z-30 top-20 right-14">
                 <span className="px-3 py-1 text-xs font-semibold text-white border rounded-full bg-black/35 backdrop-blur-sm border-white/15">
                   {currentImageIndex + 1} / {images.length}
                 </span>
@@ -220,7 +257,7 @@ export default function VideoCard({
                 )}
                 
                 {/* Mobile dots indicator */}
-                <div className="absolute z-30 flex items-center justify-center gap-2 -translate-x-1/2 bottom-6 left-1/2 md:hidden">
+                <div className="absolute z-30 flex items-center justify-center gap-2 -translate-x-1/2 left-1/2 md:hidden bottom-48">
                   {images.map((_, index) => (
                     <button
                       key={index}
@@ -241,79 +278,41 @@ export default function VideoCard({
             )}
           </div>
         ) : (
-          // ── Video Player ───────────────────────────────────────────────────
-          <div className="relative w-full h-full bg-black">
-            {/* Poster shown while loading or when video not near/active */}
+          // ── Native video (Supabase public URL) ─────────────────────────────
+          <div className="relative flex items-center justify-center w-full h-full bg-black">
             {(!isNearActive || isLoading) && video.poster && (
               <img
                 src={video.poster}
                 alt={video.title}
-                className="absolute inset-0 object-cover w-full h-full"
+                className="absolute inset-0 object-contain w-full h-full"
               />
             )}
-
-            {hasVideo && video.videoUrl && (
-              <ReactPlayer
-                {...({
-                  ref: playerRef,
-                  url: video.videoUrl,
-                  playing: shouldPlay,
-                  loop: true,
-                  muted: true,
-                  playsinline: true,
-                  width: "100%",
-                  height: "100%",
-                  style: { position: "absolute", inset: 0 },
-                  config: {
-                    file: {
-                      attributes: {
-                        style: { objectFit: "cover" },
-                        preload: "metadata",
-                        poster: video.poster || undefined,
-                      },
-                    },
-                  },
-                  onReady: () => {
-                    // Avoid a stuck loading spinner if playback is interrupted.
-                    if (isActive && isNearActive) setIsLoading(false);
-                  },
-                  onStart: () => {
-                    // Video actually started playing
-                    setIsLoading(false);
-                    isTransitioningRef.current = false;
-                  },
-                  onPlay: () => {
-                    // Video is playing
-                    setIsLoading(false);
-                    isTransitioningRef.current = false;
-                  },
-                  onPause: () => {
-                    // If it paused while active, keep spinner off (prevents pause->play thrash spinner).
-                    if (isActive) setIsLoading(false);
-                  },
-                  onError: (e: any) => {
-                    console.error("ReactPlayer error:", e);
-                    setIsLoading(false);
-                    isTransitioningRef.current = false;
-                  },
-                  onProgress: () => {
-                    // Video is progressing, so it's playing
-                    if (isLoading && shouldPlay) {
-                      setIsLoading(false);
-                    }
-                  },
-                } as any)}
-              />
-            )}
-
-            {/* Loading spinner - show as long as loading */}
+            
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              poster={video.poster || undefined}
+              loop
+              playsInline
+              muted={isMuted}
+              preload="auto"
+              className="absolute inset-0 object-contain w-full h-full"
+              onCanPlay={() => {
+                if (isActive && isNearActive) setIsLoading(false);
+              }}
+              onPlaying={() => setIsLoading(false)}
+              onError={() => setIsLoading(false)}
+              onLoadedData={() => {
+                if (isActive && isNearActive) setIsLoading(false);
+              }}
+            />
+            {/* Loading spinner */}
             {isLoading && hasVideo && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40">
                 <div className="w-12 h-12 border-4 rounded-full border-white/30 border-t-white animate-spin" />
               </div>
             )}
-
-            {/* Play/Pause overlay */}
+            {/* Play / Pause overlay (tap to toggle) */}
             {hasVideo && showControls && !isLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
                 <div className="flex items-center justify-center w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm">
@@ -324,6 +323,30 @@ export default function VideoCard({
                   )}
                 </div>
               </div>
+            )}
+            {/* Mute / Unmute button — unmute in same user gesture so sound is allowed */}
+            {hasVideo && !isLoading && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const el = videoRef.current;
+                  const nextMuted = !isMuted;
+                  if (el) {
+                    el.muted = nextMuted;
+                    if (!nextMuted) el.play().catch(() => {});
+                  }
+                  setIsMuted(nextMuted);
+                }}
+                className="absolute z-20 flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full bottom-4 left-4 bg-black/50 backdrop-blur-sm hover:bg-black/60"
+                aria-label={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
+              </button>
             )}
           </div>
         )}
