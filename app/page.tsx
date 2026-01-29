@@ -461,8 +461,9 @@ export default function RootPage() {
           {/* TikTok-like top overlay */}
           <div className="absolute top-0 left-0 right-0 z-20">
             <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
-            <div className="absolute left-0 right-0 flex items-center justify-between px-4 top-3">
-              <div className="flex items-center gap-2">
+            <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-3">
+              {/* Small: back, search, upload centered in the middle */}
+              <div className="flex items-center justify-center flex-1 gap-3 md:hidden">
                 <button
                   className="p-2 text-white rounded-full bg-white/10"
                   onClick={closeViewer}
@@ -471,17 +472,34 @@ export default function RootPage() {
                   <ArrowLeft className="w-5 h-5" strokeWidth={1.5}/>
                 </button>
                 <button
-                  className="p-2 text-white rounded-full bg-white/10 md:hidden"
+                  className="p-2 text-white rounded-full bg-white/10"
                   onClick={() => setSearchOpen(true)}
                   aria-label="Search"
                 >
                   <Search className="w-5 h-5" strokeWidth={1.5}/>
                 </button>
+                {isAuthenticated && (
+                  <button
+                    className="p-2 text-white rounded-full bg-white/10"
+                    onClick={() => router.push("/research-lab/upload")}
+                    aria-label="Upload"
+                  >
+                    <UploadCloud className="w-5 h-5" strokeWidth={1.5}/>
+                  </button>
+                )}
               </div>
 
-              {/* Desktop Search */}
-              <div className="items-center flex-1 hidden max-w-md gap-4 mx-auto md:flex">
-                <div className="relative flex-1">
+              {/* Big: input in the middle, back on its left, upload on the right */}
+              <div className="items-center justify-end flex-1 hidden min-w-0 md:flex" />
+              <div className="items-center flex-shrink-0 hidden gap-2 md:flex">
+                <button
+                  className="p-2 text-white rounded-full bg-white/10"
+                  onClick={closeViewer}
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="w-5 h-5" strokeWidth={1.5}/>
+                </button>
+                <div className="relative w-64 min-w-0 sm:w-72 md:max-w-md">
                   <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
                   <input
                     type="text"
@@ -492,16 +510,17 @@ export default function RootPage() {
                   />
                 </div>
               </div>
-
-              {isAuthenticated && (
-                <button
-                  className="p-2 text-white rounded-full bg-white/10"
-                  onClick={() => router.push("/research-lab/upload")}
-                  aria-label="Upload"
-                >
-                  <UploadCloud className="w-5 h-5" strokeWidth={1.5}/>
-                </button>
-              )}
+              <div className="items-center justify-end flex-1 hidden min-w-0 md:flex">
+                {isAuthenticated && (
+                  <button
+                    className="p-2 text-white rounded-full bg-white/10"
+                    onClick={() => router.push("/research-lab/upload")}
+                    aria-label="Upload"
+                  >
+                    <UploadCloud className="w-5 h-5" strokeWidth={1.5}/>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -628,7 +647,7 @@ export default function RootPage() {
                 setSearchQuery("");
                 setSearchOpen(false);
               }}
-              className="w-full px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              className="w-full px-4 py-2 text-sm font-medium bg-white rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900"
             >
               Clear search
             </button>

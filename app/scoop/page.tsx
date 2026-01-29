@@ -275,18 +275,45 @@ export default function ScoopPage() {
         {/* TikTok-like top overlay */}
         <div className="absolute top-0 left-0 right-0 z-20">
           <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
-          <div className="absolute left-0 right-0 flex items-center justify-between px-4 top-3">
-            <button
-              className="p-2 text-white rounded-full bg-white/10 md:hidden"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+          <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-3">
+            {/* Small: search, For You/Following, upload centered in the middle */}
+            <div className="flex items-center justify-center flex-1 gap-3 md:hidden">
+              <button
+                className="p-2 text-white rounded-full bg-white/10"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-6 text-white">
+                {/* <button
+                  onClick={() => setActiveTab("following")}
+                  className={`text-sm font-bold transition-opacity ${activeTab === "following" ? "opacity-100" : "opacity-60"}`}
+                >
+                  Following
+                </button> */}
+                <button
+                  onClick={() => setActiveTab("forYou")}
+                  className={`text-sm font-bold transition-opacity ${activeTab === "forYou" ? "opacity-100" : "opacity-60"}`}
+                >
+                  Scoop
+                </button>
+              </div>
+              {isAuthenticated && isGlobalAdmin && (
+                <button
+                  className="p-2 text-white rounded-full bg-white/10"
+                  onClick={() => router.push("/scoop/upload")}
+                  aria-label="Upload"
+                >
+                  <UploadCloud className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
-            {/* Desktop Search */}
-            <div className="items-center flex-1 hidden max-w-md gap-4 mx-auto md:flex">
-              <div className="relative flex-1">
+            {/* Big: input in the middle, upload on the right */}
+            <div className="flex-1 hidden min-w-0 md:flex" />
+            <div className="items-center flex-shrink-0 hidden md:flex">
+              <div className="relative w-64 min-w-0 sm:w-72 md:max-w-md">
                 <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
                 <input
                   type="text"
@@ -297,31 +324,17 @@ export default function ScoopPage() {
                 />
               </div>
             </div>
-
-            <div className="flex items-center gap-6 mx-auto text-white md:hidden">
-              <button
-                onClick={() => setActiveTab("following")}
-                className={`text-sm font-bold transition-opacity ${activeTab === "following" ? "opacity-100" : "opacity-60"}`}
-              >
-                Following
-              </button>
-              <button
-                onClick={() => setActiveTab("forYou")}
-                className={`text-sm font-bold transition-opacity ${activeTab === "forYou" ? "opacity-100" : "opacity-60"}`}
-              >
-                For You
-              </button>
+            <div className="items-center justify-end flex-1 hidden min-w-0 md:flex">
+              {isAuthenticated && isGlobalAdmin && (
+                <button
+                  className="p-2 text-white rounded-full bg-white/10"
+                  onClick={() => router.push("/scoop/upload")}
+                  aria-label="Upload"
+                >
+                  <UploadCloud className="w-5 h-5" />
+                </button>
+              )}
             </div>
-
-            {isAuthenticated && isGlobalAdmin && (
-              <button
-                className="p-2 text-white rounded-full bg-white/10"
-                onClick={() => router.push("/scoop/upload")}
-                aria-label="Upload"
-              >
-                <UploadCloud className="w-5 h-5" />
-              </button>
-            )}
           </div>
         </div>
 
