@@ -148,13 +148,12 @@ export default function DataTable({
         <div className="flex items-center gap-2 mb-2 md:mb-0">
           <span className="text-xs text-[#172b4d]">Rows per page:</span>
           <Dropdown
-            options={itemsPerPageOptions.map((v) => ({ label: v, value: v }))}
-            value={itemsPerPage}
+            options={itemsPerPageOptions.map((v) => ({ label: String(v), value: String(v) }))}
+            value={String(itemsPerPage)}
             onChange={(e: any) => {
               const value = typeof e === "number" ? e : Number(e?.target?.value ?? e);
               onItemsPerPageChange(value);
             }}
-            width="80px"
             className="w-[80px]"
           />
         </div>
