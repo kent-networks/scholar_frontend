@@ -243,7 +243,7 @@ export default function Sidebar() {
         <div className={`flex-shrink-0 px-4 border-b border-white/10 ${collapsed ? 'py-3' : 'py-5'}`}>
           <div className={`flex items-center gap-2 ${collapsed ? 'flex-col justify-center gap-1' : 'justify-between'}`}>
             <Link href="/home" className={`flex items-center min-w-0 gap-2 ${collapsed ? 'flex-col' : ''}`}>
-              <GraduationCap className="flex-shrink-0 h-7 w-7 text-primary" strokeWidth={1.5}/>
+              <img src="/assets/Bwati.png" alt="Bwati" className="object-cover w-10 h-10 rounded-lg"/>
               <div
                 className={`transition-all duration-300 overflow-hidden ${
                   collapsed ? 'w-0 opacity-0 h-0' : 'w-auto opacity-100'

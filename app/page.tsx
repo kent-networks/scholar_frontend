@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Sidebar, { MobileBottomNav } from "@/components/Sidebar";
 import VideoCard from "@/app/scoop/components/VideoCard";
 import CommentsSidePanel from "@/components/CommentsSidePanel";
@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
 
 export default function RootPage() {
+  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
@@ -296,9 +297,15 @@ export default function RootPage() {
   }, [viewMode]);
 
   const openViewerAt = (index: number) => {
+    const videoId = videos[index]?.id;
     setCurrentIndex(index);
     pendingOpenIndexRef.current = index;
     setViewMode("viewer");
+    if (videoId != null) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("video", String(videoId));
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }
   };
 
   const closeViewer = () => {
@@ -306,6 +313,10 @@ export default function RootPage() {
     setSearchOpen(false);
     setCommentsOpen(false);
     setSelectedVideoId(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("video");
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   };
 
   return (
@@ -475,7 +486,7 @@ export default function RootPage() {
             )}
             {viewMode === "cards" && loadingMore && videos.length > 0 && (
               <div className="flex justify-center py-6">
-                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 rounded-full border-primary/30 border-t-primary animate-spin" />
               </div>
             )}
           </div>
@@ -489,7 +500,7 @@ export default function RootPage() {
           {/* TikTok-like top overlay */}
           <div className="absolute top-0 left-0 right-0 z-20">
             <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
-            <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-3">
+            <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-8">
               {/* Small: back, search, upload centered in the middle */}
               <div className="flex items-center justify-center flex-1 gap-3 md:hidden">
                 <button
@@ -651,12 +662,12 @@ export default function RootPage() {
             )}
             {viewMode === "viewer" && loadingMore && videos.length > 0 && (
               <div className="flex justify-center py-4">
-                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 rounded-full border-white/30 border-t-white animate-spin" />
               </div>
             )}
 
             {loading && videos.length === 0 && (
-              <div className="flex justify-center h-screen items-center">
+              <div className="flex items-center justify-center h-screen">
                 <div className="w-12 h-12 border-4 rounded-full border-white/30 border-t-white animate-spin" />
               </div>
             )}

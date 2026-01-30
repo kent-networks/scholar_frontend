@@ -292,7 +292,7 @@ export default function ScoopPage() {
         {/* TikTok-like top overlay */}
         <div className="absolute top-0 left-0 right-0 z-20">
           <div className="h-20 bg-gradient-to-b from-black/80 to-transparent" />
-          <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-3">
+          <div className="absolute left-0 flex items-center justify-between px-4 right-3 top-8">
             {/* Small: search, For You/Following, upload centered in the middle */}
             <div className="flex items-center justify-center flex-1 gap-3 md:hidden">
               <button
@@ -456,7 +456,7 @@ export default function ScoopPage() {
           )}
           {loadingMore && videos.length > 0 && (
             <div className="flex justify-center py-4">
-              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 rounded-full border-white/30 border-t-white animate-spin" />
             </div>
           )}
 

@@ -32,7 +32,7 @@ export default function TopNav() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="w-8 h-8 text-primary" />
+            <img src="/assets/Bwati.png" alt="Bwati" className="object-cover w-12 h-12 rounded-lg"/>
             <span className="text-xl font-bold text-slate-900 dark:text-white">Bwati</span>
           </Link>
 

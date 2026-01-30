@@ -21,15 +21,15 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   ),
   title: {
-    default: 'ClasslyAfrica - Academic Ecosystem',
-    template: '%s | ClasslyAfrica',
+    default: 'Bwati - Academic Ecosystem',
+    template: '%s | Bwati',
   },
   description:
     'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
   keywords: [
     'academic',
     'research',
-    'ClasslyAfrica',
+    'Bwati',
     'education',
     'community',
     'collaboration',
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     'knowledge sharing',
     'academic networking',
   ],
-  authors: [{ name: 'ClasslyAfrica' }],
-  creator: 'ClasslyAfrica',
+  authors: [{ name: 'Bwati' }],
+  creator: 'Bwati',
   alternates: {
     canonical: '/',
   },
@@ -47,25 +47,25 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-    siteName: 'ClasslyAfrica',
-    title: 'ClasslyAfrica - Academic Ecosystem',
+    siteName: 'Bwati',
+    title: 'Bwati - Academic Ecosystem',
     description:
       'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
     images: [
       {
-        url: 'assets/ClasslyAfrica.png',
+        url: 'assets/Bwati.png',
         width: 901,
         height: 842,
-        alt: 'ClasslyAfrica',
+        alt: 'Bwati',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClasslyAfrica - Academic Ecosystem',
+    title: 'Bwati - Academic Ecosystem',
     description:
       'Research lab, community operations, and academic collaboration platform. Connect with researchers, share knowledge, and build academic communities.',
-    images: ['assets/ClasslyAfrica.png'],
+    images: ['assets/Bwati.png'],
   },
   robots: {
     index: true,
@@ -94,7 +94,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
-      <body className="font-body antialiased">
+      <body className="antialiased font-body">
         <AuthProvider>
           {children}
           <Toaster

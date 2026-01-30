@@ -30,7 +30,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <GraduationCap className="w-8 h-8 text-primary" strokeWidth={1.5}/>
+              <img src="/assets/Bwati.png" alt="Bwati" className="object-cover w-10 h-10 rounded-lg"/>
               <span className="text-xl font-bold">Bwati</span>
             </Link>
             <p className="max-w-md mb-4 text-slate-400">
