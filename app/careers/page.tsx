@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Briefcase, MapPin, Clock, ExternalLink, Sparkles } from "lucide-react";
 
-const jobOpenings: any[] = [];
+// const jobOpenings: any[] = [];
 
 const perks = [
   { icon: Sparkles, text: "Work on projects that shape global research & education" },
