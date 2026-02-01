@@ -131,7 +131,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}k`;
     }
-    // return count.toString();
+    return count.toString();
   };
 
   const handleClick = () => {
