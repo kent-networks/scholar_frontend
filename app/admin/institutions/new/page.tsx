@@ -138,7 +138,7 @@ export default function CreateInstitutionPage() {
                 />
               </div>
 
-              <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+              <div className="mt-3 overflow-hidden bg-white border rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900">
                 {usersLoading ? (
                   <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
                 ) : users.length === 0 ? (
@@ -162,17 +162,17 @@ export default function CreateInstitutionPage() {
                               <img
                                 src={u.profilePhotoPath}
                                 alt={u.name}
-                                className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                                className="object-cover w-10 h-10 border rounded-full border-slate-200 dark:border-slate-700"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-extrabold">
+                              <div className="flex items-center justify-center w-10 h-10 font-extrabold rounded-full bg-primary/10 text-primary">
                                 {letter}
                               </div>
                             )}
 
-                            <div className="min-w-0 flex-1">
-                              <div className="font-bold text-slate-900 dark:text-white truncate">{u.name}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{u.username}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold truncate text-slate-900 dark:text-white">{u.name}</div>
+                              <div className="text-xs truncate text-slate-500 dark:text-slate-400">@{u.username}</div>
                             </div>
 
                             {isSelected ? <CheckCircle2 className="w-5 h-5 text-primary" /> : null}
@@ -193,7 +193,7 @@ export default function CreateInstitutionPage() {
                     type="button"
                     disabled={usersPage <= 1}
                     onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
-                    className="px-3 py-2 text-sm font-bold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="px-3 py-2 text-sm font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Prev
                   </button>
@@ -201,7 +201,7 @@ export default function CreateInstitutionPage() {
                     type="button"
                     disabled={usersPage >= usersTotalPages}
                     onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
-                    className="px-3 py-2 text-sm font-bold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="px-3 py-2 text-sm font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Next
                   </button>
@@ -221,7 +221,7 @@ export default function CreateInstitutionPage() {
               <button
                 type="button"
                 onClick={() => router.push("/admin?tab=institutions")}
-                className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="px-4 py-2 border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -246,7 +246,7 @@ export default function CreateInstitutionPage() {
                     setCreating(false);
                   }
                 }}
-                className="px-5 py-2 font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
+                className="px-5 py-2 text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50"
               >
                 {creating ? "Creating..." : "Create institution"}
               </button>

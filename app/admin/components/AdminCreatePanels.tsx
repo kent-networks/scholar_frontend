@@ -91,7 +91,7 @@ export default function AdminCreatePanels({
   }, [assignOpen, userSearch]);
 
   return (
-    <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+    <div className="p-3 bg-white border dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800">
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -131,7 +131,7 @@ export default function AdminCreatePanels({
       </div>
 
       {activeTab === "create-admin" && (
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 mt-4">
           <div className="text-sm text-slate-600 dark:text-slate-400">
             You’ll create admins via the admin signup screen.
           </div>
@@ -146,7 +146,7 @@ export default function AdminCreatePanels({
       )}
 
       {activeTab === "institutions" && (
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 mt-4 md:grid-cols-3">
           <input
             value={instName}
             onChange={(e) => setInstName(e.target.value)}
@@ -181,7 +181,7 @@ export default function AdminCreatePanels({
                   setInstCreating(false);
                 }
               }}
-              className="w-full md:w-auto px-4 py-3.5 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark disabled:opacity-50 transition-all"
+              className="w-full md:w-auto px-4 py-3.5 rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-50 transition-all"
             >
               {instCreating ? "Creating..." : "Create Institution"}
             </button>
@@ -190,14 +190,14 @@ export default function AdminCreatePanels({
       )}
 
       {activeTab === "assign-user" && (
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 mt-4">
           <div className="text-sm text-slate-600 dark:text-slate-400">
             Assign a user to an institution (optionally as institution admin).
           </div>
           <button
             disabled={loadingInstitutions}
             onClick={() => setAssignOpen(true)}
-            className="px-4 py-2.5 rounded-lg font-bold border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+            className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             Open assign form
           </button>
@@ -228,7 +228,7 @@ export default function AdminCreatePanels({
             className={inputClass}
           />
 
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-h-56 overflow-auto">
+          <div className="overflow-auto bg-white border rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 max-h-56">
             {userLoading ? (
               <div className="p-3 text-sm text-slate-500 dark:text-slate-400">Searching...</div>
             ) : userResults.length === 0 ? (
@@ -245,8 +245,8 @@ export default function AdminCreatePanels({
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-bold text-slate-900 dark:text-white truncate">{u.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <div className="font-bold truncate text-slate-900 dark:text-white">{u.name}</div>
+                      <div className="text-xs truncate text-slate-500 dark:text-slate-400">
                         @{u.username} · {u.email}
                       </div>
                     </div>
@@ -272,7 +272,7 @@ export default function AdminCreatePanels({
               type="checkbox"
               checked={assignIsInstAdmin}
               onChange={(e) => setAssignIsInstAdmin(e.target.checked)}
-              className="h-4 w-4"
+              className="w-4 h-4"
             />
             Make user an institution admin
           </label>

@@ -1,19 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter, Poppins } from 'next/font/google'
+import { Roboto } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
 
-const inter = Inter({
+const roboto = Roboto({
   subsets: ['latin'],
-  weight: ['400', '500', '700', '900'],
-  variable: '--font-inter',
-})
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-poppins',
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+  preload: true,
 })
 
 export const metadata: Metadata = {
@@ -93,12 +89,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
-      <body className="antialiased font-body">
+    <html lang="en" className={roboto.variable} suppressHydrationWarning>
+      <body className={`${roboto.className} antialiased font-body`}>
+        {/* Critical CSS to prevent FOUC: font and background before main CSS parses */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `body{font-family:var(--font-roboto),system-ui,sans-serif;background-color:#eef2f7;}.dark body{background-color:#101622;}`,
+          }}
+        />
         <AuthProvider>
           {children}
           <Toaster
             position="top-right"
+            containerClassName="toaster-container"
             toastOptions={{
               duration: 3000,
               style: {

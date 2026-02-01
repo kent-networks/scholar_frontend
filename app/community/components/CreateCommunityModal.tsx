@@ -85,6 +85,10 @@ export default function CreateCommunityModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasInstitution && !joinCode.trim()) {
+      toast.error("Join code is required for institution communities.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -92,7 +96,7 @@ export default function CreateCommunityModal({
         ...formData,
         researchField: formData.researchField === "Other" ? otherField : formData.researchField,
       };
-      if (hasInstitution && joinCode.trim()) {
+      if (hasInstitution) {
         submitData.joinCode = joinCode.trim();
       }
       await communityApi.createCommunity(submitData);
@@ -169,18 +173,19 @@ export default function CreateCommunityModal({
               />
             </div>
 
-            {/* Join code (institution users only) */}
+            {/* Join code (required for institution users) */}
             {hasInstitution && (
               <div className="flex flex-col gap-2 md:col-span-2">
                 <label className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Join code (optional)
+                  Join code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
+                  required
                   className="flex w-full h-12 px-4 text-base font-normal leading-normal transition-all duration-200 bg-white border rounded-xl border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                  placeholder="Leave blank to auto-generate"
+                  placeholder="Enter join code (required)"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Members will need this code to join. Institution-linked communities can have unlimited members.
@@ -282,7 +287,7 @@ export default function CreateCommunityModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (hasInstitution && !joinCode.trim())}
               className="flex min-w-[160px] cursor-pointer items-center justify-center rounded-xl h-11 px-5 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isSubmitting ? "Creating..." : "Create Community"}

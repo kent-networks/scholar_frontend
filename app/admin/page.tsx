@@ -504,7 +504,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => router.push("/admin/institutions/new")}
-                  className="w-full md:w-auto px-4 py-3.5 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition-colors"
+                  className="w-full md:w-auto px-4 py-3.5 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors"
                 >
                   Create institution
                 </button>

@@ -329,14 +329,14 @@ export default function ScoopUploadPage() {
               <button
                 onClick={() => router.back()}
                 disabled={isUploading}
-                className="flex-1 px-6 py-3 font-bold transition-colors border rounded-2xl border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                className="flex-1 px-6 py-3 transition-colors border rounded-2xl text-slate-700 border-slate-300 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpload}
                 disabled={selectedFiles.length === 0 || isUploading}
-                className="flex items-center justify-center flex-1 gap-2 px-6 py-3 font-bold text-white transition-colors rounded-2xl bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center flex-1 gap-2 px-6 py-3 text-white transition-colors rounded-2xl bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>

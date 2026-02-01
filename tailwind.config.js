@@ -25,8 +25,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['var(--font-poppins)', 'sans-serif'],
-        body: ['var(--font-inter)', 'sans-serif'],
+        sans: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
+        body: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         DEFAULT: '0.25rem',

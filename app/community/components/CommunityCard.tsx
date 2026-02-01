@@ -110,6 +110,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [joinConfirmOpen, setJoinConfirmOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -133,15 +134,32 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
     return count.toString();
   };
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (isMember || isOwner || isGlobalAdmin) {
       router.push(`/community/${community.id}`);
     } else {
-      // Join community
       if (!isAuthenticated) {
         router.push("/login");
         return;
       }
+      setJoinConfirmOpen(true);
+    }
+  };
+
+  const handleConfirmJoin = async () => {
+    setJoinConfirmOpen(false);
+    if (!community.requireJoinCode) {
+      try {
+        setLoading(true);
+        await communityApi.joinCommunity(community.id);
+        toast.success("Successfully joined community");
+        onUpdate?.();
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to join community");
+      } finally {
+        setLoading(false);
+      }
+    } else {
       setJoinOpen(true);
     }
   };
@@ -219,12 +237,43 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
               isMember || isOwner
                 ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
                 : "bg-primary text-white hover:bg-primary/90"
-            } font-bold rounded-2xl transition-colors disabled:opacity-50`}
+            } rounded-2xl transition-colors disabled:opacity-50`}
           >
             {loading ? "Joining..." : isMember || isOwner ? "Open Community" : "Join Community"}
           </button>
         </div>
       </div>
+          
+      {joinConfirmOpen && (
+        <ModalDialog
+          isOpen={joinConfirmOpen}
+          onClose={() => setJoinConfirmOpen(false)}
+          title="Join Community"
+          width="md"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Are you sure you want to join <span className="font-bold text-slate-900 dark:text-white">{community.name}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setJoinConfirmOpen(false)}
+                className="px-4 py-2 border rounded-lg text-slate-900 border-slate-300 dark:border-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmJoin}
+                className="px-4 py-2 text-white rounded-lg bg-primary hover:bg-primary-dark"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </ModalDialog>
+      )}
 
       {joinOpen && (
         <ModalDialog
@@ -238,7 +287,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Enter the community code to join.
+              This community requires a join code. Enter the code to join.
             </p>
             <input
               value={joinCode}
@@ -298,7 +347,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
               <button
                 type="button"
                 onClick={() => setDeleteOpen(false)}
-                className="px-4 py-2 font-bold border rounded-lg border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                className="px-4 py-2 border rounded-lg text-slate-900 border-slate-300 dark:border-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -318,7 +367,7 @@ export default function CommunityCard({ community, onUpdate }: CommunityCardProp
                     setDeleting(false);
                   }
                 }}
-                className="px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>

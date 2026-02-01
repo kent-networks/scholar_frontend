@@ -141,7 +141,7 @@ export default function ScholinkPage() {
                     className="p-5 transition-all border shadow-sm bg-surface-light dark:bg-surface-dark rounded-xl border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/50"
                   >
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="min-w-0 flex-1">
+                      <div className="flex-1 min-w-0">
                       {competition.isPaid && (
                         <span className="inline-block px-2 py-1 mb-2 text-xs font-bold rounded-full bg-amber-500/10 text-amber-700">
                           Paid
@@ -209,7 +209,7 @@ export default function ScholinkPage() {
                         </div>
                       )}
                     </div>
-                    <button className="w-full px-4 py-2 font-bold text-white transition-colors rounded-lg shadow-sm bg-primary hover:bg-primary-dark shadow-primary/30">
+                    <button className="w-full px-4 py-2 text-white transition-colors rounded-lg shadow-sm bg-primary hover:bg-primary-dark shadow-primary/30">
                       View Details
                     </button>
                   </div>
@@ -406,7 +406,7 @@ export default function ScholinkPage() {
                   setDeleting(false);
                 }
               }}
-              className="px-4 py-2 font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              className="px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
             >
               {deleting ? "Deleting..." : "Delete"}
             </button>
