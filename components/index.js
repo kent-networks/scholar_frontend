@@ -13,4 +13,4 @@ export { default as ModalDialog } from "./ModalDialog";
 export { default as NoDataYet } from "./NoDataYet";
 export { default as Skeleton } from "./Skeleton";
 export { default as SlideInPanel } from "./SlideInPanel";
-export { default as Tooltip } from "./Tooltip";
+// export { default as Tooltip } from "./Tooltip";
